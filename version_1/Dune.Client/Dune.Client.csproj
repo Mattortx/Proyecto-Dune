@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dune.Domain\Dune.Domain.csproj" />
+    <ProjectReference Include="..\Dune.Simulation\Dune.Simulation.csproj" />
+    <ProjectReference Include="..\Dune.Persistence\Dune.Persistence.csproj" />
+    <ProjectReference Include="..\Dune.Events\Dune.Events.csproj" />
+  </ItemGroup>
+
+</Project>
