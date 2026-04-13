@@ -1,0 +1,16 @@
+[project]
+name = "dune-mcp-multiagent"
+version = "0.1.0"
+description = "MCP multi-agent orchestration core with mutant agents"
+requires-python = ">=3.11"
+readme = "src/mcp_multiagent/README.md"
+dependencies = []
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
