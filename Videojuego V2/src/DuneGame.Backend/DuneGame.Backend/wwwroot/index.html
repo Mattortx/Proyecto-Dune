@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casa Portil - Gestión Hidráulica Dinástica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0d1117;
+            --bg-panel: #161b22;
+            --bg-card: #21262d;
+            --border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-gold: #d4a76a;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --water-blue: #1f6feb;
+            --stone-gray: #484f58;
+            --bronze: #8b7355;
+            --amber: #d4a76a;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Cinzel', 'Georgia', serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: linear-gradient(180deg, #0a0f14 0%, #121820 50%, #1a1f28 100%);
+        }
+
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: linear-gradient(180deg, rgba(22, 27, 34, 0.95) 0%, rgba(13, 17, 23, 0.9) 100%);
+            border-bottom: 2px solid var(--bronze);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .resource-icon { font-size: 20px; }
+        .resource-value { font-size: 16px; font-weight: bold; color: var(--accent-gold); }
+        .resource-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+
+        .risk-indicator {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .risk-stable { background: var(--accent-green); color: #000; }
+        .risk-low { background: #58a6ff; color: #000; }
+        .risk-medium { background: var(--accent-gold); color: #000; }
+        .risk-high { background: #f0883e; color: #000; }
+        .risk-critical { background: var(--accent-red); color: #fff; }
+
+        #mainContent { display: flex; flex: 1; overflow: hidden; }
+
+        #leftPanel {
+            width: 280px;
+            background: var(--bg-panel);
+            border-right: 2px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .palace-header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+            border: 2px solid var(--bronze);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .palace-title { font-size: 18px; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .palace-level { font-size: 12px; color: var(--text-secondary); }
+        .palace-features { margin-top: 12px; text-align: left; }
+        .palace-feature { font-size: 11px; color: var(--stone-gray); padding: 4px 0; border-bottom: 1px solid var(--border); }
+
+        .dynasty-info {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .dynasty-name { font-size: 16px; color: var(--accent-gold); margin-bottom: 8px; }
+        .ruler-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+
+        #tabs { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        .tab-btn:hover { background: var(--bg-panel); color: var(--text-primary); border-color: var(--bronze); }
+        .tab-btn.active { background: linear-gradient(90deg, rgba(212, 167, 106, 0.2) 0%, var(--bg-card) 100%); color: var(--accent-gold); border-color: var(--accent-gold); border-left: 3px solid var(--accent-gold); }
+
+        #centerPanel { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 450px; }
+
+        #visualContainer {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #0a0f14;
+            min-height: 350px;
+            width: 100%;
+        }
+
+        .visual-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #backgroundLayer { z-index: 1; }
+        #cityLayer { z-index: 2; }
+        #structuresLayer { z-index: 3; }
+        #waterLayer { z-index: 4; }
+        #fogLayer { z-index: 5; }
+        #lightLayer { z-index: 6; }
+
+#backgroundLayer { 
+            z-index: 1;
+            background: linear-gradient(180deg, #0a0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f1729 100%);
+        }
+
+        #cityLayer {
+            z-index: 2;
+            background-image: 
+                /* Torres principales - verticales */
+                linear-gradient(90deg, transparent 19%, rgba(50, 55, 70, 0.9) 19%, rgba(50, 55, 70, 0.9) 21%, transparent 21%),
+                linear-gradient(90deg, transparent 44%, rgba(45, 50, 65, 0.85) 44%, rgba(45, 50, 65, 0.85) 46%, transparent 46%),
+                linear-gradient(90deg, transparent 69%, rgba(55, 60, 75, 0.9) 69%, rgba(55, 60, 75, 0.9) 71%, transparent 71%),
+                /* Edificios anchos */
+                radial-gradient(ellipse 25% 40% at 25% 60%, rgba(35, 40, 55, 0.8) 0%, transparent 100%),
+                radial-gradient(ellipse 30% 45% at 75% 55%, rgba(40, 45, 60, 0.8) 0%, transparent 100%),
+                /* Base */
+                linear-gradient(180deg, transparent 50%, rgba(25, 30, 45, 0.6) 100%);
+        }
+
+        #structuresLayer {
+            z-index: 3;
+            background-image: 
+                /* Palacio central - aguja */
+                linear-gradient(90deg, transparent 46%, rgba(80, 70, 60, 0.7) 46%, rgba(80, 70, 60, 0.7) 48%, rgba(80, 70, 60, 0.7) 52%, transparent 52%),
+                linear-gradient(180deg, transparent 10%, rgba(80, 70, 60, 0.5) 10%, rgba(80, 70, 60, 0.5) 12%, transparent 12%);
+        }
+
+        #waterLayer {
+            z-index: 4;
+            background: 
+                linear-gradient(180deg, transparent 70%, rgba(20, 60, 120, 0.3) 80%, rgba(30, 80, 150, 0.35) 90%, rgba(20, 60, 120, 0.3) 100%);
+        }
+
+        #fogLayer {
+            z-index: 5;
+            background: 
+                radial-gradient(ellipse 100% 30% at 50% 100%, rgba(100, 130, 170, 0.25) 0%, transparent 70%);
+            animation: fogDrift 25s ease-in-out infinite;
+        }
+
+        @keyframes fogDrift { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        #lightLayer {
+            z-index: 6;
+            background-image: 
+                /* Ventanas iluminadas */
+                radial-gradient(circle 3px at 20% 25%, rgba(255, 200, 100, 0.8) 0%, transparent 100%),
+                radial-gradient(circle 3px at 44% 15%, rgba(255, 180, 80, 0.7) 0%, transparent 100%),
+                radial-gradient(circle 3px at 70% 20%, rgba(255, 200, 100, 0.8) 0%, transparent 100%),
+                /* Luces bajas */
+                radial-gradient(circle 4px at 30% 55%, rgba(255, 180, 60, 0.5) 0%, transparent 100%),
+                radial-gradient(circle 4px at 60% 50%, rgba(255, 160, 80, 0.4) 0%, transparent 100%);
+        }
+
+        #cityLayer {
+            background-image: 
+                /* Torres y agujas */
+                radial-gradient(ellipse 2% 8% at 20% 30%, rgba(60, 70, 90, 0.8) 0%, transparent 100%),
+                radial-gradient(ellipse 2% 10% at 35% 25%, rgba(50, 60, 80, 0.7) 0%, transparent 100%),
+                radial-gradient(ellipse 2% 12% at 50% 20%, rgba(70, 80, 100, 0.8) 0%, transparent 100%),
+                radial-gradient(ellipse 2% 8% at 65% 28%, rgba(55, 65, 85, 0.7) 0%, transparent 100%),
+                radial-gradient(ellipse 2% 10% at 80% 35%, rgba(65, 75, 95, 0.8) 0%, transparent 100%),
+                /* Edificios base */
+                radial-gradient(ellipse 15% 25% at 25% 55%, rgba(40, 50, 70, 0.6) 0%, transparent 100%),
+                radial-gradient(ellipse 20% 30% at 50% 50%, rgba(35, 45, 65, 0.5) 0%, transparent 100%),
+                radial-gradient(ellipse 15% 25% at 75% 55%, rgba(45, 55, 75, 0.6) 0%, transparent 100%),
+                /* Terrazas inferiores */
+                radial-gradient(ellipse 30% 15% at 50% 75%, rgba(30, 40, 60, 0.4) 0%, transparent 100%),
+                linear-gradient(180deg, transparent 40%, #1a1a2e 100%);
+        }
+
+        #waterLayer {
+            background: 
+                /* Canales principales */
+                linear-gradient(90deg, transparent 0%, transparent 20%, rgba(30, 100, 180, 0.15) 20%, rgba(30, 100, 180, 0.15) 25%, transparent 25%, transparent 75%, rgba(30, 100, 180, 0.15) 75%, rgba(30, 100, 180, 0.15) 80%, transparent 80%),
+                /* Río central */
+                linear-gradient(180deg, transparent 0%, rgba(20, 80, 150, 0.2) 30%, rgba(30, 100, 180, 0.25) 50%, rgba(20, 80, 150, 0.2) 70%, transparent 100%),
+                /* Reflejos */
+                repeating-linear-gradient(90deg, transparent 0px, rgba(100, 180, 255, 0.03) 2px, transparent 4px),
+                repeating-linear-gradient(0deg, transparent 0px, rgba(100, 180, 255, 0.02) 2px, transparent 4px);
+            animation: waterRipple 8s ease-in-out infinite;
+        }
+
+        #fogLayer {
+            background: 
+                /* Niebla baixa */
+                radial-gradient(ellipse 100% 40% at 50% 90%, rgba(100, 149, 237, 0.2) 0%, transparent 60%),
+                /* Bruma */
+                radial-gradient(ellipse 80% 30% at 20% 40%, rgba(150, 180, 210, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 25% at 70% 35%, rgba(140, 170, 200, 0.08) 0%, transparent 40%),
+                /* Capas de humedad */
+                radial-gradient(ellipse 100% 50% at 30% 70%, rgba(80, 120, 160, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 40% at 70% 65%, rgba(90, 130, 170, 0.1) 0%, transparent 40%);
+            animation: fogDrift 25s ease-in-out infinite;
+        }
+
+#lightLayer {
+            /* Ventanas iluminadas */
+            background-image: 
+                radial-gradient(circle 2px at 22% 32%, rgba(255, 200, 100, 0.6) 0%, transparent 100%),
+                radial-gradient(circle 2px at 25% 35%, rgba(255, 200, 100, 0.4) 0%, transparent 100%),
+                radial-gradient(circle 2px at 37% 28%, rgba(255, 180, 80, 0.5) 0%, transparent 100%),
+                radial-gradient(circle 2px at 52% 23%, rgba(255, 200, 100, 0.6) 0%, transparent 100%),
+                radial-gradient(circle 2px at 67% 31%, rgba(255, 180, 80, 0.4) 0%, transparent 100%),
+                radial-gradient(circle 2px at 82% 38%, rgba(255, 200, 100, 0.5) 0%, transparent 100%),
+                radial-gradient(ellipse 10% 5% at 40% 70%, rgba(255, 200, 100, 0.15) 0%, transparent 100%),
+                radial-gradient(ellipse 15% 8% at 60% 75%, rgba(255, 180, 80, 0.12) 0%, transparent 100%),
+                radial-gradient(ellipse 20% 15% at 85% 15%, rgba(200, 210, 230, 0.1) 0%, transparent 100%);
+        }
+
+        #tabContent {
+            height: 320px;
+            background: var(--bg-panel);
+            border-top: 2px solid var(--bronze);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tab-view { display: none; }
+        .tab-view.active { display: block; }
+        .section-title { font-size: 16px; color: var(--accent-gold); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .info-card { background: var(--bg-card); padding: 12px; border: 1px solid var(--border); border-radius: 4px; }
+        .info-card-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; }
+        .info-card-value { font-size: 18px; color: var(--accent-gold); font-weight: bold; }
+
+        .building-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .building-card { background: var(--bg-card); padding: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .building-card:hover { border-color: var(--accent-gold); transform: translateY(-2px); }
+        .building-card.built { border-color: var(--accent-green); opacity: 0.7; }
+        .building-name { font-size: 14px; color: var(--accent-gold); margin-bottom: 4px; }
+        .building-category { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; }
+        .building-cost { font-size: 11px; color: var(--text-secondary); }
+
+        .family-list, .houses-list, .ministers-list { display: flex; flex-direction: column; gap: 8px; }
+        .family-member, .house-card, .minister-card { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px; border: 1px solid var(--border); border-radius: 4px; }
+        .member-name, .house-name, .minister-name { color: var(--accent-gold); font-size: 14px; }
+        .member-role, .house-power, .minister-dept { font-size: 11px; color: var(--text-secondary); }
+        .stat-badge { font-size: 10px; padding: 2px 6px; background: var(--bg-panel); border-radius: 2px; color: var(--text-secondary); }
+
+        .house-hostility { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .hostility-low { background: var(--accent-green); color: #000; }
+        .hostility-medium { background: var(--accent-gold); color: #000; }
+        .hostility-high { background: var(--accent-red); color: #fff; }
+
+        #buildBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
+            border-top: 2px solid var(--bronze);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .build-category { padding: 8px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: all 0.3s; }
+        .build-category:hover, .build-category.active { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--stone-gray); }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="hud">
+            <div class="resource-item"><span class="resource-icon">💰</span><div><div class="resource-value" id="funds">5000</div><div class="resource-label">Fondos</div></div></div>
+            <div class="resource-item"><span class="resource-icon">💧</span><div><div class="resource-value" id="water">1000</div><div class="resource-label">Agua</div></div></div>
+            <div class="resource-item"><span class="resource-icon">🌾</span><div><div class="resource-value" id="food">1000</div><div class="resource-label">Alimento</div></div></div>
+            <div class="resource-item"><span class="resource-icon">📊</span><div><div class="resource-value" id="prestige">100</div><div class="resource-label">Prestigio</div></div></div>
+            <div class="resource-item"><span class="resource-icon">👥</span><div><div class="resource-value" id="population">100</div><div class="resource-label">Población</div></div></div>
+            <div class="resource-item"><span class="resource-icon">👷</span><div><div class="resource-value" id="staff">50</div><div class="resource-label">Personal</div></div></div>
+            <div class="risk-indicator risk-stable" id="risk">ESTABLE</div>
+        </div>
+
+        <div id="mainContent">
+            <div id="leftPanel">
+                <div class="palace-header">
+                    <div class="palace-title">Palacio Hidráulico</div>
+                    <div class="palace-level">Nivel 1</div>
+                    <div class="palace-features">
+                        <div class="palace-feature">• Sala del Consejo</div>
+                        <div class="palace-feature">• Archivo Dinástico</div>
+                        <div class="palace-feature">• Cámara Hidráulica</div>
+                    </div>
+                </div>
+                <div class="dynasty-info">
+                    <div class="dynasty-name">Casa Portil</div>
+                    <div class="ruler-info"><span>Regente: Archivist Vanya</span><span>Legitimidad: 80%</span></div>
+                </div>
+                <div id="tabs">
+                    <button class="tab-btn active" data-tab="panel">📊 Panel Principal</button>
+                    <button class="tab-btn" data-tab="enclaves">🏛️ Enclaves</button>
+                    <button class="tab-btn" data-tab="criaturas">🐚 Criaturas</button>
+                    <button class="tab-btn" data-tab="construccion">🔨 Construcción</button>
+                    <button class="tab-btn" data-tab="eventos">📜 Eventos</button>
+                    <button class="tab-btn" data-tab="familia">👑 Familia</button>
+                    <button class="tab-btn" data-tab="gobierno">⚖️ Gobierno</button>
+                    <button class="tab-btn" data-tab="ejercito">🛡️ Ejército</button>
+                    <button class="tab-btn" data-tab="diplomacia">🌐 Diplomacia</button>
+                </div>
+            </div>
+
+            <div id="centerPanel">
+                <div id="visualContainer">
+                    <div id="backgroundLayer" class="visual-layer"></div>
+                    <div id="cityLayer" class="visual-layer"></div>
+                    <div id="structuresLayer" class="visual-layer"></div>
+                    <div id="waterLayer" class="visual-layer"></div>
+                    <div id="fogLayer" class="visual-layer"></div>
+                    <div id="lightLayer" class="visual-layer"></div>
+                </div>
+                
+                <div id="tabContent">
+                    <div class="tab-view active" id="view-panel">
+                        <div class="section-title">Resumen del Reino</div>
+                        <div class="info-grid">
+                            <div class="info-card"><div class="info-card-label">Estabilidad del Gobierno</div><div class="info-card-value" id="stability">70%</div></div>
+                            <div class="info-card"><div class="info-card-label">Influencia Dinástica</div><div class="info-card-value" id="influence">50</div></div>
+                            <div class="info-card"><div class="info-card-label">Defensa Interna</div><div class="info-card-value" id="defense">50</div></div>
+                            <div class="info-card"><div class="info-card-label">Reputación Diplomática</div><div class="info-card-value" id="reputation">50</div></div>
+                            <div class="info-card"><div class="info-card-label">Estrés Poblacional</div><div class="info-card-value" id="stress">20%</div></div>
+                            <div class="info-card"><div class="info-card-label">Línea Temporal</div><div class="info-card-value" id="timeline">0</div></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-view" id="view-enclaves">
+                        <div class="section-title">Distritos Hidráulicos</div>
+                        <div class="info-grid" id="districtsGrid"></div>
+                    </div>
+
+                    <div class="tab-view" id="view-criaturas">
+                        <div class="section-title">Estado de la Población</div>
+                        <div class="info-grid">
+                            <div class="info-card"><div class="info-card-label">Trabajadores</div><div class="info-card-value" id="workers">50</div></div>
+                            <div class="info-card"><div class="info-card-label">Científicos</div><div class="info-card-value" id="scientists">20</div></div>
+                            <div class="info-card"><div class="info-card-label">Guardias</div><div class="info-card-value" id="guards">10</div></div>
+                            <div class="info-card"><div class="info-card-label">Nobles</div><div class="info-card-value" id="nobles">20</div></div>
+                            <div class="info-card"><div class="info-card-label">Salud Biológica</div><div class="info-card-value" id="health">80%</div></div>
+                            <div class="info-card"><div class="info-card-label">Hidratación</div><div class="info-card-value" id="hydration">80%</div></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-view" id="view-construccion">
+                        <div class="section-title">Edificios Disponibles</div>
+                        <div class="building-grid" id="buildingsGrid"></div>
+                    </div>
+
+                    <div class="tab-view" id="view-eventos">
+                        <div class="section-title">Cronología de Eventos</div>
+                        <div class="info-grid">
+                            <div class="info-card"><div class="info-card-label">Tiempo Transcurrido</div><div class="info-card-value" id="eventTimeline">0 ciclos</div></div>
+                        </div>
+                        <div id="activeEvent" style="margin-top: 16px;"></div>
+                    </div>
+
+                    <div class="tab-view" id="view-familia">
+                        <div class="section-title">Gestión Dinástica</div>
+                        <div class="family-list" id="familyList"></div>
+                    </div>
+
+                    <div class="tab-view" id="view-gobierno">
+                        <div class="section-title">Consejo de Ministers</div>
+                        <div class="ministers-list" id="ministersList"></div>
+                    </div>
+
+                    <div class="tab-view" id="view-ejercito">
+                        <div class="section-title">Fuerzas de Seguridad</div>
+                        <div class="info-grid">
+                            <div class="info-card"><div class="info-card-label">Defensa Interna</div><div class="info-card-value" id="armyDefense">50</div></div>
+                            <div class="info-card"><div class="info-card-label">Guardias Asignados</div><div class="info-card-value" id="armyGuards">20</div></div>
+                            <div class="info-card"><div class="info-card-label">Nivel de Seguridad</div><div class="info-card-value" id="securityLevel">50%</div></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-view" id="view-diplomacia">
+                        <div class="section-title">Relaciones con Casas</div>
+                        <div class="houses-list" id="housesList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="buildBar">
+            <span style="color: var(--text-secondary); font-size: 12px; margin-right: 8px;">Construir:</span>
+            <button class="build-category active" data-category="all">Todo</button>
+            <button class="build-category" data-category="Aclima">Aclima</button>
+            <button class="build-category" data-category="Exhibition">Exhibición</button>
+            <button class="build-category" data-category="Science">Ciencia</button>
+            <button class="build-category" data-category="Logistics">Logística</button>
+            <button class="build-category" data-category="Security">Seguridad</button>
+            <button class="build-category" data-category="Archive">Archivo</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

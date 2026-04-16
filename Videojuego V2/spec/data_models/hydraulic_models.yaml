@@ -1,0 +1,176 @@
+# Data Models - Hydraulic Dynasty Manager
+
+## Resources (Recursos principales)
+- Funds: int (Fondos - moneda)
+- Water: int (Agua utilizable)
+- Food: int (Alimento biológico)
+- ContainmentMaterial: int (Material de contención)
+- SpecializedStaff: int (Personal especializado)
+- Prestige: int (Prestigio)
+- BiologicalData: int (Datos biológicos)
+
+## ResourceLimits
+- MaxFunds: 100000
+- MaxWater: 10000
+- MaxFood: 10000
+- MaxContainment: 5000
+- MaxStaff: 1000
+- MaxPrestige: 10000
+- MaxBioData: 10000
+
+## RiskLevel (Nivel de riesgo)
+- Critical
+- High
+- Medium
+- Low
+- Stable
+
+## Buildings (Edificios)
+- Id: string
+- Name: string
+- Category: BuildingCategory
+- Cost: ResourceCost
+- Requirements: BuildingRequirements
+- Effects: BuildingEffects
+
+## BuildingCategory (enum)
+- Aclima (recintos, cámaras hidráulicas)
+- Exhibition (plazas ceremoniales, centros interpretación)
+- Science (laboratorios, archivos biológicos)
+- Logistics (depósitos, plantas de agua, filtrado)
+- Security (murallas hidráulicas, torres vigilancia)
+- Archive (cámara datos, archivo dinástico)
+
+## BuildingRequirements
+- RequiredFunds: int
+- RequiredWater: int
+- RequiredStaff: int
+- RequiredTechnology: List<string>
+- RequiredBuildings: List<string>
+
+## BuildingEffects
+- FundsGeneration: int
+- WaterGeneration: int
+- FoodGeneration: int
+- PrestigeGeneration: int
+- PopulationCapacity: int
+- SecurityBonus: int
+
+## Districts (Distritos hidráulicos)
+- Id: string
+- Name: string
+- Buildings: List<Building>
+- Population: int
+- WaterUsage: int
+
+## Population (Población/Criaturas)
+- Total: int
+- Workers: int
+- Scientists: int
+- Guards: int
+- Nobles: int
+- StressLevel: int (0-100)
+- BiologicalState: BiologicalState
+
+## BiologicalState
+- Health: int
+- Hydration: int
+- Nutrition: int
+- Mutation: int (datos biológicos)
+
+## Family (Gestión familiar)
+- DynastyName: string
+- Ruler: FamilyMember
+- Heirs: List<FamilyMember>
+- Influence: int
+- Legitimacy: int
+
+## FamilyMember
+- Id: string
+- Name: string
+- Age: int
+- Role: string
+- Stats: MemberStats
+
+## MemberStats
+- Diplomacy: int
+- Military: int
+- Science: int
+- Administration: int
+- Charisma: int
+
+## Government (Gestión de gobierno)
+- Ministers: List<Minister>
+- Stability: int (0-100)
+- Policies: List<Policy>
+- Decrees: List<Decree>
+
+## Minister
+- Id: string
+- Name: string
+- Department: string
+- Skill: int
+- Loyalty: int
+
+## Policy
+- Id: string
+- Name: string
+- Description: string
+- Effects: PolicyEffects
+- Cost: ResourceCost
+
+## Army (Gestión militar)
+- InternalDefense: int
+- Guards: int
+- SecurityLevel: int
+
+## DiplomaticRelations (Diplomacia)
+- Houses: List<House>
+- Reputation: int
+- Treaties: List<Treaty>
+
+## House (Casa rival)
+- Id: string
+- Name: string
+- Power: int
+- Hostility: int (0-100)
+
+## Treaty
+- Id: string
+- Type: TreatyType
+- SignedWith: string
+- Duration: int
+- Effects: TreatyEffects
+
+## EventSystem (Eventos dinámicos)
+- Events: List<GameEvent>
+- Timeline: int
+
+## GameEvent
+- Id: string
+- Title: string
+- Description: string
+- Type: EventType
+- Severity: int
+- Choices: List<EventChoice>
+- Consequences: EventConsequences
+
+## EventChoice
+- Id: string
+- Text: string
+- Requirements: ResourceCost
+- Effects: EventConsequences
+
+## EventConsequences
+- FundsChange: int
+- WaterChange: int
+- FoodChange: int
+- StabilityChange: int
+- PrestigeChange: int
+- PopulationChange: int
+
+## Palace (Palacio central)
+- Name: string
+- Level: int
+- Features: List<string>
+- CurrentEvents: List<string>
