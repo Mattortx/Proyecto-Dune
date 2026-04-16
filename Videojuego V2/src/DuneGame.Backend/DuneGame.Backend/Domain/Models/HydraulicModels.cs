@@ -1,5 +1,7 @@
 namespace DuneGame.Backend.Domain.Models;
 
+#region Recursos
+
 public class ResourceState
 {
     public int Funds { get; set; } = 5000;
@@ -29,6 +31,10 @@ public class ResourceCost
     public int Prestige { get; set; }
     public int BioData { get; set; }
 }
+
+#endregion
+
+#region Edificios
 
 public class Building
 {
@@ -80,6 +86,10 @@ public class District
     public int WaterUsage { get; set; }
 }
 
+#endregion
+
+#region Población
+
 public class PopulationState
 {
     public int Total { get; set; } = 100;
@@ -98,6 +108,10 @@ public class BiologicalState
     public int Nutrition { get; set; } = 80;
     public int Mutation { get; set; } = 0;
 }
+
+#endregion
+
+#region Familia
 
 public class FamilyState
 {
@@ -125,6 +139,10 @@ public class MemberStats
     public int Administration { get; set; }
     public int Charisma { get; set; }
 }
+
+#endregion
+
+#region Gobierno
 
 public class GovernmentState
 {
@@ -160,12 +178,20 @@ public class Decree
     public string Description { get; set; } = string.Empty;
 }
 
+#endregion
+
+#region Ejército
+
 public class ArmyState
 {
     public int InternalDefense { get; set; } = 50;
     public int Guards { get; set; } = 20;
     public int SecurityLevel { get; set; } = 50;
 }
+
+#endregion
+
+#region Diplomacia
 
 public class DiplomacyState
 {
@@ -199,6 +225,10 @@ public enum TreatyType
     Alliance,
     Vassalage
 }
+
+#endregion
+
+#region Eventos
 
 public class EventState
 {
@@ -245,6 +275,10 @@ public class EventConsequences
     public int PopulationChange { get; set; }
 }
 
+#endregion
+
+#region Palacio
+
 public class PalaceState
 {
     public string Name { get; set; } = "Palacio Hidráulico Dinástico";
@@ -252,6 +286,10 @@ public class PalaceState
     public List<string> Features { get; set; } = [];
     public List<string> CurrentEvents { get; set; } = [];
 }
+
+#endregion
+
+#region Configuración y Estado Global
 
 public class HydraulicConfig
 {
@@ -274,3 +312,5 @@ public class FullGameState
     public List<District> Districts { get; set; } = [];
     public int RiskLevel { get; set; } = 70;
 }
+
+#endregion

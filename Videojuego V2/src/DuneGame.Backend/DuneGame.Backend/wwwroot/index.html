@@ -84,6 +84,7 @@
 
         #leftPanel {
             width: 280px;
+            min-width: 280px;
             background: var(--bg-panel);
             border-right: 2px solid var(--border);
             padding: 20px;
@@ -131,18 +132,27 @@
         .tab-btn:hover { background: var(--bg-panel); color: var(--text-primary); border-color: var(--bronze); }
         .tab-btn.active { background: linear-gradient(90deg, rgba(212, 167, 106, 0.2) 0%, var(--bg-card) 100%); color: var(--accent-gold); border-color: var(--accent-gold); border-left: 3px solid var(--accent-gold); }
 
-        #centerPanel { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 450px; }
+#centerPanel { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 450px; overflow: hidden; }
 
         #visualContainer {
-            flex: 1;
+            flex: 0 0 250px;
             position: relative;
             overflow: hidden;
             background: #0a0f14;
-            min-height: 350px;
             width: 100%;
         }
 
-        .visual-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #tabContent {
+            flex: 1;
+            background: var(--bg-panel);
+            border-top: 2px solid var(--bronze);
+            padding: 20px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            min-height: 200px;
+        }
+
+.visual-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         #backgroundLayer { z-index: 1; }
         #cityLayer { z-index: 2; }
         #structuresLayer { z-index: 3; }
@@ -150,122 +160,96 @@
         #fogLayer { z-index: 5; }
         #lightLayer { z-index: 6; }
 
-#backgroundLayer { 
+        /* FONDO - Cielo crepuscular oscuro */
+        #backgroundLayer {
             z-index: 1;
-            background: linear-gradient(180deg, #0a0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f1729 100%);
+            background: 
+                radial-gradient(ellipse 100% 60% at 20% 0%, #1a1a2e 0%, transparent 50%),
+                radial-gradient(ellipse 80% 40% at 80% 10%, #16213e 0%, transparent 40%),
+                linear-gradient(180deg, #0a0f1a 0%, #121a28 40%, #1a2030 100%);
         }
 
+        /* CIUDAD - Siluetas de edificios */
         #cityLayer {
             z-index: 2;
-            background-image: 
-                /* Torres principales - verticales */
-                linear-gradient(90deg, transparent 19%, rgba(50, 55, 70, 0.9) 19%, rgba(50, 55, 70, 0.9) 21%, transparent 21%),
-                linear-gradient(90deg, transparent 44%, rgba(45, 50, 65, 0.85) 44%, rgba(45, 50, 65, 0.85) 46%, transparent 46%),
-                linear-gradient(90deg, transparent 69%, rgba(55, 60, 75, 0.9) 69%, rgba(55, 60, 75, 0.9) 71%, transparent 71%),
-                /* Edificios anchos */
-                radial-gradient(ellipse 25% 40% at 25% 60%, rgba(35, 40, 55, 0.8) 0%, transparent 100%),
-                radial-gradient(ellipse 30% 45% at 75% 55%, rgba(40, 45, 60, 0.8) 0%, transparent 100%),
-                /* Base */
-                linear-gradient(180deg, transparent 50%, rgba(25, 30, 45, 0.6) 100%);
+            background:
+                /* Torres del fondo */
+                linear-gradient(to top, #0d1117 0%, #151a22 100%),
+                /* Edificio 1 - izquierda */
+                linear-gradient(90deg, transparent 10%, #1a1f28 10%, #1a1f28 14%, transparent 14%),
+                linear-gradient(to top, transparent 30%, #1a1f28 30%),
+                /* Edificio 2 - centro-izquierda */
+                linear-gradient(90deg, transparent 30%, #181c24 30%, #181c24 36%, transparent 36%),
+                linear-gradient(to top, transparent 25%, #181c24 25%),
+                /* Edificio 3 - centro */
+                linear-gradient(90deg, transparent 50%, #1a1e28 50%, #1a1e28 56%, transparent 56%),
+                linear-gradient(to top, transparent 15%, #1a1e28 15%),
+                /* Edificio 4 - derecha */
+                linear-gradient(90deg, transparent 70%, #171c22 70%, #171c22 76%, transparent 76%),
+                linear-gradient(to top, transparent 28%, #171c22 28%),
+                /* Edificio 5 - extremo derecha */
+                linear-gradient(90deg, transparent 88%, #191d26 88%, #191d26 94%, transparent 94%),
+                linear-gradient(to top, transparent 35%, #191d26 35%);
         }
 
+        /* ESTRUCTURAS - Palacio y elementos detalle */
         #structuresLayer {
             z-index: 3;
-            background-image: 
-                /* Palacio central - aguja */
-                linear-gradient(90deg, transparent 46%, rgba(80, 70, 60, 0.7) 46%, rgba(80, 70, 60, 0.7) 48%, rgba(80, 70, 60, 0.7) 52%, transparent 52%),
-                linear-gradient(180deg, transparent 10%, rgba(80, 70, 60, 0.5) 10%, rgba(80, 70, 60, 0.5) 12%, transparent 12%);
+            background:
+                /* Palacio central */
+                linear-gradient(90deg, transparent 46%, #2a2520 46%, #2a2520 54%, transparent 54%),
+                linear-gradient(to top, transparent 0%, #2a2520 0%),
+                /* Torres del palacio */
+                linear-gradient(90deg, transparent 42%, #252220 42%, #252220 44%, transparent 44%),
+                linear-gradient(90deg, transparent 56%, #252220 56%, #252220 58%, transparent 58%);
         }
 
+        /* AGUA - Río y canales */
         #waterLayer {
             z-index: 4;
-            background: 
-                linear-gradient(180deg, transparent 70%, rgba(20, 60, 120, 0.3) 80%, rgba(30, 80, 150, 0.35) 90%, rgba(20, 60, 120, 0.3) 100%);
+            background:
+                linear-gradient(180deg, transparent 60%, rgba(20, 60, 100, 0.4) 75%, rgba(30, 80, 130, 0.5) 100%);
         }
 
+        /* NIEBLA - Bruma húmeda */
         #fogLayer {
             z-index: 5;
-            background: 
-                radial-gradient(ellipse 100% 30% at 50% 100%, rgba(100, 130, 170, 0.25) 0%, transparent 70%);
-            animation: fogDrift 25s ease-in-out infinite;
+            background:
+                radial-gradient(ellipse 100% 20% at 50% 100%, rgba(80, 100, 130, 0.5) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 15% at 20% 80%, rgba(90, 110, 140, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 12% at 70% 85%, rgba(85, 105, 135, 0.25) 0%, transparent 50%);
+            animation: fogDrift 20s ease-in-out infinite;
         }
 
-        @keyframes fogDrift { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes fogDrift {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
 
+        /* LUCES - Ventanas illuminadas */
         #lightLayer {
             z-index: 6;
-            background-image: 
-                /* Ventanas iluminadas */
-                radial-gradient(circle 3px at 20% 25%, rgba(255, 200, 100, 0.8) 0%, transparent 100%),
-                radial-gradient(circle 3px at 44% 15%, rgba(255, 180, 80, 0.7) 0%, transparent 100%),
-                radial-gradient(circle 3px at 70% 20%, rgba(255, 200, 100, 0.8) 0%, transparent 100%),
-                /* Luces bajas */
-                radial-gradient(circle 4px at 30% 55%, rgba(255, 180, 60, 0.5) 0%, transparent 100%),
-                radial-gradient(circle 4px at 60% 50%, rgba(255, 160, 80, 0.4) 0%, transparent 100%);
-        }
-
-        #cityLayer {
-            background-image: 
-                /* Torres y agujas */
-                radial-gradient(ellipse 2% 8% at 20% 30%, rgba(60, 70, 90, 0.8) 0%, transparent 100%),
-                radial-gradient(ellipse 2% 10% at 35% 25%, rgba(50, 60, 80, 0.7) 0%, transparent 100%),
-                radial-gradient(ellipse 2% 12% at 50% 20%, rgba(70, 80, 100, 0.8) 0%, transparent 100%),
-                radial-gradient(ellipse 2% 8% at 65% 28%, rgba(55, 65, 85, 0.7) 0%, transparent 100%),
-                radial-gradient(ellipse 2% 10% at 80% 35%, rgba(65, 75, 95, 0.8) 0%, transparent 100%),
-                /* Edificios base */
-                radial-gradient(ellipse 15% 25% at 25% 55%, rgba(40, 50, 70, 0.6) 0%, transparent 100%),
-                radial-gradient(ellipse 20% 30% at 50% 50%, rgba(35, 45, 65, 0.5) 0%, transparent 100%),
-                radial-gradient(ellipse 15% 25% at 75% 55%, rgba(45, 55, 75, 0.6) 0%, transparent 100%),
-                /* Terrazas inferiores */
-                radial-gradient(ellipse 30% 15% at 50% 75%, rgba(30, 40, 60, 0.4) 0%, transparent 100%),
-                linear-gradient(180deg, transparent 40%, #1a1a2e 100%);
-        }
-
-        #waterLayer {
-            background: 
-                /* Canales principales */
-                linear-gradient(90deg, transparent 0%, transparent 20%, rgba(30, 100, 180, 0.15) 20%, rgba(30, 100, 180, 0.15) 25%, transparent 25%, transparent 75%, rgba(30, 100, 180, 0.15) 75%, rgba(30, 100, 180, 0.15) 80%, transparent 80%),
-                /* Río central */
-                linear-gradient(180deg, transparent 0%, rgba(20, 80, 150, 0.2) 30%, rgba(30, 100, 180, 0.25) 50%, rgba(20, 80, 150, 0.2) 70%, transparent 100%),
-                /* Reflejos */
-                repeating-linear-gradient(90deg, transparent 0px, rgba(100, 180, 255, 0.03) 2px, transparent 4px),
-                repeating-linear-gradient(0deg, transparent 0px, rgba(100, 180, 255, 0.02) 2px, transparent 4px);
-            animation: waterRipple 8s ease-in-out infinite;
-        }
-
-        #fogLayer {
-            background: 
-                /* Niebla baixa */
-                radial-gradient(ellipse 100% 40% at 50% 90%, rgba(100, 149, 237, 0.2) 0%, transparent 60%),
-                /* Bruma */
-                radial-gradient(ellipse 80% 30% at 20% 40%, rgba(150, 180, 210, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 25% at 70% 35%, rgba(140, 170, 200, 0.08) 0%, transparent 40%),
-                /* Capas de humedad */
-                radial-gradient(ellipse 100% 50% at 30% 70%, rgba(80, 120, 160, 0.12) 0%, transparent 50%),
-                radial-gradient(ellipse 80% 40% at 70% 65%, rgba(90, 130, 170, 0.1) 0%, transparent 40%);
-            animation: fogDrift 25s ease-in-out infinite;
-        }
-
-#lightLayer {
-            /* Ventanas iluminadas */
-            background-image: 
-                radial-gradient(circle 2px at 22% 32%, rgba(255, 200, 100, 0.6) 0%, transparent 100%),
-                radial-gradient(circle 2px at 25% 35%, rgba(255, 200, 100, 0.4) 0%, transparent 100%),
-                radial-gradient(circle 2px at 37% 28%, rgba(255, 180, 80, 0.5) 0%, transparent 100%),
-                radial-gradient(circle 2px at 52% 23%, rgba(255, 200, 100, 0.6) 0%, transparent 100%),
-                radial-gradient(circle 2px at 67% 31%, rgba(255, 180, 80, 0.4) 0%, transparent 100%),
-                radial-gradient(circle 2px at 82% 38%, rgba(255, 200, 100, 0.5) 0%, transparent 100%),
-                radial-gradient(ellipse 10% 5% at 40% 70%, rgba(255, 200, 100, 0.15) 0%, transparent 100%),
-                radial-gradient(ellipse 15% 8% at 60% 75%, rgba(255, 180, 80, 0.12) 0%, transparent 100%),
-                radial-gradient(ellipse 20% 15% at 85% 15%, rgba(200, 210, 230, 0.1) 0%, transparent 100%);
+            background:
+                /* Ventanas edificios superiores */
+                radial-gradient(circle 4px at 12% 42%, rgba(255, 180, 60, 0.9) 0%, transparent 100%),
+                radial-gradient(circle 3px at 32% 38%, rgba(255, 200, 80, 0.8) 0%, transparent 100%),
+                radial-gradient(circle 4px at 52% 32%, rgba(255, 170, 50, 0.85) 0%, transparent 100%),
+                radial-gradient(circle 3px at 72% 40%, rgba(255, 190, 70, 0.8) 0%, transparent 100%),
+                radial-gradient(circle 4px at 92% 45%, rgba(255, 185, 65, 0.9) 0%, transparent 100%),
+                /* Ventanas inferiores */
+                radial-gradient(circle 3px at 25% 58%, rgba(255, 160, 40, 0.6) 0%, transparent 100%),
+                radial-gradient(circle 3px at 55% 55%, rgba(255, 175, 55, 0.7) 0%, transparent 100%),
+                radial-gradient(circle 4px at 75% 60%, rgba(255, 165, 45, 0.65) 0%, transparent 100%);
         }
 
         #tabContent {
-            height: 320px;
+            height: 100%;
             background: var(--bg-panel);
             border-top: 2px solid var(--bronze);
             padding: 20px;
             overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .tab-view { display: none; }
@@ -314,10 +298,10 @@
         .build-category { padding: 8px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: all 0.3s; }
         .build-category:hover, .build-category.active { border-color: var(--accent-gold); color: var(--accent-gold); }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--stone-gray); }
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); border-left: 1px solid var(--border); }
+        ::-webkit-scrollbar-thumb { background: var(--bronze); border-radius: 6px; border: 2px solid var(--bg-dark); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
     </style>
 </head>
 <body>

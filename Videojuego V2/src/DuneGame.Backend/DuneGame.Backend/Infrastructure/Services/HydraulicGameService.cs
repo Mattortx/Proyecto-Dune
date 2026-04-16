@@ -5,8 +5,14 @@ namespace DuneGame.Backend.Infrastructure.Services;
 
 public class HydraulicGameService : IHydraulicGameService
 {
+    #region Campos Privados
+
     private readonly HydraulicConfig _config;
     private FullGameState _gameState;
+
+    #endregion
+
+    #region Constructor
 
     public HydraulicGameService()
     {
@@ -14,31 +20,27 @@ public class HydraulicGameService : IHydraulicGameService
         _gameState = InitializeGameState();
     }
 
+    #endregion
+
+    #region Métodos de Obtención de Datos
+
     public HydraulicConfig GetConfig() => _config;
-
     public FullGameState GetInitialState() => _gameState;
-
     public FullGameState GetCurrentState() => _gameState;
-
     public List<Building> GetBuildings() => _gameState.Buildings;
-
     public List<District> GetDistricts() => _gameState.Districts;
-
     public ResourceState GetResources() => _gameState.Resources;
-
     public PopulationState GetPopulation() => _gameState.Population;
-
     public FamilyState GetFamily() => _gameState.Family;
-
     public GovernmentState GetGovernment() => _gameState.Government;
-
     public ArmyState GetArmy() => _gameState.Army;
-
     public DiplomacyState GetDiplomacy() => _gameState.Diplomacy;
-
     public EventState GetEvents() => _gameState.Events;
-
     public PalaceState GetPalace() => _gameState.Palace;
+
+    #endregion
+
+    #region Construcción de Edificios
 
     public bool Build(string buildingId)
     {
@@ -76,6 +78,10 @@ public class HydraulicGameService : IHydraulicGameService
         pop.Total += effects.PopulationCapacity;
     }
 
+    #endregion
+
+    #region Gestión de Eventos
+
     public bool ProcessEventChoice(string eventId, string choiceId)
     {
         var evt = _gameState.Events.ActiveEvent;
@@ -105,6 +111,10 @@ public class HydraulicGameService : IHydraulicGameService
         _gameState.Events.ActiveEvent = null;
         return true;
     }
+
+    #endregion
+
+    #region Ciclo del Juego
 
     public void Tick()
     {
@@ -138,6 +148,10 @@ public class HydraulicGameService : IHydraulicGameService
 
         return Math.Clamp(risk, 0, 100);
     }
+
+    #endregion
+
+    #region Inicialización
 
     private FullGameState InitializeGameState()
     {
@@ -213,4 +227,6 @@ public class HydraulicGameService : IHydraulicGameService
             new Building { Id = "filtration_plant", Name = "Planta de Filtrado", Category = BuildingCategory.Logistics, Cost = new ResourceCost { Funds = 800, Staff = 5 }, Effects = new BuildingEffects { FoodGeneration = 30 } }
         ];
     }
+
+    #endregion
 }
