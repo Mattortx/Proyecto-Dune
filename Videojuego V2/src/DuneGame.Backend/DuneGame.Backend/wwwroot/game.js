@@ -267,14 +267,97 @@ function renderDistricts() {
 }
 
 // ============================================
+// IA System - Funciones de control
+// ============================================
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function randomRange(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function updateAI() {
+    const pop = gameState.population;
+    const res = gameState.resources;
+    const gov = gameState.government;
+    const army = gameState.army;
+    const fam = gameState.family;
+    
+    let waterProduction = 2;
+    let foodProduction = 2;
+    let fundsProduction = 1;
+    
+    for (const building of gameState.buildings) {
+        if (building.isBuilt && building.effects) {
+            if (building.effects.waterGeneration) waterProduction += building.effects.waterGeneration;
+            if (building.effects.foodGeneration) foodProduction += building.effects.foodGeneration;
+            if (building.effects.fundsGeneration) fundsProduction += building.effects.fundsGeneration;
+        }
+    }
+    
+    const waterConsumption = Math.floor(pop.total * 0.1);
+    const foodConsumption = Math.floor(pop.total * 0.1);
+    
+    res.water = clamp(res.water + waterProduction - waterConsumption, 0, 9999);
+    res.food = clamp(res.food + foodProduction - foodConsumption, 0, 9999);
+    res.funds = clamp(res.funds + fundsProduction + randomRange(-2, 3), 0, 999999);
+    res.prestige = clamp(res.prestige + randomRange(-1, 1), 0, 100);
+    
+    pop.workers = clamp(pop.workers + randomRange(-1, 1), 0, pop.total);
+    pop.total = clamp(pop.total + randomRange(-1, 1), 10, 500);
+    pop.scientists = clamp(pop.scientists + randomRange(-1, 1), 0, 50);
+    pop.guards = clamp(pop.guards + randomRange(-1, 1), 0, 100);
+    pop.nobles = clamp(pop.nobles + randomRange(0, 1), 0, 30);
+    pop.stress = clamp(pop.stress + randomRange(-1, 1), 0, 100);
+    
+    fam.influence = clamp(fam.influence + randomRange(-1, 1), 0, 100);
+    fam.legitimacy = clamp(fam.legitimacy + randomRange(-1, 1), 0, 100);
+    
+    gov.stability = clamp(gov.stability + randomRange(-1, 1), 0, 100);
+    gov.approval = clamp(gov.approval + randomRange(-1, 1), 0, 100);
+    
+    army.defense = clamp(army.defense + randomRange(-1, 1), 0, 100);
+    army.power = clamp(army.power + randomRange(-1, 1), 0, 100);
+    army.morale = clamp(army.morale + randomRange(-1, 1), 0, 100);
+    army.discipline = clamp(army.discipline + randomRange(-1, 1), 0, 100);
+    army.security = clamp(army.security + randomRange(-1, 1), 0, 100);
+    
+    gameState.faith = clamp(gameState.faith + randomRange(-1, 1), 0, 100);
+    gameState.military = clamp(gameState.military + randomRange(-1, 1), 0, 100);
+    gameState.diplomacy.reputation = clamp(gameState.diplomacy.reputation + randomRange(-1, 1), 0, 100);
+    
+    gameState.riskLevel = clamp(gameState.riskLevel + randomRange(-2, 2), 0, 100);
+    
+    if (randomRange(0, 20) === 1) {
+        const eventType = randomRange(0, 2);
+        if (eventType === 0) {
+            res.prestige = clamp(res.prestige + 2, 0, 100);
+        } else if (eventType === 1) {
+            res.funds = clamp(res.funds + 5, 0, 999999);
+        } else {
+            res.food = clamp(res.food - 3, 0, 9999);
+        }
+    }
+    
+    gameState.events.timeline++;
+    
+    updateAllUI();
+}
+
+// ============================================
 // Game Loop
 // ============================================
 
 let gameLoopInterval = null;
+let aiLoopInterval = null;
 
 function startGameLoop() {
     if (gameLoopInterval) clearInterval(gameLoopInterval);
+    if (aiLoopInterval) clearInterval(aiLoopInterval);
     gameLoopInterval = setInterval(gameTick, 5000);
+    aiLoopInterval = setInterval(updateAI, 2000);
 }
 
 async function gameTick() {
@@ -283,54 +366,8 @@ async function gameTick() {
         await loadGameData();
         updateAllUI();
     } catch (e) {
-        offlineTick();
+        console.log('Modo offline - IA activa');
     }
-}
-
-function offlineTick() {
-    const speed = 1;
-    const waterBaseProduction = 2;
-    const foodBaseProduction = 2;
-    const fundsBaseProduction = 1;
-    
-    let waterGen = waterBaseProduction;
-    let foodGen = foodBaseProduction;
-    let fundsGen = fundsBaseProduction;
-    
-    for (const building of gameState.buildings) {
-        if (building.isBuilt && building.effects) {
-            if (building.effects.waterGeneration) waterGen += building.effects.waterGeneration;
-            if (building.effects.foodGeneration) foodGen += building.effects.foodGeneration;
-            if (building.effects.fundsGeneration) fundsGen += building.effects.fundsGeneration;
-        }
-    }
-    
-    const consumption = Math.floor(gameState.population.total * 0.3);
-    
-    gameState.resources.water = Math.max(0, Math.min(100000, gameState.resources.water + waterGen - consumption));
-    gameState.resources.food = Math.max(0, Math.min(100000, gameState.resources.food + foodGen - consumption));
-    gameState.resources.funds = Math.max(0, Math.min(100000, gameState.resources.funds + fundsGen));
-    
-    function randomVariation() {
-        return Math.floor(Math.random() * 3) - 1;
-    }
-    
-    gameState.population.workers = Math.max(10, Math.min(200, gameState.population.workers + randomVariation()));
-    gameState.population.total = Math.max(10, Math.min(500, gameState.population.total + randomVariation()));
-    gameState.resources.prestige = Math.max(0, Math.min(1000, gameState.resources.prestige + randomVariation()));
-    gameState.family.influence = Math.max(0, Math.min(100, gameState.family.influence + randomVariation()));
-    gameState.government.stability = Math.max(0, Math.min(100, gameState.government.stability + randomVariation()));
-    gameState.government.approval = Math.max(0, Math.min(100, gameState.government.approval + randomVariation()));
-    gameState.army.defense = Math.max(0, Math.min(100, gameState.army.defense + randomVariation()));
-    gameState.army.power = Math.max(0, Math.min(100, gameState.army.power + randomVariation()));
-    gameState.army.morale = Math.max(0, Math.min(100, gameState.army.morale + randomVariation()));
-    gameState.army.discipline = Math.max(0, Math.min(100, gameState.army.discipline + randomVariation()));
-    gameState.faith = Math.max(0, Math.min(100, gameState.faith + randomVariation()));
-    gameState.military = Math.max(0, Math.min(100, gameState.military + randomVariation()));
-    
-    gameState.events.timeline++;
-    
-    updateAllUI();
 }
 
 // ============================================
