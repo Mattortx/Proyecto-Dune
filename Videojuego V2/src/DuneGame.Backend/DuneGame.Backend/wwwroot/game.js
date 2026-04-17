@@ -1,724 +1,968 @@
 // ============================================
-// DUNE: THE MEASURE - Casa Portil
-// Frontend JavaScript - Modelo Unificado
+// HYDRAULIC DYNASTY MANAGER - Frontend UI
 // ============================================
 
 const API_BASE = '';
 
-// ============================================
-// Estado del Juego - Recursos Unificados
-// ============================================
+// Game State - Portil HUD Compatible
 const gameState = {
-    // Recursos primarios HUD
-    solari: 5000,
-    agua: 1000,
-    comida: 800,
-    plastiacero: 200,
-    cuadros: 50,
-    
-    // Recursos secundarios
-    sellos: 20,
-    registros: 150,
-    melange: 5,
-    creditoLandraad: 75,
-    participacionesChoam: 15,
-    
-    // Indicadores
-    tension: 70,
-    ronda: 1,
-    tiempo: 0,
-    
-    // Flags
+    resources: { funds: 5000, water: 1000, food: 1000, prestige: 100, staff: 50 },
+    population: { total: 100, workers: 50, scientists: 20, guards: 10, nobles: 20, stress: 20 },
+    family: { dynastyName: 'Casa Portil', ruler: { name: 'Archivist Vanya', role: 'Regente' }, legitimacy: 80, influence: 50 },
+    government: { stability: 70, approval: 60 },
+    army: { defense: 50, guards: 20, security: 50, power: 50, morale: 50, discipline: 50 },
+    diplomacy: { reputation: 50 },
+    events: { timeline: 0, day: 1, month: 'Cicloceno', year: 1020, hour: 8 },
+    buildings: [],
+    districts: [],
+    riskLevel: 70,
+    production: { water: 2, food: 2, funds: 1 },
+    faith: 80,
+    military: 50,
+    timeSpeed: 1,
     isPaused: false,
     hasUnsavedChanges: false
 };
 
-// Recursos con variaciones
+// Resource variations tracking
 const resourceVariations = {
-    solari: 0,
-    agua: 0,
-    comida: 0,
-    plastiacero: 0,
-    cuadros: 0
+    funds: 0,
+    prestige: 0,
+    faith: 0,
+    military: 0
+};
+
+// Status trends
+const statusTrends = {
+    stability: 'up',
+    approval: 'down'
 };
 
 // ============================================
-// Datos del Sistema
+// UI System - Portil HUD
 // ============================================
-const enclaves = [
-    { id: 'palacio', name: 'Distrito del Palacio', icon: '🏛️', tension: 45, population: 50, water: 200, built: ['planta_agua', 'archivo', 'biocontrol'] },
-    { id: 'comercio', name: 'Distrito Comercial', icon: '🏪', tension: 65, population: 30, water: 80, built: ['almacen', 'patio'] },
-    { id: 'investigacion', name: 'Distrito Científico', icon: '🔬', tension: 80, population: 20, water: 50, built: ['laboratorio', 'mentat'] }
-];
 
-const buildings = [
-    // Infraestructura
-    { id: 'planta_agua', name: 'Planta de Recuperación Hídrica', category: 'infra', sub: 'infraestructura', cost: { solari: 1000, plastiacero: 100 }, outputs: { agua: 50 }, built: true, req: null },
-    { id: 'cisterna', name: 'Cisterna Mayor', category: 'infra', sub: 'infraestructura', cost: { solari: 600, plastiacero: 80 }, outputs: { agua: 30 }, built: false, req: 'planta_agua' },
-    { id: 'filtrado', name: 'Red de Filtrado Salino', category: 'infra', sub: 'infraestructura', cost: { solari: 400, plastiacero: 50 }, outputs: { agua: 20 }, built: false, req: 'planta_agua' },
-    
-    // Logística
-    { id: 'almacen', name: 'Almacén de Estiba', category: 'log', sub: 'logistica', cost: { solari: 400, plastiacero: 30 }, outputs: { stock: 100 }, built: false, req: null },
-    { id: 'deposito', name: 'Depósito de Plastiacero', category: 'log', sub: 'logistica', cost: { solari: 300 }, outputs: { stock: 50 }, built: false, req: null },
-    { id: 'patio', name: 'Patio de Transferencia', category: 'log', sub: 'logistica', cost: { solari: 500, agua: 20 }, outputs: { eficiencia: 15 }, built: false, req: null },
-    
-    // Custodia
-    { id: 'transito', name: 'Cámara de Tránsito', category: 'cust', sub: 'custodia', cost: { solari: 800, sellos: 10 }, outputs: { stress: -10 }, built: false, req: null },
-    { id: 'cuarentena', name: 'Patio de Cuarentena', category: 'cust', sub: 'custodia', cost: { solari: 600, sellos: 15 }, outputs: { contención: 20 }, built: false, req: null },
-    { id: 'anillo', name: 'Anillo de Custodia', category: 'cust', sub: 'custodia', cost: { solari: 1000, sellos: 20 }, outputs: { fuga: -15 }, built: false, req: null },
-    { id: 'linea', name: 'Cámara de Línea Sensible', category: 'cust', sub: 'custodia', cost: { solari: 500, sellos: 5 }, outputs: { riesgo: 10 }, built: false, req: 'anillo' },
-    
-    // Ciencia
-    { id: 'biocontrol', name: 'Casa de Biocontrol', category: 'sci', sub: 'ciencia', cost: { solari: 1500, cuadros: 10, registros: 20 }, outputs: { diagnóstico: 1 }, built: true, req: null },
-    { id: 'archivo', name: 'Archivo de Caudales', category: 'sci', sub: 'ciencia', cost: { solari: 600, cuadros: 5 }, outputs: { registro: 10 }, built: true, req: null },
-    { id: 'mentat', name: 'Cámara Mentat', category: 'sci', sub: 'ciencia', cost: { solari: 1200, registros: 30, cuadros: 5 }, outputs: { predicción: 1 }, built: false, req: 'archivo' },
-    
-    // Administración
-    { id: 'aforos', name: 'Sala de Aforos', category: 'admin', sub: 'administracion', cost: { solari: 500, cuadros: 5 }, outputs: { licencia: 10 }, built: false, req: null },
-    { id: 'choam', name: 'Oficina CHOAM', category: 'admin', sub: 'administracion', cost: { solari: 800, creditoLandraad: 10 }, outputs: { contrato: 1 }, built: false, req: null },
-    
-    // Protocolo
-    { id: 'audiencia', name: 'Pabellón de Audiencia', category: 'prot', sub: 'protocolo', cost: { solari: 800, agua: 50, cuadros: 5 }, outputs: { audiencia: 50 }, built: false, req: null },
-    { id: 'protocolo', name: 'Sala de Protocolo', category: 'prot', sub: 'protocolo', cost: { solari: 600, melange: 2 }, outputs: { prestigio: 15 }, built: false, req: 'audiencia' },
-    { id: 'patrocinio', name: 'Terraza de Patrocinio', category: 'prot', sub: 'protocolo', cost: { solari: 400, agua: 30 }, outputs: { donacion: 20 }, built: false, req: null },
-    
-    // Seguridad
-    { id: 'guardia', name: 'Cuartel de Guardapuertas', category: 'sec', sub: 'seguridad', cost: { solari: 600, cuadros: 10 }, outputs: { respuesta: 20 }, built: false, req: null },
-    { id: 'vigilancia', name: 'Torre de Vigía', category: 'sec', sub: 'seguridad', cost: { solari: 400, plastiacero: 30 }, outputs: { alerta: 15 }, built: false, req: null },
-    { id: 'sello', name: 'Compuerta de Sello', category: 'sec', sub: 'seguridad', cost: { solari: 500, sellos: 5 }, outputs: { seguridad: 20 }, built: false, req: null }
-];
-
-// Contratos
-const contracts = [
-    { id: 'choam', name: 'Acuerdo CHOAM', type: 'corporativo', parties: ['Portil', 'CHOAM'], value: 150, duration: 10, state: 'active', desc: 'Suministro exclusivo de especia' },
-    { id: 'atreides', name: 'Pacto de-no Agresión', type: 'diplomatico', parties: ['Portil', 'Atreides'], value: 0, duration: 20, state: 'active', desc: 'Pacto defensivo mutuo' },
-    { id: 'harks', name: 'Audiencia con Harkonnen', type: 'audiencia', parties: ['Portil', 'Harkonnen'], value: 200, duration: 1, state: 'pending', desc: 'Negociación de enclave' },
-    { id: ' landsraad', name: 'Audiencia Imperial', type: 'audiencia', parties: ['Portil', 'Corrino'], value: 500, duration: 1, state: 'pending', desc: 'Solicitud de расширение territorial' }
-];
-
-// Custodia / Biológicos
-const custodiaAssets = [
-    { id: 'c1', name: 'Línea Alpha-7', class: 'Combatiente', costManten: 15, stability: 90, risk: 'low', enclave: 'palacio', estado: 'activa' },
-    { id: 'c2', name: 'Línea Beta-3', class: 'Obrera', costManten: 8, stability: 75, risk: 'medium', enclave: 'comercio', estado: 'activa' },
-    { id: 'c3', name: 'Línea Gamma-1', class: 'Especial', costManten: 25, stability: 60, risk: 'high', enclave: 'investigacion', estado: 'cuarentena' },
-    { id: 'c4', name: 'Línea Delta-9', class: 'Obrera', costManten: 8, stability: 85, risk: 'low', enclave: 'comercio', estado: 'activa' }
-];
-
-// Crisis
-const crisisList = [
-    { 
-        id: 'crisis_agua', 
-        name: 'Contaminación de Acuífero', 
-        severity: 'high', 
-        desc: 'Se ha detectado contaminación en el acuífero principal del Distrito Comercial. La situación requiere atención inmediata.',
-        options: [
-            { id: 'op1', text: 'Ordenar cierre inmediato', cost: { solari: 200 }, damage: 0 },
-            { id: 'op2', text: 'Investigar antes de actuar', cost: { registros: 10 }, damage: 15 },
-            { id: 'op3', text: 'Ignorar (esperar)', cost: { solari: 0 }, damage: 30 }
-        ]
-    }
-];
-
-// Bitácora
-const bitacora = [
-    { ronda: 1, text: 'Partido iniciada', critical: false }
-];
-
-// ============================================
-// Inicialización
-// ============================================
 function initUI() {
-    setupEvents();
-    updateAllUI();
+    loadGameData();
+    setupHUDEvents();
+    updateHUD();
     startGameLoop();
 }
 
-function setupEvents() {
-    // Start button
-    document.getElementById('btnNewGame')?.addEventListener('click', () => {
-        document.getElementById('startScreen').classList.add('hidden');
-        document.getElementById('appContainer').classList.remove('hidden');
-        initUI();
-    });
-    
-    // Navigation tabs
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const vista = tab.dataset.vista;
-            switchVista(vista);
-            
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-        });
-    });
-    
-    // Sub-tabs (Obras)
-    document.querySelectorAll('.sub-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const sub = tab.dataset.sub;
-            renderBuildingsBySub(sub);
-            
-            document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-        });
-    });
-    
-    // Close round button
-    document.getElementById('btn-close-round')?.addEventListener('click', closeRound);
-}
+// ============================================
+// HUD Events - Portil Style
+// ============================================
 
-// ============================================
-// Navegación de Vistas
-// ============================================
-function switchVista(vistaName) {
-    // Hide all vista panels
-    document.querySelectorAll('.vista-panel').forEach(p => p.classList.add('hidden'));
-    
-    // Show selected vista
-    const vista = document.getElementById(`vista-${vistaName}`);
-    if (vista) {
-        vista.classList.remove('hidden');
+function setupHUDEvents() {
+    // Menu Button
+    const menuBtn = document.getElementById('menuButton');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+            menuBtn.classList.toggle('active');
+            openPanel('mainMenu');
+        });
     }
+
+    // Crest Medallion
+    const crest = document.getElementById('crestMedallion');
+    if (crest) {
+        crest.addEventListener('click', () => {
+            openPanel('house');
+        });
+    }
+
+    // Time Control Buttons
+    document.getElementById('btn-pause')?.addEventListener('click', () => setTimeSpeed(0));
+    document.getElementById('btn-play')?.addEventListener('click', () => setTimeSpeed(1));
+    document.getElementById('btn-fast')?.addEventListener('click', () => setTimeSpeed(2));
+    document.getElementById('btn-veryfast')?.addEventListener('click', () => setTimeSpeed(4));
+
+    // Command Bar Buttons
+    document.querySelectorAll('.command-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const panel = btn.dataset.panel;
+            if (btn.classList.contains('blocked')) return;
+            
+            document.querySelectorAll('.command-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            
+            openPanel(panel);
+            
+            // Hide novelty dots after click
+            btn.querySelector('.novelty-dot')?.remove();
+        });
+    });
+
+    // Resource Card Tooltips
+    document.querySelectorAll('.resource-card').forEach(card => {
+        const resource = card.dataset.resource;
+        card.addEventListener('mouseenter', (e) => showTooltip(e, resource));
+        card.addEventListener('mouseleave', hideTooltip);
+    });
     
-    // Update inspector
-    updateInspector(vistaName);
+    // Category Tabs
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const cat = tab.dataset.cat;
+            renderBuildingsByCategory(cat);
+        });
+    });
 }
 
-function updateInspector(vistaName) {
-    const titleEl = document.getElementById('inspector-title');
-    const subEl = document.getElementById('inspector-subtitle');
-    const contentEl = document.getElementById('inspector-content');
-    
-    const inspectorData = {
-        casa: {
-            title: 'Casa Portil',
-            subtitle: 'Estado institucional',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">ESTADO</div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Legitimidad</span>
-                        <span class="inspector-stat-value">${gameState.creditoLandraad}%</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Influencia</span>
-                        <span class="inspector-stat-value">${gameState.participacionesChoam}%</span>
-                    </div>
-                </div>
-                <div class="inspector-section">
-                    <div class="inspector-section-title">RECURSOS DISPONIBLES</div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Solari</span>
-                        <span class="inspector-stat-value">${gameState.solari}</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Sellos</span>
-                        <span class="inspector-stat-value">${gameState.sellos}</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Melange</span>
-                        <span class="inspector-stat-value">${gameState.melange}</span>
-                    </div>
-                </div>
-            `
-        },
-        enclaves: {
-            title: 'Enclaves',
-            subtitle: 'Seleccione un nodo',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">GUÍA</div>
-                    <div style="font-size: 12px; color: var(--plata-fluvial); line-height: 1.6;">
-                        Haga clic en un nodo del mapa para ver sus detalles.
-                    </div>
-                </div>
-            `
-        },
-        obras: {
-            title: 'Obras',
-            subtitle: 'Construcciones',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">SELECCIÓN</div>
-                    <div style="font-size: 12px; color: var(--plata-fluvial); line-height: 1.6;">
-                        Seleccione un edificio para ver requisitos y efectos.
-                    </div>
-                </div>
-            `
-        },
-        hacienda: {
-            title: 'Hacienda',
-            subtitle: 'Estado económico',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">PROYECCIÓN</div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">1 ronda</span>
-                        <span class="inspector-stat-value" style="color: var(--verde-estuario);">${gameState.solari + 140}</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">3 rondas</span>
-                        <span class="inspector-stat-value" style="color: var(--verde-estuario);">${gameState.solari + 420}</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">6 rondas</span>
-                        <span class="inspector-stat-value" style="color: var(--plata-fluvial);">${gameState.solari + 840}</span>
-                    </div>
-                </div>
-            `
-        },
-        contratos: {
-            title: 'Contratos',
-            subtitle: 'Negociaciones',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">REQUISITOS</div>
-                    <div style="font-size: 12px; color: var(--plata-fluvial); line-height: 1.6;">
-                        Seleccione un contrato para ver detalles.
-                    </div>
-                </div>
-            `
-        },
-        custodia: {
-            title: 'Custodia',
-            subtitle: 'Activos biológicos',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">COSTE TOTAL</div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Mantenimiento</span>
-                        <span class="inspector-stat-value">${custodiaAssets.reduce((a, c) => a + c.costManten, 0)}/ronda</span>
-                    </div>
-                </div>
-            `
-        },
-        archivo: {
-            title: 'Archivo',
-            subtitle: 'Datos y análisis',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">MÉTRICAS</div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Registros</span>
-                        <span class="inspector-stat-value">${gameState.registros}</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span class="inspector-stat-label">Tendencia</span>
-                        <span class="inspector-stat-value" style="color: var(--amber-critico);">↑</span>
-                    </div>
-                </div>
-            `
-        },
-        crisis: {
-            title: 'Crisis',
-            subtitle: 'Eventos activos',
-            content: `
-                <div class="inspector-section">
-                    <div class="inspector-section-title">ESTADO</div>
-                    <div style="font-size: 12px; color: var(--plata-fluvial); line-height: 1.6;">
-                        Seleccione una opción de respuesta.
-                    </div>
-                </div>
-            `
-        }
+// ============================================
+// Panel System
+// ============================================
+
+function openPanel(panelName) {
+    const panelMap = {
+        'construction': 'constructionPanel',
+        'politics': 'politicsPanel',
+        'research': 'researchPanel',
+        'diplomacy': 'diplomacyPanel',
+        'alerts': 'alertsPanel',
+        'mainMenu': 'mainMenuModal',
+        'house': 'housePanel'
     };
     
-    const data = inspectorData[vistaName] || inspectorData.casa;
-    titleEl.textContent = data.title;
-    subEl.textContent = data.subtitle;
-    contentEl.innerHTML = data.content;
+    const panelId = panelMap[panelName];
+    if (!panelId) return;
+    
+    document.getElementById(panelId)?.classList.add('active');
+    
+    // Load panel content
+    if (panelName === 'construction') renderBuildingsList();
+    else if (panelName === 'politics') renderPolitics();
+    else if (panelName === 'research') renderResearch();
+    else if (panelName === 'diplomacy') renderDiplomacy();
+    else if (panelName === 'alerts') renderAlerts();
+    else if (panelName === 'house') renderHousePanel();
+    
+    // Close other side panels
+    if (panelName === 'construction') {
+        document.getElementById('diplomacyPanel')?.classList.remove('active');
+    } else if (panelName === 'diplomacy') {
+        document.getElementById('constructionPanel')?.classList.remove('active');
+    }
+}
+
+function closePanel(panelName) {
+    const panelMap = {
+        'construction': 'constructionPanel',
+        'politics': 'politicsPanel',
+        'research': 'researchPanel',
+        'diplomacy': 'diplomacyPanel',
+        'alerts': 'alertsPanel',
+        'mainMenu': 'mainMenuModal',
+        'house': 'housePanel'
+    };
+    
+    const panelId = panelMap[panelName];
+    if (!panelId) return;
+    
+    document.getElementById(panelId)?.classList.remove('active');
+    
+    // Deselect command button
+    document.querySelectorAll('.command-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function closeActivePanel() {
+    document.querySelectorAll('.panel-side.active, .main-modal.active, .house-panel.active').forEach(p => {
+        p.classList.remove('active');
+    });
+    document.querySelectorAll('.command-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function resumeGame() {
+    closePanel('mainMenu');
+}
+
+function saveGame() {
+    showNotification('Partida Guardada', 'Tu progreso ha sido guardado exitosamente.');
+}
+
+function loadGame() {
+    closePanel('mainMenu');
+    showNotification('Cargar Partida', 'Cargando última partida guardada...');
+}
+
+function exitToMainMenu() {
+    const startScreen = document.getElementById('startScreen');
+    startScreen.style.display = 'flex';
+    closePanel('mainMenu');
+    gameState.isPaused = true;
 }
 
 // ============================================
-// Renderizado de Contenido
+// Construction Panel
 // ============================================
-function renderEnclaves() {
-    const mapContainer = document.getElementById('nodeMap');
-    if (!mapContainer) return;
-    
-    const positions = [
-        { x: 50, y: 30 },
-        { x: 25, y: 60 },
-        { x: 75, y: 60 }
-    ];
-    
-    mapContainer.innerHTML = enclaves.map((enclave, i) => {
-        const pos = positions[i];
-        let tensionClass = 'low';
-        if (enclave.tension >= 70) tensionClass = 'high';
-        else if (enclave.tension >= 50) tensionClass = 'medium';
-        
-        return `
-            <div class="node" style="left: ${pos.x}%; top: ${pos.y}%; transform: translate(-50%, -50%);" onclick="selectEnclave('${enclave.id}')">
-                <div class="node-icon">${enclave.icon}</div>
-                <div class="node-name">${enclave.name.split(' ')[0]}</div>
-                <div class="node-tension ${tensionClass}">${enclave.tension}</div>
-            </div>
-        `;
-    }).join('');
-}
 
-function renderBuildingsBySub(sub) {
-    const grid = document.getElementById('buildingsGrid');
-    if (!grid) return;
+function renderBuildingsList() {
+    const list = document.getElementById('buildingsList');
+    if (!list) return;
     
-    const filtered = buildings.filter(b => b.sub === sub);
-    
-    grid.innerHTML = filtered.map(b => {
-        const isLocked = !isBuildingAvailable(b);
-        const isBuilt = b.built;
+    list.innerHTML = gameState.buildings.map(b => {
+        const costHTML = [];
+        if (b.cost.funds) costHTML.push(`<span class="cost-funds">💰 ${b.cost.funds}</span>`);
+        if (b.cost.water) costHTML.push(`<span class="cost-water">💧 ${b.cost.water}</span>`);
+        if (b.cost.food) costHTML.push(`<span class="cost-food">🍖 ${b.cost.food}</span>`);
         
-        let costHTML = [];
-        if (b.cost.solari) costHTML.push(`<span class="building-cost solari">💰 ${b.cost.solari}</span>`);
-        if (b.cost.agua) costHTML.push(`<span class="building-cost water">💧 ${b.cost.agua}</span>`);
-        if (b.cost.plastiacero) costHTML.push(`<span class="building-cost plastiacero">⚙️ ${b.cost.plastiacero}</span>`);
-        if (b.cost.sellos) costHTML.push(`<span class="building-cost sellos">🔒 ${b.cost.sellos}</span>`);
-        if (b.cost.cuadros) costHTML.push(`<span class="building-cost cuadros">👥 ${b.cost.cuadros}</span>`);
-        
-        let effectsHTML = [];
-        if (b.outputs.agua) effectsHTML.push(`+${b.outputs.agua} agua`);
-        if (b.outputs.stock) effectsHTML.push(`+${b.outputs.stock} stock`);
-        if (b.outputs.stress) effectsHTML.push(`${b.outputs.stress} estrés`);
-        if (b.outputs.contencion) effectsHTML.push(`+${b.outputs.contencion} contención`);
-        if (b.outputs.fuga) effectsHTML.push(`${b.outputs.fuga} fuga`);
-        if (b.outputs.registro) effectsHTML.push(`+${b.outputs.registro} registros`);
-        if (b.outputs.audiencia) effectsHTML.push(`+${b.outputs.audiencia} audiencia`);
+        const effectsHTML = [];
+        if (b.effects.waterGeneration) effectsHTML.push(`+${b.effects.waterGeneration} agua/ciclo`);
+        if (b.effects.foodGeneration) effectsHTML.push(`+${b.effects.foodGeneration} comida/ciclo`);
+        if (b.effects.fundsGeneration) effectsHTML.push(`+${b.effects.fundsGeneration} fondos/ciclo`);
+        if (b.effects.prestigeGeneration) effectsHTML.push(`+${b.effects.prestigeGeneration} prestigio/ciclo`);
+        if (b.effects.securityBonus) effectsHTML.push(`+${b.effects.securityBonus} seguridad`);
         
         return `
-            <div class="building-card ${isBuilt ? 'built' : ''} ${isLocked ? 'locked' : ''}" onclick="${!isBuilt && !isLocked ? `buildBuilding('${b.id}')` : ''}">
-                <div class="building-header">
+            <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
+                <div class="building-card-header">
                     <span class="building-name">${b.name}</span>
                     <span class="building-category">${b.category}</span>
                 </div>
-                <div class="building-costs">${costHTML.join('')}</div>
-                ${effectsHTML.length ? `<div class="building-effects">${effectsHTML.join(', ')}</div>` : ''}
-                <div class="building-status ${isBuilt ? 'built' : isLocked ? 'locked' : ''}">
-                    ${isBuilt ? '✓ Construido' : isLocked ? '🔒 Bloqueado' : 'Disponible'}
+                <div class="building-cost">${costHTML.join('')}</div>
+                ${effectsHTML.length ? `<div class="building-effect">${effectsHTML.join(', ')}</div>` : ''}
+                ${b.isBuilt ? '<div class="building-status built">✓ Construido</div>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderBuildingsByCategory(category) {
+    const list = document.getElementById('buildingsList');
+    if (!list) return;
+    
+    let buildings = gameState.buildings;
+    if (category !== 'all') {
+        buildings = buildings.filter(b => b.category === category);
+    }
+    
+    list.innerHTML = buildings.map(b => {
+        const costHTML = [];
+        if (b.cost.funds) costHTML.push(`<span class="cost-funds">💰 ${b.cost.funds}</span>`);
+        if (b.cost.water) costHTML.push(`<span class="cost-water">💧 ${b.cost.water}</span>`);
+        if (b.cost.food) costHTML.push(`<span class="cost-food">🍖 ${b.cost.food}</span>`);
+        
+        const effectsHTML = [];
+        if (b.effects.waterGeneration) effectsHTML.push(`+${b.effects.waterGeneration} agua/ciclo`);
+        if (b.effects.foodGeneration) effectsHTML.push(`+${b.effects.foodGeneration} comida/ciclo`);
+        if (b.effects.fundsGeneration) effectsHTML.push(`+${b.effects.fundsGeneration} fondos/ciclo`);
+        
+        return `
+            <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
+                <div class="building-card-header">
+                    <span class="building-name">${b.name}</span>
+                    <span class="building-category">${b.category}</span>
+                </div>
+                <div class="building-cost">${costHTML.join('')}</div>
+                ${effectsHTML.length ? `<div class="building-effect">${effectsHTML.join(', ')}</div>` : ''}
+                ${b.isBuilt ? '<div class="building-status built">✓ Construido</div>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// Politics Panel
+// ============================================
+
+const politicsPolicies = [
+    { id: 'water_tax', name: 'Impuesto Hidráulico', effect: '+15% fondos, -5% estabilidad', cost: { prestige: 10 }, target: 'all' },
+    { id: 'food_rationing', name: 'Racionamiento', effect: '+10% agua, -10% comida', cost: { funds: 100 }, target: 'all' },
+    { id: 'security_martial', name: 'Ley Marcial', effect: '+20% seguridad, -10% aprobación', cost: { funds: 200 }, target: 'all' },
+    { id: 'religious_fest', name: 'Festival del Río', effect: '+15% fe, +5% prestigio', cost: { funds: 150, prestige: 20 }, target: 'all' },
+    { id: 'trade_deal', name: 'Acuerdo Comercial', effect: '+20% fondos/ciclo', cost: { prestige: 30 }, target: 'all' },
+    { id: 'propaganda', name: 'Propaganda', effect: '+10% aprobación', cost: { funds: 100 }, target: 'all' }
+];
+
+function renderPolitics() {
+    const list = document.getElementById('politicsList');
+    if (!list) return;
+    
+    list.innerHTML = politicsPolicies.map(p => `
+        <div class="politics-card">
+            <div class="politics-header">
+                <span class="politics-name">${p.name}</span>
+            </div>
+            <div class="politics-effect">${p.effect}</div>
+            <div class="politics-cost">
+                ${p.cost.funds ? `<span>💰 ${p.cost.funds}</span>` : ''}
+                ${p.cost.water ? `<span>💧 ${p.cost.water}</span>` : ''}
+                ${p.cost.prestige ? `<span>⭐ ${p.cost.prestige}</span>` : ''}
+            </div>
+            <button class="politics-btn" onclick="enactPolicy('${p.id}')">Aplicar</button>
+        </div>
+    `).join('');
+}
+
+function enactPolicy(policyId) {
+    showNotification('Política Aplicada', `La política ${policyId} ha sido implementada.`);
+}
+
+// ============================================
+// Research Panel
+// ============================================
+
+const researchTechs = [
+    { id: 'hydraulic_theory', name: 'Teoría Hidráulica', desc: 'Mejora eficiencia de agua +20%', cost: { funds: 500 }, status: 'unlocked', req: null },
+    { id: 'desalination', name: 'Desalación', desc: 'Permite construir Plantas de Desalación', cost: { funds: 800, prestige: 20 }, status: 'available', req: 'hydraulic_theory' },
+    { id: 'bio_engineering', name: 'Bioingeniería', desc: 'Permite laboratorio biológico', cost: { funds: 1200, staff: 5 }, status: 'available', req: 'hydraulic_theory' },
+    { id: 'water_storage', name: 'Almacenamiento Advanced', desc: '+50% capacidad de agua', cost: { funds: 600 }, status: 'locked', req: 'desalination' },
+    { id: 'sandstorm_defense', name: 'Defensa contra Tormentas', desc: 'Protección contra desastres', cost: { funds: 1000, prestige: 30 }, status: 'locked', req: 'desalination' }
+];
+
+function renderResearch() {
+    const tree = document.getElementById('researchTree');
+    if (!tree) return;
+    
+    tree.innerHTML = researchTechs.map(t => `
+        <div class="research-node ${t.status}" onclick="unlockTech('${t.id}')">
+            <div class="research-node-header">
+                <span class="research-name">${t.name}</span>
+                <span class="research-status ${t.status}">${t.status === 'unlocked' ? 'Descubierto' : t.status === 'available' ? 'Disponible' : 'Bloqueado'}</span>
+            </div>
+            <div class="research-desc">${t.desc}</div>
+            <div class="research-cost">
+                ${t.cost.funds ? `💰 ${t.cost.funds}` : ''}
+                ${t.cost.prestige ? ` ⭐ ${t.cost.prestige}` : ''}
+                ${t.cost.staff ? ` 👤 ${t.cost.staff}` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function unlockTech(techId) {
+    showNotification('Tecnología Investigada', `Has descubierto una nueva tecnología.`);
+}
+
+// ============================================
+// Diplomacy Panel
+// ============================================
+
+const houses = [
+    { id: 'atreides', name: 'Casa Atreides', emblem: '🦅', power: 90, hostility: 35 },
+    { id: 'harkonnen', name: 'Casa Harkonnen', emblem: '🐗', power: 85, hostility: 75 },
+    { id: 'corrino', name: 'Casa Corrino', emblem: '🦁', power: 100, hostility: 60 },
+    { id: 'fenring', name: 'Casa Fenring', emblem: '🐺', power: 40, hostility: 20 }
+];
+
+function renderDiplomacy() {
+    const list = document.getElementById('diplomacyList');
+    if (!list) return;
+    
+    list.innerHTML = houses.map(h => {
+        let relationClass = 'neutral';
+        let relationText = 'Neutral';
+        if (h.hostility >= 60) { relationClass = 'hostile'; relationText = 'Hostil'; }
+        else if (h.hostility <= 25) { relationClass = 'friendly'; relationText = 'Amistoso'; }
+        
+        return `
+            <div class="diplomacy-card">
+                <div class="diplomacy-info">
+                    <div class="house-emblem">${h.emblem}</div>
+                    <div class="house-details">
+                        <div class="house-name">${h.name}</div>
+                        <div class="house-power">Poder: ${h.power}</div>
+                    </div>
+                </div>
+                <div class="house-relation">
+                    <span class="relation-status ${relationClass}">${relationText}</span>
                 </div>
             </div>
         `;
     }).join('');
 }
 
-function renderContracts() {
-    const list = document.getElementById('contractsList');
+// ============================================
+// Alerts / Notifications Panel
+// ============================================
+
+const notifications = [
+    { title: 'Escasez de Agua', content: 'Los almacenes de agua están al 20% de capacidad.', time: 'Día 5, 14:00', critical: true },
+    { title: 'Nuevo Edificio', content: 'Cámara Hidráaulica construida exitosamente.', time: 'Día 3, 10:00', critical: false },
+    { title: 'Crisis de Población', content: 'La población está creciendo demasiado rápido.', time: 'Día 2, 08:00', critical: false }
+];
+
+function renderAlerts() {
+    const list = document.getElementById('alertsList');
     if (!list) return;
     
-    list.innerHTML = contracts.map(c => `
-        <div class="contract-card">
-            <div class="contract-header">
-                <span class="contract-name">${c.name}</span>
-                <span class="contract-state ${c.state}">${c.state === 'active' ? 'Activo' : c.state === 'pending' ? 'Pendiente' : 'Expirado'}</span>
+    list.innerHTML = notifications.map(n => `
+        <div class="notification ${n.critical ? 'critical' : ''}" style="position: relative; display: block; margin-bottom: 10px;">
+            <div class="notification-header">
+                <span class="notification-title">${n.title}</span>
+                <span class="notification-time">${n.time}</span>
             </div>
-            <div class="contract-parties">
-                ${c.parties.join(' ↔ ')}
-            </div>
-            <div style="font-size: 11px; color: var(--plata-fluvial); opacity: 0.7; margin-bottom: 8px;">${c.desc}</div>
-            ${c.value > 0 ? `<div class="contract-value">+${c.value} Solari/ronda</div>` : ''}
+            <div class="notification-content">${n.content}</div>
         </div>
     `).join('');
 }
 
-function renderCustodia() {
-    const grid = document.getElementById('custodiaGrid');
-    if (!grid) return;
+function showNotification(title, content, critical = false) {
+    const container = document.getElementById('notificationsContainer');
+    if (!container) return;
     
-    grid.innerHTML = custodiaAssets.map(c => `
-        <div class="custodia-card">
-            <div class="custodia-header">
-                <span class="custodia-class">${c.class}</span>
-                <span class="custodia-risk ${c.risk}">${c.risk === 'high' ? 'Alto' : c.risk === 'medium' ? 'Medio' : 'Bajo'}</span>
-            </div>
-            <div style="font-family: Cinzel; color: var(--plata-clara); font-size: 13px; margin-bottom: 8px;">${c.name}</div>
-            <div class="custodia-stats">
-                <span><span class="custodia-stat-label">Coste:</span> <span class="custodia-stat-value">${c.costManten}</span></span>
-                <span><span class="custodia-stat-label">Estabilidad:</span> <span class="custodia-stat-value">${c.stability}%</span></span>
-            </div>
-            <div style="font-size: 10px; color: var(--plata-fluvial); opacity: 0.7; margin-top: 8px;">Estado: ${c.estado}</div>
+    const notif = document.createElement('div');
+    notif.className = `notification ${critical ? 'critical' : ''}`;
+    notif.innerHTML = `
+        <div class="notification-header">
+            <span class="notification-title">${title}</span>
+            <span class="notification-time">Ahora</span>
         </div>
-    `).join('');
-}
-
-function renderCrisis() {
-    const list = document.getElementById('crisisList');
-    if (!list) return;
+        <div class="notification-content">${content}</div>
+    `;
     
-    if (crisisList.length === 0) {
-        list.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: var(--plata-fluvial); opacity: 0.6;">
-                <div style="font-size: 32px; margin-bottom: 16px;">✓</div>
-                <div>No hay crisis activas</div>
-            </div>
-        `;
-        return;
-    }
+    container.appendChild(notif);
+    notif.classList.add('active');
     
-    list.innerHTML = crisisList.map(c => `
-        <div class="crisis-card">
-            <div class="crisis-header">
-                <span class="crisis-title">${c.name}</span>
-                <span class="crisis-severity">${c.severity.toUpperCase()}</span>
-            </div>
-            <div class="crisis-desc">${c.desc}</div>
-            <div class="crisis-options">
-                ${c.options.map(opt => `
-                    <div class="crisis-option" onclick="resolveCrisis('${c.id}', '${opt.id}')">
-                        <span>${opt.text}</span>
-                        <span class="crisis-option-cost">
-                            ${Object.entries(opt.cost).map(([k, v]) => `${k}: ${v}`).join(', ')}
-                        </span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
+    setTimeout(() => {
+        notif.classList.remove('active');
+        setTimeout(() => notif.remove(), 300);
+    }, 4000);
 }
 
 // ============================================
-// Lógica del Juego
+// House Portil Panel
 // ============================================
-function isBuildingAvailable(building) {
-    if (!building.req) return true;
-    const reqBuilding = buildings.find(b => b.id === building.req);
-    return reqBuilding && reqBuilding.built;
-}
 
-function buildBuilding(buildingId) {
-    const building = buildings.find(b => b.id === buildingId);
-    if (!building || building.built || !isBuildingAvailable(building)) return;
+function renderHousePanel() {
+    // Update stats
+    document.getElementById('house-legitimacy').textContent = gameState.family.legitimacy + '%';
+    document.getElementById('house-influence').textContent = gameState.family.influence;
+    document.getElementById('house-risk').textContent = gameState.riskLevel + '%';
+    document.getElementById('house-population').textContent = gameState.population.total;
     
-    // Check costs
-    if ((building.cost.solari || 0) > gameState.solari) {
-        alert('Solari insuficientes');
-        return;
-    }
-    if ((building.cost.plastiacero || 0) > gameState.plastiacero) {
-        alert('Plastiacero insuficiente');
-        return;
-    }
-    if ((building.cost.agua || 0) > gameState.agua) {
-        alert('Agua insuficiente');
-        return;
-    }
-    if ((building.cost.sellos || 0) > gameState.sellos) {
-        alert('Sellos insuficientes');
-        return;
-    }
-    if ((building.cost.cuadros || 0) > gameState.cuadros) {
-        alert('Cuadros insuficientes');
-        return;
-    }
-    
-    // Deduct costs
-    gameState.solari -= (building.cost.solari || 0);
-    gameState.plastiacero -= (building.cost.plastiacero || 0);
-    gameState.agua -= (building.cost.agua || 0);
-    gameState.sellos -= (building.cost.sellos || 0);
-    gameState.cuadros -= (building.cost.cuadros || 0);
-    
-    // Mark as built
-    building.built = true;
-    
-    // Update outputs
-    if (building.outputs.agua) gameState.agua += building.outputs.agua;
-    
-    // Add bitácora entry
-    addBitacoraEntry(`Construido: ${building.name}`);
-    
-    // Update UI
-    updateAllUI();
-    
-    // Re-render buildings
-    const activeSub = document.querySelector('.sub-tab.active')?.dataset.sub || 'infra';
-    renderBuildingsBySub(activeSub);
-}
-
-function selectEnclave(enclaveId) {
-    const enclave = enclaves.find(e => e.id === enclaveId);
-    if (!enclave) return;
-    
-    // Update inspector
-    const titleEl = document.getElementById('inspector-title');
-    const subEl = document.getElementById('inspector-subtitle');
-    const contentEl = document.getElementById('inspector-content');
-    
-    titleEl.textContent = enclave.name;
-    subEl.textContent = 'Enclave seleccionado';
-    contentEl.innerHTML = `
-        <div class="inspector-section">
-            <div class="inspector-section-title">ESTADO</div>
-            <div class="inspector-stat">
-                <span class="inspector-stat-label">Tensión</span>
-                <span class="inspector-stat-value" style="color: ${enclave.tension >= 70 ? 'var(--amber-critico)' : 'var(--plata-clara)'};">${enclave.tension}%</span>
+    // Render family
+    const familyList = document.getElementById('houseFamilyList');
+    familyList.innerHTML = `
+        <div class="family-member-card">
+            <div class="member-info">
+                <span class="member-name">${gameState.family.ruler.name}</span>
+                <span class="member-role">${gameState.family.ruler.role}</span>
             </div>
-            <div class="inspector-stat">
-                <span class="inspector-stat-label">Población</span>
-                <span class="inspector-stat-value">${enclave.population}</span>
-            </div>
-            <div class="inspector-stat">
-                <span class="inspector-stat-label">Agua</span>
-                <span class="inspector-stat-value">${enclave.water}</span>
+            <div class="member-stats">
+                <span class="stat-badge">DIplo: 80</span>
+                <span class="stat-badge">Cien: 60</span>
+                <span class="stat-badge">Adm: 70</span>
             </div>
         </div>
-        <div class="inspector-section">
-            <div class="inspector-section-title">EDIFICIOS</div>
-            ${enclave.built.map(bid => {
-                const b = buildings.find(b => b.id === bid);
-                return b ? `<div style="font-size: 12px; color: var(--plata-clara); padding: 4px 0;">✓ ${b.name}</div>` : '';
-            }).join('')}
+        <div class="family-member-card">
+            <div class="member-info">
+                <span class="member-name">Aurelio</span>
+                <span class="member-role">Herdero</span>
+            </div>
+            <div class="member-stats">
+                <span class="stat-badge">DIplo: 50</span>
+                <span class="stat-badge">Mil: 40</span>
+            </div>
         </div>
     `;
     
-    // Mark node as selected
-    document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
-    event.target.closest('.node')?.classList.add('selected');
+    // Render ministers
+    const ministersList = document.getElementById('houseMinistersList');
+    ministersList.innerHTML = `
+        <div class="minister-card">
+            <div class="member-info">
+                <span class="member-name">Capitán Cael</span>
+                <span class="member-role">Defensa</span>
+            </div>
+            <span class="stat-badge">Habilidad: 75</span>
+        </div>
+        <div class="minister-card">
+            <div class="member-info">
+                <span class="member-name">Mercader Seris</span>
+                <span class="member-role">Comercio</span>
+            </div>
+            <span class="stat-badge">Habilidad: 70</span>
+        </div>
+        <div class="minister-card">
+            <div class="member-info">
+                <span class="member-name">Sacerdotisa Ilyna</span>
+                <span class="member-role">Rituales</span>
+            </div>
+            <span class="stat-badge">Habilidad: 85</span>
+        </div>
+    `;
 }
 
-function resolveCrisis(crisisId, optionId) {
-    const crisis = crisisList.find(c => c.id === crisisId);
-    if (!crisis) return;
+function setTimeSpeed(speed) {
+    gameState.timeSpeed = speed;
+    gameState.isPaused = speed === 0;
     
-    const option = crisis.options.find(o => o.id === optionId);
-    if (!option) return;
+    // Update button states
+    document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
     
-    // Apply costs
-    gameState.solari -= (option.cost.solari || 0);
-    gameState.registros -= (option.cost.registros || 0);
-    
-    // Update tension based on damage
-    gameState.tension = Math.max(0, gameState.tension - (option.damage || 0));
-    
-    // Remove crisis
-    const idx = crisisList.findIndex(c => c.id === crisisId);
-    if (idx >= 0) crisisList.splice(idx, 1);
-    
-    // Add bitácora
-    addBitacoraEntry(`Crisis resuelta: ${option.text}`);
-    
-    // Update UI
-    updateAllUI();
-    renderCrisis();
+    if (speed === 0) document.getElementById('btn-pause')?.classList.add('active');
+    else if (speed === 1) document.getElementById('btn-play')?.classList.add('active');
+    else if (speed === 2) document.getElementById('btn-fast')?.classList.add('active');
+    else if (speed === 4) document.getElementById('btn-veryfast')?.classList.add('active');
 }
 
-function closeRound() {
-    gameState.ronda++;
-    addBitacoraEntry(`Ronda ${gameState.ronda} cerrada`);
+function showTooltip(e, resource) {
+    const tooltip = document.getElementById('tooltip');
+    if (!tooltip) return;
     
-    // Simulate resources changes
-    const prevSolari = gameState.solari;
-    gameState.solari += 140;
-    gameState.registros += 5;
+    const titles = {
+        money: 'Fondos - Tesorería de la Casa',
+        prestige: 'Prestigio - Capital Simbólico',
+        faith: 'Fe - Legitimidad Ritual',
+        military: 'Fuerzas Armadas - Defensa'
+    };
     
-    resourceVariations.solari = gameState.solari - prevSolari;
+    const contents = {
+        money: 'Recursos financieros disponibles para construcciones, mantenimiento y diplomático.',
+        prestige: 'Rango efectivo dentro del Landsraad. Afecta relaciones exteriores.',
+        faith: 'Adhesión doctrinal al Rito del Río. Mantiene legitimidad interna.',
+        military: 'Preparación militar de la Casa. No indica tropas desplegadas.'
+    };
     
-    // Random events
-    if (Math.random() < 0.2) {
-        gameState.tension = Math.min(100, gameState.tension + 5);
+    tooltip.querySelector('.tooltip-title').textContent = titles[resource] || '';
+    tooltip.querySelector('.tooltip-content').textContent = contents[resource] || '';
+    
+    tooltip.style.left = (e.clientX + 15) + 'px';
+    tooltip.style.top = (e.clientY + 15) + 'px';
+    tooltip.classList.add('visible');
+}
+
+function hideTooltip() {
+    document.getElementById('tooltip')?.classList.remove('visible');
+}
+
+// ============================================
+// Data Loading
+// ============================================
+
+async function loadGameData() {
+    try {
+        const [stateRes, buildingsRes] = await Promise.all([
+            fetch(`${API_BASE}/api/hydraulic/state`).catch(() => null),
+            fetch(`${API_BASE}/api/hydraulic/buildings`).catch(() => null)
+        ]);
+
+        if (stateRes?.ok) {
+            const state = await stateRes.json();
+            Object.assign(gameState.resources, state.resources);
+            Object.assign(gameState.population, state.population);
+            gameState.family = state.family;
+            gameState.government = state.government;
+            gameState.army = state.army;
+            gameState.diplomacy = state.diplomacy;
+            gameState.events = state.events;
+            gameState.riskLevel = state.riskLevel;
+        }
+
+        if (buildingsRes?.ok) {
+            gameState.buildings = await buildingsRes.json();
+            renderBuildings(gameState.buildings);
+        }
+    } catch (e) {
+        console.log('Running in offline mode');
+        initOfflineData();
     }
-    
-    updateAllUI();
+}
+
+function initOfflineData() {
+    gameState.buildings = [
+        { id: 'hydraulic_chamber', name: 'Cámara Hidráulica', category: 'Aclima', cost: { funds: 1000, water: 200 }, effects: { waterGeneration: 50 }, isBuilt: false },
+        { id: 'granja', name: 'Granja Hidráulica', category: 'Logistics', cost: { funds: 600, water: 50 }, effects: { foodGeneration: 5 }, isBuilt: false },
+        { id: 'almacen_alimento', name: 'Almacén de Alimentos', category: 'Logistics', cost: { funds: 400 }, effects: { foodStorage: 20 }, isBuilt: false },
+        { id: 'canal_riego', name: 'Canal de Riego', category: 'Aclima', cost: { funds: 800, water: 100 }, effects: { foodGeneration: 2, waterDistribution: 10 }, isBuilt: false },
+        { id: 'ceremonial_plaza', name: 'Plaza Ceremonial', category: 'Exhibition', cost: { funds: 800, prestige: 50 }, effects: { prestigeGeneration: 20 }, isBuilt: false },
+        { id: 'biology_lab', name: 'Laboratorio Biológico', category: 'Science', cost: { funds: 1500, staff: 10 }, effects: { foodGeneration: 10 }, isBuilt: false },
+        { id: 'water_plant', name: 'Planta de Agua', category: 'Logistics', cost: { funds: 2000, water: 100 }, effects: { waterGeneration: 100 }, isBuilt: false },
+        { id: 'water_wall', name: 'Muro Hidráulico', category: 'Security', cost: { funds: 1200, water: 200 }, effects: { securityBonus: 30 }, isBuilt: false },
+        { id: 'data_chamber', name: 'Cámara de Datos', category: 'Archive', cost: { funds: 600, prestige: 50 }, effects: { prestigeGeneration: 10 }, isBuilt: false },
+        { id: 'water_depot', name: 'Depósito de Agua', category: 'Logistics', cost: { funds: 500, water: 100 }, effects: { waterGeneration: 20 }, isBuilt: false },
+        { id: 'filtration_plant', name: 'Planta de Filtrado', category: 'Logistics', cost: { funds: 800, staff: 5 }, effects: { foodGeneration: 30 }, isBuilt: false }
+    ];
+    gameState.districts = [
+        { id: 'd1', name: 'Distrito del Palacio', population: 50, waterUsage: 100 },
+        { id: 'd2', name: 'Distrito Comercial', population: 30, waterUsage: 60 },
+        { id: 'd3', name: 'Distrito de Investigación', population: 20, waterUsage: 40 }
+    ];
+    renderBuildings(gameState.buildings);
+    renderDistricts();
 }
 
 // ============================================
-// Actualización de UI
+// UI Updates
 // ============================================
+
 function updateAllUI() {
-    // Update HUD
-    document.getElementById('hud-solari').textContent = gameState.solari;
-    document.getElementById('hud-agua').textContent = gameState.agua;
-    document.getElementById('hud-comida').textContent = gameState.comida;
-    document.getElementById('hud-plastiacero').textContent = gameState.plastiacero;
-    document.getElementById('hud-cuadros').textContent = gameState.cuadros;
-    
-    // Update tension
-    document.getElementById('tension-bar').style.width = gameState.tension + '%';
-    document.getElementById('tension-value').textContent = gameState.tension + '%';
-    
-    const tensionBar = document.getElementById('tension-bar');
-    tensionBar.classList.remove('warning', 'critical');
-    if (gameState.tension >= 70) tensionBar.classList.add('critical');
-    else if (gameState.tension >= 50) tensionBar.classList.add('warning');
-    
-    // Update Casa stats
-    document.getElementById('credito-landraad').textContent = gameState.creditoLandraad;
-    document.getElementById('participaciones-choam').textContent = gameState.participacionesChoam + '%';
-    document.getElementById('enclaves-activos').textContent = enclaves.length;
-    document.getElementById('obras-activas').textContent = buildings.filter(b => b.built).length;
-    
-    // Update Hacienda
-    document.getElementById('flow-ingresos').textContent = '320';
-    document.getElementById('flow-caja').textContent = gameState.solari;
-    document.getElementById('flow-gastos').textContent = '180';
-    document.getElementById('ingreso-ronda').textContent = '+320';
-    document.getElementById('gasto-ronda').textContent = '-180';
-    document.getElementById('balance-neto').textContent = '+140';
-    
-    // Update Enclaves
-    renderEnclaves();
-    
-    // Update buildings
-    renderBuildingsBySub('infraestructura');
-    
-    // Update contracts
-    renderContracts();
-    
-    // Update custodia
-    renderCustodia();
-    
-    // Update crisis
-    renderCrisis();
-    
-    // Update round
-    document.getElementById('round-number').textContent = gameState.ronda;
+    updateHUD();
 }
 
-function addBitacoraEntry(text, critical = false) {
-    const timeline = document.getElementById('bitacora-timeline');
-    if (!timeline) return;
+function updateHUD() {
+    // Update resource cards
+    const moneyEl = document.getElementById('resource-money');
+    if (moneyEl) moneyEl.textContent = gameState.resources.funds;
     
-    bitacora.unshift({ ronda: gameState.ronda, text, critical });
+    const prestigeEl = document.getElementById('resource-prestige');
+    if (prestigeEl) prestigeEl.textContent = gameState.resources.prestige;
     
-    const entry = document.createElement('div');
-    entry.className = `bitacora-entry ${critical ? 'critical' : ''}`;
-    entry.innerHTML = `
-        <span class="bitacora-time">R${gameState.ronda}</span>
-        <span class="bitacora-event">${text}</span>
+    const faithEl = document.getElementById('resource-faith');
+    if (faithEl) faithEl.textContent = gameState.faith;
+    
+    const militaryEl = document.getElementById('resource-military');
+    if (militaryEl) militaryEl.textContent = gameState.military;
+
+    // Update variations
+    updateVariation('variation-money', resourceVariations.funds);
+    updateVariation('variation-prestige', resourceVariations.prestige);
+    updateVariation('variation-faith', resourceVariations.faith);
+    updateVariation('variation-military', resourceVariations.military);
+
+    // Update calendar/time display
+    const dayEl = document.getElementById('day-display');
+    if (dayEl) dayEl.textContent = gameState.events.day || 1;
+    
+    const monthEl = document.getElementById('month-display');
+    if (monthEl) monthEl.textContent = `${gameState.events.month || 'Cicloceno'}, ${gameState.events.year || 1020}`;
+    
+    const hourEl = document.getElementById('hour-display');
+    if (hourEl) hourEl.textContent = String(gameState.events.hour || 8).padStart(2, '0') + ':00';
+
+    // Update stability meter
+    updateStatusMeter('stability', gameState.government.stability);
+    updateStatusMeter('approval', gameState.government.approval);
+
+    // Update menu button unsaved indicator
+    const menuBtn = document.getElementById('menuButton');
+    if (menuBtn) {
+        if (gameState.hasUnsavedChanges) {
+            menuBtn.classList.add('has-unsaved');
+        } else {
+            menuBtn.classList.remove('has-unsaved');
+        }
+    }
+}
+
+function updateVariation(elementId, variation) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const sign = variation >= 0 ? '+' : '';
+    el.textContent = sign + variation;
+    
+    el.classList.remove('positive', 'negative');
+    if (variation > 0) el.classList.add('positive');
+    else if (variation < 0) el.classList.add('negative');
+}
+
+function updateStatusMeter(type, value) {
+    const bar = document.getElementById(`${type}-bar`);
+    const valueEl = document.getElementById(`${type}-value`);
+    const trendEl = document.getElementById(`${type}-trend`);
+    
+    if (bar) {
+        bar.style.width = value + '%';
+        bar.classList.remove('warning', 'critical');
+        
+        if (value < 30) bar.classList.add('critical');
+        else if (value < 50) bar.classList.add('warning');
+    }
+    
+    if (valueEl) valueEl.textContent = value + '%';
+    
+    if (trendEl) {
+        trendEl.classList.remove('up', 'down');
+        trendEl.textContent = statusTrends[type] === 'up' ? '▲' : '▼';
+        trendEl.classList.add(statusTrends[type]);
+    }
+}
+
+function updatePanelView() {
+    document.getElementById('stability').textContent = `${gameState.government.stability}%`;
+    document.getElementById('influence').textContent = gameState.family.influence;
+    document.getElementById('defense').textContent = gameState.army.defense;
+    document.getElementById('reputation').textContent = gameState.diplomacy.reputation;
+    document.getElementById('stress').textContent = `${gameState.population.stress}%`;
+    document.getElementById('timeline').textContent = gameState.events.timeline;
+}
+
+function updatePopulationView() {
+    document.getElementById('workers').textContent = gameState.population.workers;
+    document.getElementById('scientists').textContent = gameState.population.scientists;
+    document.getElementById('guards').textContent = gameState.population.guards;
+    document.getElementById('nobles').textContent = gameState.population.nobles;
+    document.getElementById('health').textContent = '80%';
+    document.getElementById('hydration').textContent = '80%';
+}
+
+function updateFamilyView() {
+    const list = document.getElementById('familyList');
+    list.innerHTML = `
+        <div class="family-member">
+            <div><div class="member-name">${gameState.family.ruler.name}</div><div class="member-role">${gameState.family.ruler.role}</div></div>
+            <div><span class="stat-badge">DIplo:80</span><span class="stat-badge">Cien:60</span><span class="stat-badge">Adm:70</span></div>
+        </div>
+        <div class="family-member">
+            <div><div class="member-name">Aurelio</div><div class="member-role">Herdero</div></div>
+            <div><span class="stat-badge">DIplo:50</span><span class="stat-badge">Cien:40</span></div>
+        </div>
+        <div class="family-member">
+            <div><div class="member-name">Isabel</div><div class="member-role">Herdera</div></div>
+            <div><span class="stat-badge">DIplo:60</span><span class="stat-badge">Cien:70</span></div>
+        </div>
     `;
+}
+
+function updateGovernmentView() {
+    const list = document.getElementById('ministersList');
+    list.innerHTML = `
+        <div class="minister-card"><div><div class="minister-name">Capitán Cael</div><div class="minister-dept">Defensa</div></div><span class="stat-badge">Habilidad: 75</span></div>
+        <div class="minister-card"><div><div class="minister-name">Mercader Seris</div><div class="minister-dept">Comercio</div></div><span class="stat-badge">Habilidad: 70</span></div>
+        <div class="minister-card"><div><div class="minister-name">Sacerdotisa Ilyna</div><div class="minister-dept">Rituales</div></div><span class="stat-badge">Habilidad: 85</span></div>
+    `;
+}
+
+function updateArmyView() {
+    document.getElementById('armyDefense').textContent = gameState.army.defense;
+    document.getElementById('armyGuards').textContent = gameState.army.guards;
+    document.getElementById('securityLevel').textContent = `${gameState.army.security}%`;
     
-    timeline.insertBefore(entry, timeline.firstChild);
+    const armyPowerEl = document.getElementById('armyPower');
+    if (armyPowerEl) armyPowerEl.textContent = gameState.army.power || 50;
+    const armyMoraleEl = document.getElementById('armyMorale');
+    if (armyMoraleEl) armyMoraleEl.textContent = gameState.army.morale || 50;
+    const armyDisciplineEl = document.getElementById('armyDiscipline');
+    if (armyDisciplineEl) armyDisciplineEl.textContent = gameState.army.discipline || 50;
+}
+
+function updateDiplomacyView() {
+    const list = document.getElementById('housesList');
+    list.innerHTML = `
+        <div class="house-card"><div><div class="house-name">Casa Atreides</div><div class="house-power">Poder: 90</div></div><span class="house-hostility hostility-medium">Hostilidad: 40%</span></div>
+        <div class="house-card"><div><div class="house-name">Casa Harkonnen</div><div class="house-power">Poder: 85</div></div><span class="house-hostility hostility-high">Hostilidad: 70%</span></div>
+        <div class="house-card"><div><div class="house-name">Casa Corrino</div><div class="house-power">Poder: 100</div></div><span class="house-hostility hostility-low">Hostilidad: 30%</span></div>
+    `;
+}
+
+// ============================================
+// Building System
+// ============================================
+
+function renderBuildings(buildings) {
+    const grid = document.getElementById('buildingsGrid');
+    grid.innerHTML = buildings.map(b => `
+        <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
+            <div class="building-name">${b.name}</div>
+            <div class="building-category">${b.category}</div>
+            <div class="building-cost">Cost: ${b.cost.funds}💰 ${b.cost.water ? `+ ${b.cost.water}💧` : ''}</div>
+        </div>
+    `).join('');
+}
+
+function filterBuildings(category) {
+    if (category === 'all') {
+        renderBuildings(gameState.buildings);
+    } else {
+        const filtered = gameState.buildings.filter(b => b.category === category);
+        renderBuildings(filtered);
+    }
+}
+
+async function buildBuilding(buildingId) {
+    const building = gameState.buildings.find(b => b.id === buildingId);
+    if (!building || building.isBuilt) return;
+
+    const cost = building.cost;
+    if (gameState.resources.funds < cost.funds || (cost.water && gameState.resources.water < cost.water)) {
+        alert('¡Recursos insuficientes!');
+        return;
+    }
+
+    gameState.resources.funds -= cost.funds;
+    if (cost.water) gameState.resources.water -= cost.water;
+    building.isBuilt = true;
+
+    gameState.resources.funds += building.effects.fundsGeneration || 0;
+    gameState.resources.water += building.effects.waterGeneration || 0;
+    gameState.resources.food += building.effects.foodGeneration || 0;
+    gameState.resources.prestige += building.effects.prestigeGeneration || 0;
+
+    renderBuildings(gameState.buildings);
+    updateAllUI();
+}
+
+function renderDistricts() {
+    const grid = document.getElementById('districtsGrid');
+    grid.innerHTML = gameState.districts.map(d => `
+        <div class="info-card">
+            <div class="info-card-label">${d.name}</div>
+            <div class="info-card-value">👥 ${d.population}</div>
+            <div class="info-card-label" style="margin-top:8px">Agua: ${d.waterUsage}/ciclo</div>
+        </div>
+    `).join('');
+}
+
+// ============================================
+// IA System - Funciones de control
+// ============================================
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function randomRange(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function updateAI() {
+    if (gameState.isPaused) return;
+    
+    const pop = gameState.population;
+    const res = gameState.resources;
+    const gov = gameState.government;
+    const army = gameState.army;
+    const fam = gameState.family;
+    
+    // Track previous values for variation calculation
+    const prevFunds = res.funds;
+    const prevPrestige = res.prestige;
+    const prevFaith = gameState.faith;
+    const prevMilitary = gameState.military;
+    
+    let waterProduction = 2;
+    let foodProduction = 2;
+    let fundsProduction = 1;
+    
+    for (const building of gameState.buildings) {
+        if (building.isBuilt && building.effects) {
+            if (building.effects.waterGeneration) waterProduction += building.effects.waterGeneration;
+            if (building.effects.foodGeneration) foodProduction += building.effects.foodGeneration;
+            if (building.effects.fundsGeneration) fundsProduction += building.effects.fundsGeneration;
+        }
+    }
+    
+    const waterConsumption = Math.floor(pop.total * 0.1);
+    const foodConsumption = Math.floor(pop.total * 0.1);
+    
+    res.water = clamp(res.water + waterProduction - waterConsumption, 0, 9999);
+    res.food = clamp(res.food + foodProduction - foodConsumption, 0, 9999);
+    res.funds = clamp(res.funds + fundsProduction + randomRange(-2, 3), 0, 999999);
+    res.prestige = clamp(res.prestige + randomRange(-1, 1), 0, 100);
+    
+    pop.workers = clamp(pop.workers + randomRange(-1, 1), 0, pop.total);
+    pop.total = clamp(pop.total + randomRange(-1, 1), 10, 500);
+    pop.scientists = clamp(pop.scientists + randomRange(-1, 1), 0, 50);
+    pop.guards = clamp(pop.guards + randomRange(-1, 1), 0, 100);
+    pop.nobles = clamp(pop.nobles + randomRange(0, 1), 0, 30);
+    pop.stress = clamp(pop.stress + randomRange(-1, 1), 0, 100);
+    
+    fam.influence = clamp(fam.influence + randomRange(-1, 1), 0, 100);
+    fam.legitimacy = clamp(fam.legitimacy + randomRange(-1, 1), 0, 100);
+    
+    // Track previous status values
+    const prevStability = gov.stability;
+    const prevApproval = gov.approval;
+    
+    gov.stability = clamp(gov.stability + randomRange(-1, 1), 0, 100);
+    gov.approval = clamp(gov.approval + randomRange(-1, 1), 0, 100);
+    
+    // Update status trends
+    statusTrends.stability = gov.stability >= prevStability ? 'up' : 'down';
+    statusTrends.approval = gov.approval >= prevApproval ? 'up' : 'down';
+    
+    army.defense = clamp(army.defense + randomRange(-1, 1), 0, 100);
+    army.power = clamp(army.power + randomRange(-1, 1), 0, 100);
+    army.morale = clamp(army.morale + randomRange(-1, 1), 0, 100);
+    army.discipline = clamp(army.discipline + randomRange(-1, 1), 0, 100);
+    army.security = clamp(army.security + randomRange(-1, 1), 0, 100);
+    
+    gameState.faith = clamp(gameState.faith + randomRange(-1, 1), 0, 100);
+    gameState.military = clamp(gameState.military + randomRange(-1, 1), 0, 100);
+    gameState.diplomacy.reputation = clamp(gameState.diplomacy.reputation + randomRange(-1, 1), 0, 100);
+    
+    gameState.riskLevel = clamp(gameState.riskLevel + randomRange(-2, 2), 0, 100);
+    
+    // Calculate variations per tick
+    resourceVariations.funds = res.funds - prevFunds;
+    resourceVariations.prestige = res.prestige - prevPrestige;
+    resourceVariations.faith = gameState.faith - prevFaith;
+    resourceVariations.military = gameState.military - prevMilitary;
+    
+    if (randomRange(0, 20) === 1) {
+        const eventType = randomRange(0, 2);
+        if (eventType === 0) {
+            res.prestige = clamp(res.prestige + 2, 0, 100);
+        } else if (eventType === 1) {
+            res.funds = clamp(res.funds + 5, 0, 999999);
+        } else {
+            res.food = clamp(res.food - 3, 0, 9999);
+        }
+    }
+    
+    gameState.events.timeline++;
+    
+    // Update time based on speed
+    gameState.events.hour += gameState.timeSpeed;
+    if (gameState.events.hour >= 24) {
+        gameState.events.hour = 0;
+        gameState.events.day++;
+        
+        if (gameState.events.day > 30) {
+            gameState.events.day = 1;
+            // Cycle through months
+            const months = ['Cicloceno', 'Deshielo', 'Sequía', 'Aridez', 'Vendaval'];
+            const currentIdx = months.indexOf(gameState.events.month);
+            gameState.events.month = months[(currentIdx + 1) % months.length];
+            
+            if (currentIdx === 4) {
+                gameState.events.year++;
+            }
+        }
+    }
+    
+    updateHUD();
 }
 
 // ============================================
 // Game Loop
 // ============================================
+
 let gameLoopInterval = null;
+let aiLoopInterval = null;
 
 function startGameLoop() {
-    // Update every 3 seconds (simulation tick)
-    gameLoopInterval = setInterval(() => {
-        // Random resource variations
-        gameState.agua = Math.max(0, gameState.agua + Math.floor(Math.random() * 6) - 2);
-        gameState.comida = Math.max(0, gameState.comida + Math.floor(Math.random() * 4) - 2);
-        
-        // Random tension changes
-        if (Math.random() < 0.1) {
-            gameState.tension = Math.max(0, Math.min(100, gameState.tension + (Math.random() > 0.5 ? 1 : -1)));
-        }
-        
+    if (gameLoopInterval) clearInterval(gameLoopInterval);
+    if (aiLoopInterval) clearInterval(aiLoopInterval);
+    
+    // Base update interval: 2 seconds
+    // Adjusted by timeSpeed for faster simulation
+    const baseInterval = 2000;
+    aiLoopInterval = setInterval(updateAI, baseInterval);
+    
+    // Sync with server less frequently
+    gameLoopInterval = setInterval(gameTick, 5000);
+}
+
+async function gameTick() {
+    try {
+        await fetch(`${API_BASE}/api/hydraulic/tick`, { method: 'POST' });
+        await loadGameData();
         updateAllUI();
-    }, 3000);
+    } catch (e) {
+        console.log('Modo offline - IA activa');
+    }
 }
 
 // ============================================
-// Botón de inicio
+// Initialize - Portil HUD
 // ============================================
-function iniciarPartido() {
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('appContainer').classList.remove('hidden');
-    initUI();
-}
 
-// Ocultar start screen al cargar
-document.getElementById('startScreen').style.display = 'none';
-document.getElementById('appContainer').classList.remove('hidden');
-initUI();
+document.addEventListener('DOMContentLoaded', function() {
+    const startScreen = document.getElementById('startScreen');
+    const hudRoot = document.getElementById('hudRoot');
+    const btnNewGame = document.getElementById('btnNewGame');
+    
+    if (btnNewGame && startScreen && hudRoot) {
+        btnNewGame.addEventListener('click', function() {
+            startScreen.style.display = 'none';
+            initUI();
+        });
+    } else {
+        initUI();
+    }
+});
