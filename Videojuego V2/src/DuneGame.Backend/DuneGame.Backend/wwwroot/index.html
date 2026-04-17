@@ -4,223 +4,656 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Casa Portil - Gestión Hidráulica Dinástica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --verde-estuario: #2B443B;
+            --negro-pizarra: #1A1D20;
+            --plata-fluvial: #B0B3B4;
+            --plata-clara: #C4C5C4;
+            --sombra-panel: #111317;
+            --negro-pizarra-oscuro: #0f1113;
+            --amber-critico: #b8860b;
+            --rojo-apagado: #8b3a3a;
+            --sombra-humo: rgba(20, 25, 30, 0.95);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --bg-dark: #0d1117;
-            --bg-panel: #161b22;
-            --bg-card: #21262d;
-            --border: #30363d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --accent-blue: #58a6ff;
-            --accent-gold: #d4a76a;
-            --accent-green: #3fb950;
-            --accent-red: #f85149;
-            --water-blue: #1f6feb;
-            --stone-gray: #484f58;
-            --bronze: #8b7355;
-            --amber: #d4a76a;
-        }
-
         body {
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            font-family: 'Cinzel', 'Georgia', serif;
+            background: var(--negro-pizarra);
+            color: var(--plata-fluvial);
+            font-family: 'Crimson Text', 'Georgia', serif;
             min-height: 100vh;
             overflow: hidden;
+            font-size: 15px;
         }
 
         #gameContainer {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            background: linear-gradient(180deg, #0a0f14 0%, #121820 50%, #1a1f28 100%);
+            background: linear-gradient(180deg, #0a0e12 0%, #0f1418 30%, #141a20 60%, #1a2028 100%);
         }
 
-        #hud {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 24px;
-            background: linear-gradient(180deg, rgba(22, 27, 34, 0.95) 0%, rgba(13, 17, 23, 0.9) 100%);
-            border-bottom: 2px solid var(--bronze);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .resource-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-        }
-
-        .resource-icon { font-size: 20px; }
-        .resource-value { font-size: 16px; font-weight: bold; color: var(--accent-gold); }
-        .resource-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-
-        .risk-indicator {
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 12px;
-        }
-        .risk-stable { background: var(--accent-green); color: #000; }
-        .risk-low { background: #58a6ff; color: #000; }
-        .risk-medium { background: var(--accent-gold); color: #000; }
-        .risk-high { background: #f0883e; color: #000; }
-        .risk-critical { background: var(--accent-red); color: #fff; }
-
-        #mainContent { display: flex; flex: 1; overflow: hidden; }
-
-        #leftPanel {
-            width: 280px;
-            min-width: 280px;
-            background: var(--bg-panel);
-            border-right: 2px solid var(--border);
-            padding: 20px;
+        /* ==================== HUD ROOT ==================== */
+        #hudRoot {
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            max-height: calc(100vh - 120px);
+            height: 100vh;
+            position: relative;
+            z-index: 10;
         }
 
-        .palace-header {
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-panel) 100%);
-            border: 2px solid var(--bronze);
-            border-radius: 8px;
-            margin-bottom: 20px;
+        /* ==================== TOP BAND - SOVEREIGNTY ==================== */
+        #topBand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.85) 100%);
+            border-bottom: 1px solid rgba(176, 179, 180, 0.15);
+            min-height: 90px;
+            position: relative;
         }
 
-        .palace-title { font-size: 18px; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
-        .palace-level { font-size: 12px; color: var(--text-secondary); }
-        .palace-features { margin-top: 12px; text-align: left; }
-        .palace-feature { font-size: 11px; color: var(--stone-gray); padding: 4px 0; border-bottom: 1px solid var(--border); }
-
-        .dynasty-info {
-            background: var(--bg-card);
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .dynasty-name { font-size: 16px; color: var(--accent-gold); margin-bottom: 8px; }
-        .ruler-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
-
-        #tabs { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; }
-
-        .tab-btn {
-            padding: 12px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 13px;
+        /* Menu Button (Top-Left) */
+        #menuButton {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1f2327 0%, #15181d 100%);
+            border: 2px solid var(--plata-fluvial);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
-            text-align: left;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(176, 179, 180, 0.1);
+            position: relative;
         }
-        .tab-btn:hover { background: var(--bg-panel); color: var(--text-primary); border-color: var(--bronze); }
-        .tab-btn.active { background: linear-gradient(90deg, rgba(212, 167, 106, 0.2) 0%, var(--bg-card) 100%); color: var(--accent-gold); border-color: var(--accent-gold); border-left: 3px solid var(--accent-gold); }
 
-#centerPanel { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 450px; overflow: hidden; }
+        #menuButton:hover {
+            border-color: var(--verde-estuario);
+            box-shadow: 
+                0 0 20px rgba(43, 68, 59, 0.4),
+                0 4px 12px rgba(0, 0, 0, 0.4);
+        }
 
-        #visualContainer {
-            flex: 0 0 250px;
+        #menuButton.active {
+            border-color: var(--plata-clara);
+            box-shadow: 0 0 0 3px rgba(196, 197, 196, 0.2);
+        }
+
+        #menuButton svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--plata-fluvial);
+        }
+
+        #menuButton:hover svg {
+            fill: var(--verde-estuario);
+        }
+
+        #menuButton .alert-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            background: var(--amber-critico);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--amber-critico);
+            display: none;
+        }
+
+        #menuButton.has-unsaved .alert-dot {
+            display: block;
+        }
+
+        /* Resource Bar */
+        #topResourceBar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            justify-content: center;
+            margin: 0 80px;
+        }
+
+        .resource-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.25);
+            border-radius: 6px;
+            min-width: 120px;
+            position: relative;
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(176, 179, 180, 0.08);
+        }
+
+        .resource-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(176, 179, 180, 0.15), transparent);
+        }
+
+        .resource-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(176, 179, 180, 0.1);
+            border-radius: 4px;
+        }
+
+        .resource-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--plata-fluvial);
+        }
+
+        .resource-data {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .resource-value {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--plata-clara);
+            letter-spacing: 1px;
+        }
+
+        .resource-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+        }
+
+        .resource-variation {
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .resource-variation.positive {
+            color: var(--verde-estuario);
+        }
+
+        .resource-variation.negative {
+            color: var(--amber-critico);
+        }
+
+        /* ==================== CENTER BAND - IDENTITY + TIME ==================== */
+        #centerBand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(17, 19, 23, 0.3) 50%, transparent 100%);
+            position: relative;
+        }
+
+        /* House Portil Crest Medallion */
+        #crestMedallion {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1a1f24 0%, #0f1216 100%);
+            border: 4px solid var(--plata-fluvial);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                0 0 0 2px rgba(176, 179, 180, 0.1),
+                inset 0 0 60px rgba(26, 29, 32, 0.8);
+        }
+
+        #crestMedallion::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            border: 2px solid rgba(176, 179, 180, 0.2);
+        }
+
+        #crestMedallion::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid rgba(43, 68, 59, 0.3);
+        }
+
+        #crestMedallion:hover {
+            box-shadow: 
+                0 12px 48px rgba(0, 0, 0, 0.6),
+                0 0 0 2px rgba(43, 68, 59, 0.4),
+                0 0 40px rgba(43, 68, 59, 0.15),
+                inset 0 0 60px rgba(26, 29, 32, 0.8);
+        }
+
+        .crest-inner {
+            width: 140px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .crest-shield {
+            width: 80px;
+            height: 90px;
+            position: relative;
+        }
+
+        .crest-shield svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--verde-estuario);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .crest-delta {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .crest-delta span {
+            width: 20px;
+            height: 4px;
+            background: var(--plata-fluvial);
+            opacity: 0.6;
+        }
+
+        .crest-delta span:nth-child(2) {
+            width: 14px;
+            opacity: 0.4;
+        }
+
+        .crest-name {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--plata-fluvial);
+            margin-top: 12px;
+            opacity: 0.8;
+        }
+
+        /* Time Control */
+        #timeControlBar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: linear-gradient(145deg, #181c21 0%, #101318 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .time-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .time-btn:hover {
+            border-color: var(--plata-fluvial);
+            background: linear-gradient(145deg, #22282e 0%, #1a1e22 100%);
+        }
+
+        .time-btn.active {
+            border-color: var(--verde-estuario);
+            box-shadow: 0 0 12px rgba(43, 68, 59, 0.4);
+        }
+
+        .time-btn.active svg {
+            fill: var(--verde-estuario);
+        }
+
+        .time-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--plata-fluvial);
+        }
+
+        .time-divider {
+            width: 1px;
+            height: 30px;
+            background: rgba(176, 179, 180, 0.15);
+        }
+
+        #calendarDisplay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding-left: 16px;
+            border-left: 1px solid rgba(176, 179, 180, 0.15);
+        }
+
+        .calendar-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--plata-fluvial);
+            opacity: 0.5;
+        }
+
+        .calendar-value {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--plata-clara);
+            letter-spacing: 1px;
+        }
+
+        /* ==================== BOTTOM BAND - LEGITIMACY + ORDERS ==================== */
+        #bottomBand {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.95) 100%);
+            border-top: 1px solid rgba(176, 179, 180, 0.15);
+            min-height: 100px;
+            z-index: 100;
+        }
+
+        /* Status Indicators */
+        #statusIndicators {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .status-meter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-label {
+            width: 70px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+        }
+
+        .status-bar-container {
+            flex: 1;
+            height: 12px;
+            background: var(--negro-pizarra-oscuro);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(176, 179, 180, 0.1);
+            position: relative;
+        }
+
+        .status-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--verde-estuario), #3d5c4d);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .status-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent);
+        }
+
+        .status-bar-fill.warning {
+            background: linear-gradient(90deg, #6b6b3d, #7d7d4d);
+        }
+
+        .status-bar-fill.critical {
+            background: linear-gradient(90deg, var(--amber-critico), #8b6b3d);
+        }
+
+        .status-value {
+            width: 45px;
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--plata-clara);
+            text-align: right;
+        }
+
+        .status-trend {
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        .status-trend.up {
+            color: var(--verde-estuario);
+        }
+
+        .status-trend.down {
+            color: var(--amber-critico);
+        }
+
+        /* Command Buttons */
+        #commandBar {
+            display: flex;
+            gap: 12px;
+        }
+
+        .command-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1a1f24 0%, #121518 100%);
+            border: 2px solid rgba(176, 179, 180, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(176, 179, 180, 0.08);
+        }
+
+        .command-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(176, 179, 180, 0.2), transparent);
+        }
+
+        .command-btn:hover {
+            border-color: var(--plata-fluvial);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(43, 68, 59, 0.2);
+        }
+
+        .command-btn.selected {
+            border-color: var(--verde-estuario);
+            background: linear-gradient(145deg, #1f2924 0%, #161d1b 100%);
+            box-shadow: 
+                0 0 20px rgba(43, 68, 59, 0.4),
+                0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .command-btn.blocked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .command-btn .novelty-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--verde-estuario);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--verde-estuario);
+        }
+
+        .command-btn .pending-icon {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 10px;
+            height: 10px;
+            background: var(--amber-critico);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--amber-critico);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .command-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--plata-fluvial);
+        }
+
+        .command-btn:hover svg {
+            fill: var(--plata-clara);
+        }
+
+        .command-btn.selected svg {
+            fill: var(--verde-estuario);
+        }
+
+        .command-btn .btn-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--plata-fluvial);
+        }
+
+        .command-btn:hover .btn-label {
+            color: var(--plata-clara);
+        }
+
+        /* Alerts Button (smaller) */
+        #alertsBtn {
+            width: 60px;
+            height: 60px;
+        }
+
+        #alertsBtn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        #alertsBtn .btn-label {
+            font-size: 7px;
+        }
+
+        /* ==================== GAME WORLD ==================== */
+        #gameWorld {
+            flex: 1;
             position: relative;
             overflow: hidden;
-            background: #0a0f14;
+            margin: 0 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .world-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
         }
 
-        #tabContent {
-            flex: 1;
-            background: var(--bg-panel);
-            border-top: 2px solid var(--bronze);
-            padding: 20px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            min-height: 200px;
-            max-height: calc(100vh - 300px);
-        }
-
-.visual-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #backgroundLayer { z-index: 1; }
-        #cityLayer { z-index: 2; }
-        #structuresLayer { z-index: 3; }
-        #waterLayer { z-index: 4; }
-        #fogLayer { z-index: 5; }
-        #lightLayer { z-index: 6; }
-
-        /* FONDO - Cielo crepuscular oscuro */
-        #backgroundLayer {
-            z-index: 1;
+        #worldBackground {
             background: 
                 radial-gradient(ellipse 100% 60% at 20% 0%, #1a1a2e 0%, transparent 50%),
                 radial-gradient(ellipse 80% 40% at 80% 10%, #16213e 0%, transparent 40%),
                 linear-gradient(180deg, #0a0f1a 0%, #121a28 40%, #1a2030 100%);
         }
 
-        /* CIUDAD - Siluetas de edificios */
-        #cityLayer {
-            z-index: 2;
+        #worldCity {
             background:
-                /* Torres del fondo */
                 linear-gradient(to top, #0d1117 0%, #151a22 100%),
-                /* Edificio 1 - izquierda */
                 linear-gradient(90deg, transparent 10%, #1a1f28 10%, #1a1f28 14%, transparent 14%),
-                linear-gradient(to top, transparent 30%, #1a1f28 30%),
-                /* Edificio 2 - centro-izquierda */
-                linear-gradient(90deg, transparent 30%, #181c24 30%, #181c24 36%, transparent 36%),
-                linear-gradient(to top, transparent 25%, #181c24 25%),
-                /* Edificio 3 - centro */
-                linear-gradient(90deg, transparent 50%, #1a1e28 50%, #1a1e28 56%, transparent 56%),
-                linear-gradient(to top, transparent 15%, #1a1e28 15%),
-                /* Edificio 4 - derecha */
-                linear-gradient(90deg, transparent 70%, #171c22 70%, #171c22 76%, transparent 76%),
-                linear-gradient(to top, transparent 28%, #171c22 28%),
-                /* Edificio 5 - extremo derecha */
-                linear-gradient(90deg, transparent 88%, #191d26 88%, #191d26 94%, transparent 94%),
-                linear-gradient(to top, transparent 35%, #191d26 35%);
+                linear-gradient(to top, transparent 30%, #1a1f28 30%);
         }
 
-        /* ESTRUCTURAS - Palacio y elementos detalle */
-        #structuresLayer {
-            z-index: 3;
+        #worldStructures {
             background:
-                /* Palacio central */
                 linear-gradient(90deg, transparent 46%, #2a2520 46%, #2a2520 54%, transparent 54%),
                 linear-gradient(to top, transparent 0%, #2a2520 0%),
-                /* Torres del palacio */
                 linear-gradient(90deg, transparent 42%, #252220 42%, #252220 44%, transparent 44%),
                 linear-gradient(90deg, transparent 56%, #252220 56%, #252220 58%, transparent 58%);
         }
 
-        /* AGUA - Río y canales */
-        #waterLayer {
-            z-index: 4;
-            background:
-                linear-gradient(180deg, transparent 60%, rgba(20, 60, 100, 0.4) 75%, rgba(30, 80, 130, 0.5) 100%);
+        #worldWater {
+            background: linear-gradient(180deg, transparent 60%, rgba(20, 60, 100, 0.4) 75%, rgba(30, 80, 130, 0.5) 100%);
         }
 
-        /* NIEBLA - Bruma húmeda */
-        #fogLayer {
-            z-index: 5;
+        #worldFog {
             background:
                 radial-gradient(ellipse 100% 20% at 50% 100%, rgba(80, 100, 130, 0.5) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 15% at 20% 80%, rgba(90, 110, 140, 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse 50% 12% at 70% 85%, rgba(85, 105, 135, 0.25) 0%, transparent 50%);
+                radial-gradient(ellipse 60% 15% at 20% 80%, rgba(90, 110, 140, 0.3) 0%, transparent 50%);
             animation: fogDrift 20s ease-in-out infinite;
         }
 
@@ -229,221 +662,1283 @@
             50% { opacity: 1; }
         }
 
-        /* LUCES - Ventanas illuminadas */
-        #lightLayer {
-            z-index: 6;
+        #worldLights {
             background:
-                /* Ventanas edificios superiores */
                 radial-gradient(circle 4px at 12% 42%, rgba(255, 180, 60, 0.9) 0%, transparent 100%),
                 radial-gradient(circle 3px at 32% 38%, rgba(255, 200, 80, 0.8) 0%, transparent 100%),
                 radial-gradient(circle 4px at 52% 32%, rgba(255, 170, 50, 0.85) 0%, transparent 100%),
                 radial-gradient(circle 3px at 72% 40%, rgba(255, 190, 70, 0.8) 0%, transparent 100%),
-                radial-gradient(circle 4px at 92% 45%, rgba(255, 185, 65, 0.9) 0%, transparent 100%),
-                /* Ventanas inferiores */
-                radial-gradient(circle 3px at 25% 58%, rgba(255, 160, 40, 0.6) 0%, transparent 100%),
-                radial-gradient(circle 3px at 55% 55%, rgba(255, 175, 55, 0.7) 0%, transparent 100%),
-                radial-gradient(circle 4px at 75% 60%, rgba(255, 165, 45, 0.65) 0%, transparent 100%);
+                radial-gradient(circle 4px at 92% 45%, rgba(255, 185, 65, 0.9) 0%, transparent 100%);
         }
 
-        #tabContent {
-            height: 100%;
-            background: var(--bg-panel);
-            border-top: 2px solid var(--bronze);
-            padding: 20px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            box-sizing: border-box;
-        }
-
-        .tab-view { display: none; }
-        .tab-view.active { display: block; }
-        .section-title { font-size: 16px; color: var(--accent-gold); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        .info-card { background: var(--bg-card); padding: 12px; border: 1px solid var(--border); border-radius: 4px; }
-        .info-card-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; }
-        .info-card-value { font-size: 18px; color: var(--accent-gold); font-weight: bold; }
-
-        .building-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-        .building-card { background: var(--bg-card); padding: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
-        .building-card:hover { border-color: var(--accent-gold); transform: translateY(-2px); }
-        .building-card.built { border-color: var(--accent-green); opacity: 0.7; }
-        .building-name { font-size: 14px; color: var(--accent-gold); margin-bottom: 4px; }
-        .building-category { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; }
-        .building-cost { font-size: 11px; color: var(--text-secondary); }
-
-        .family-list, .houses-list, .ministers-list { display: flex; flex-direction: column; gap: 8px; }
-        .family-member, .house-card, .minister-card { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px; border: 1px solid var(--border); border-radius: 4px; }
-        .member-name, .house-name, .minister-name { color: var(--accent-gold); font-size: 14px; }
-        .member-role, .house-power, .minister-dept { font-size: 11px; color: var(--text-secondary); }
-        .stat-badge { font-size: 10px; padding: 2px 6px; background: var(--bg-panel); border-radius: 2px; color: var(--text-secondary); }
-
-        .house-hostility { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .hostility-low { background: var(--accent-green); color: #000; }
-        .hostility-medium { background: var(--accent-gold); color: #000; }
-        .hostility-high { background: var(--accent-red); color: #fff; }
-
-        #buildBar {
+        /* ==================== OVERLAYS ==================== */
+        .panel-overlay {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
-            border-top: 2px solid var(--bronze);
+            inset: 0;
+            background: rgba(10, 12, 15, 0.85);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panel-overlay.active {
+            display: flex;
+        }
+
+        .panel-modal {
+            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 12px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: hidden;
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+        }
+
+        .panel-header {
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            gap: 8px;
-            z-index: 100;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
         }
 
-        .build-category { padding: 8px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: all 0.3s; }
-        .build-category:hover, .build-category.active { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .panel-title {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--plata-clara);
+        }
 
-        ::-webkit-scrollbar { width: 12px; height: 12px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); border-left: 1px solid var(--border); }
-        ::-webkit-scrollbar-thumb { background: var(--bronze); border-radius: 6px; border: 2px solid var(--bg-dark); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
+        .panel-close {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .panel-close:hover {
+            border-color: var(--plata-fluvial);
+            background: rgba(176, 179, 180, 0.1);
+        }
+
+        .panel-close svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--plata-fluvial);
+        }
+
+        .panel-content {
+            padding: 24px;
+            max-height: calc(80vh - 80px);
+            overflow-y: auto;
+        }
+
+        /* Side Panels */
+        .panel-side {
+            position: fixed;
+            top: 90px;
+            bottom: 100px;
+            width: 380px;
+            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-side.left {
+            left: 0;
+            border-left: none;
+            border-top: none;
+            border-bottom: none;
+        }
+
+        .panel-side.right {
+            right: 0;
+            border-right: none;
+            border-top: none;
+            border-bottom: none;
+        }
+
+        .panel-side.active {
+            display: flex;
+        }
+
+        /* ==================== TOOLTIPS ==================== */
+        .tooltip {
+            position: fixed;
+            background: var(--negro-pizarra-oscuro);
+            border: 1px solid rgba(176, 179, 180, 0.25);
+            border-radius: 6px;
+            padding: 12px 16px;
+            max-width: 250px;
+            z-index: 300;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .tooltip.visible {
+            display: block;
+        }
+
+        .tooltip-title {
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            color: var(--plata-clara);
+            margin-bottom: 8px;
+        }
+
+        .tooltip-content {
+            font-size: 12px;
+            color: var(--plata-fluvial);
+            line-height: 1.5;
+        }
+
+        /* ==================== SIDE PANELS ==================== */
+        .panel-side {
+            position: fixed;
+            top: 90px;
+            bottom: 100px;
+            width: 400px;
+            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-side.left {
+            left: 0;
+            border-left: none;
+            border-top: none;
+            border-bottom: none;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .panel-side.right {
+            right: 0;
+            border-right: none;
+            border-top: none;
+            border-bottom: none;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .panel-side.active {
+            display: flex;
+        }
+
+        .panel-side .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-side .panel-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--plata-clara);
+        }
+
+        .panel-side .panel-close {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .panel-side .panel-close:hover {
+            border-color: var(--plata-fluvial);
+            background: rgba(176, 179, 180, 0.1);
+        }
+
+        .panel-side .panel-close svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--plata-fluvial);
+        }
+
+        .panel-side .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+            flex-wrap: wrap;
+        }
+
+        .category-tab {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 4px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--plata-fluvial);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-tab:hover {
+            border-color: var(--plata-fluvial);
+        }
+
+        .category-tab.active {
+            background: var(--verde-estuario);
+            border-color: var(--verde-estuario);
+            color: var(--plata-clara);
+        }
+
+        /* Building Cards */
+        .building-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .building-card {
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .building-card:hover:not(.built):not(.disabled) {
+            border-color: var(--verde-estuario);
+            box-shadow: 0 0 16px rgba(43, 68, 59, 0.2);
+        }
+
+        .building-card.built {
+            border-color: var(--verde-estuario);
+            opacity: 0.7;
+        }
+
+        .building-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .building-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .building-name {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--plata-clara);
+        }
+
+        .building-category {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--plata-fluvial);
+            opacity: 0.6;
+            background: rgba(176, 179, 180, 0.1);
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .building-cost {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--plata-fluvial);
+            margin-bottom: 6px;
+        }
+
+        .building-cost span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .building-cost .cost-funds { color: var(--plata-clara); }
+        .building-cost .cost-water { color: #5dade2; }
+        .building-cost .cost-food { color: #58d68d; }
+
+        .building-effect {
+            font-size: 11px;
+            color: var(--verde-estuario);
+            margin-top: 6px;
+        }
+
+        .building-status {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .building-status.built {
+            color: var(--verde-estuario);
+        }
+
+        /* ==================== MAIN MODAL ==================== */
+        .main-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 12, 15, 0.9);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            overflow: hidden;
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-header {
+            padding: 24px;
+            text-align: center;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--plata-clara);
+            margin-bottom: 4px;
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--plata-fluvial);
+            opacity: 0.6;
+            letter-spacing: 2px;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 8px;
+            color: var(--plata-clara);
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            border-color: var(--verde-estuario);
+            box-shadow: 0 0 16px rgba(43, 68, 59, 0.2);
+        }
+
+        .modal-btn.danger {
+            border-color: rgba(139, 58, 58, 0.4);
+        }
+
+        .modal-btn.danger:hover {
+            border-color: var(--rojo-apagado);
+            box-shadow: 0 0 16px rgba(139, 58, 58, 0.2);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+        }
+
+        /* ==================== NOTIFICATIONS / ALERTS ==================== */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 24px;
+            width: 320px;
+            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            padding: 14px 16px;
+            z-index: 300;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.active {
+            display: block;
+        }
+
+        .notification.critical {
+            border-color: var(--amber-critico);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .notification-title {
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            color: var(--plata-clara);
+        }
+
+        .notification-time {
+            font-size: 10px;
+            color: var(--plata-fluvial);
+            opacity: 0.6;
+        }
+
+        .notification-content {
+            font-size: 12px;
+            color: var(--plata-fluvial);
+            line-height: 1.5;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ==================== HOUSE PORTIL PANEL ==================== */
+        .house-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 16px;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+        }
+
+        .house-panel.active {
+            display: flex;
+        }
+
+        .house-panel .panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .house-panel .panel-content {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .house-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .house-stat-card {
+            background: rgba(176, 179, 180, 0.05);
+            border: 1px solid rgba(176, 179, 180, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .house-stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--plata-fluvial);
+            opacity: 0.6;
+            margin-bottom: 4px;
+        }
+
+        .house-stat-value {
+            font-family: 'Cinzel', serif;
+            font-size: 24px;
+            color: var(--plata-clara);
+        }
+
+        .house-stat-detail {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            margin-top: 4px;
+        }
+
+        .house-section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--plata-clara);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .house-family-list, .house-ministers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .family-member-card, .minister-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(176, 179, 180, 0.05);
+            border: 1px solid rgba(176, 179, 180, 0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+
+        .member-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .member-name {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--plata-clara);
+        }
+
+        .member-role {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+        }
+
+        .member-stats {
+            display: flex;
+            gap: 6px;
+        }
+
+        .stat-badge {
+            font-size: 10px;
+            background: rgba(43, 68, 59, 0.3);
+            color: var(--plata-clara);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        /* ==================== RESEARCH TREE ==================== */
+        .research-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .research-node {
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .research-node:hover:not(.locked) {
+            border-color: var(--verde-estuario);
+        }
+
+        .research-node.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .research-node.available {
+            border-color: rgba(43, 68, 59, 0.4);
+        }
+
+        .research-node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .research-name {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--plata-clara);
+        }
+
+        .research-status {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .research-status.available {
+            background: rgba(43, 68, 59, 0.3);
+            color: var(--verde-estuario);
+        }
+
+        .research-status.locked {
+            background: rgba(176, 179, 180, 0.1);
+            color: var(--plata-fluvial);
+        }
+
+        .research-status.unlocked {
+            background: var(--verde-estuario);
+            color: var(--plata-clara);
+        }
+
+        .research-desc {
+            font-size: 12px;
+            color: var(--plata-fluvial);
+            margin-bottom: 8px;
+        }
+
+        .research-cost {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+        }
+
+        /* ==================== DIPLOMACY PANEL ==================== */
+        .diplomacy-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .diplomacy-card {
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .diplomacy-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .house-emblem {
+            width: 40px;
+            height: 40px;
+            background: rgba(176, 179, 180, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .house-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .house-name {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--plata-clara);
+        }
+
+        .house-power {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+        }
+
+        .house-relation {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .relation-status {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .relation-status.hostile {
+            background: rgba(139, 58, 58, 0.3);
+            color: #c45050;
+        }
+
+        .relation-status.neutral {
+            background: rgba(176, 179, 180, 0.15);
+            color: var(--plata-fluvial);
+        }
+
+        .relation-status.friendly {
+            background: rgba(43, 68, 59, 0.3);
+            color: var(--verde-estuario);
+        }
+
+        /* ==================== POLITICS PANEL ==================== */
+        .politics-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .politics-card {
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .politics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .politics-name {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--plata-clara);
+        }
+
+        .politics-effect {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            margin-bottom: 10px;
+        }
+
+        .politics-cost {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            padding-top: 10px;
+            border-top: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .politics-btn {
+            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: 6px;
+            padding: 10px 16px;
+            color: var(--plata-clara);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .politics-btn:hover {
+            border-color: var(--verde-estuario);
+        }
+
+        .politics-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ==================== START SCREEN ==================== */
+        #startScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(180deg, #0a0f14 0%, #121820 50%, #1a1f28 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #startScreen h1 {
+            color: var(--plata-clara);
+            font-family: 'Cinzel', serif;
+            font-size: 56px;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            margin-bottom: 16px;
+            text-shadow: 0 4px 24px rgba(176, 179, 180, 0.2);
+        }
+
+        #startScreen p {
+            color: var(--plata-fluvial);
+            font-size: 18px;
+            font-style: italic;
+            margin-bottom: 48px;
+            opacity: 0.7;
+        }
+
+        #startScreen button {
+            padding: 16px 48px;
+            background: linear-gradient(145deg, #1f2327 0%, #15181d 100%);
+            border: 2px solid var(--plata-fluvial);
+            color: var(--plata-clara);
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #startScreen button:hover {
+            border-color: var(--plata-clara);
+            box-shadow: 0 0 24px rgba(176, 179, 180, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ==================== SCROLLBAR ==================== */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--negro-pizarra-oscuro);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(176, 179, 180, 0.3);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(176, 179, 180, 0.5);
+        }
     </style>
 </head>
 <body>
-    <div id="startScreen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(180deg,#0a0f14 0%,#121820 50%,#1a1f28 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <h1 style="color:#d4a76a;font-size:48px;margin-bottom:16px;font-family:'Cinzel',Georgia,serif;text-transform:uppercase;letter-spacing:4px;">Casa Portil</h1>
-        <p style="color:#8b949e;font-size:18px;margin-bottom:48px;font-style:italic;">Gestión Hidráulica Dinástica</p>
-        <button id="btnNewGame" style="padding:16px 48px;font-size:18px;background:#21262d;border:2px solid #d4a76a;color:#d4a76a;border-radius:8px;cursor:pointer;font-family:'Cinzel',Georgia,serif;transition:all 0.3s;">Nueva Partida</button>
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <h1>Casa Portil</h1>
+        <p>Gestión Hidráulica Dinástica</p>
+        <button id="btnNewGame">Nueva Partida</button>
     </div>
 
-    <div id="gameContainer" style="display:none;">
-        <div id="hud">
-            <div class="resource-item"><span class="resource-icon">💰</span><div><div class="resource-value" id="funds">5000</div><div class="resource-label">Fondos</div></div></div>
-            <div class="resource-item"><span class="resource-icon">💧</span><div><div class="resource-value" id="water">1000</div><div class="resource-label">Agua</div></div></div>
-            <div class="resource-item"><span class="resource-icon">🌾</span><div><div class="resource-value" id="food">1000</div><div class="resource-label">Alimento</div></div></div>
-            <div class="resource-item"><span class="resource-icon">📊</span><div><div class="resource-value" id="prestige">100</div><div class="resource-label">Prestigio</div></div></div>
-            <div class="resource-item"><span class="resource-icon">👥</span><div><div class="resource-value" id="population">100</div><div class="resource-label">Población</div></div></div>
-            <div class="resource-item"><span class="resource-icon">👷</span><div><div class="resource-value" id="staff">50</div><div class="resource-label">Personal</div></div></div>
-            <div class="risk-indicator risk-stable" id="risk">ESTABLE</div>
-        </div>
-
-        <div id="mainContent">
-            <div id="leftPanel">
-                <div class="palace-header">
-                    <div class="palace-title">Palacio Hidráulico</div>
-                    <div class="palace-level">Nivel 1</div>
-                    <div class="palace-features">
-                        <div class="palace-feature">• Sala del Consejo</div>
-                        <div class="palace-feature">• Archivo Dinástico</div>
-                        <div class="palace-feature">• Cámara Hidráulica</div>
-                    </div>
-                </div>
-                <div class="dynasty-info">
-                    <div class="dynasty-name">Casa Portil</div>
-                    <div class="ruler-info"><span>Regente: Archivist Vanya</span><span>Legitimidad: 80%</span></div>
-                </div>
-                <div id="tabs">
-                    <button class="tab-btn active" data-tab="panel">📊 Panel Principal</button>
-                    <button class="tab-btn" data-tab="enclaves">🏛️ Enclaves</button>
-                    <button class="tab-btn" data-tab="criaturas">🐚 Criaturas</button>
-                    <button class="tab-btn" data-tab="construccion">🔨 Construcción</button>
-                    <button class="tab-btn" data-tab="eventos">📜 Eventos</button>
-                    <button class="tab-btn" data-tab="familia">👑 Familia</button>
-                    <button class="tab-btn" data-tab="gobierno">⚖️ Gobierno</button>
-                    <button class="tab-btn" data-tab="ejercito">🛡️ Ejército</button>
-                    <button class="tab-btn" data-tab="diplomacia">🌐 Diplomacia</button>
-                </div>
+    <!-- HUD Root -->
+    <div id="hudRoot">
+        <!-- Top Band: Sovereignty -->
+        <div id="topBand">
+            <!-- Menu Button -->
+            <div id="menuButton" title="Menú Principal">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
+                </svg>
+                <span class="alert-dot"></span>
             </div>
 
-            <div id="centerPanel">
-                <div id="visualContainer">
-                    <div id="backgroundLayer" class="visual-layer"></div>
-                    <div id="cityLayer" class="visual-layer"></div>
-                    <div id="structuresLayer" class="visual-layer"></div>
-                    <div id="waterLayer" class="visual-layer"></div>
-                    <div id="fogLayer" class="visual-layer"></div>
-                    <div id="lightLayer" class="visual-layer"></div>
+            <!-- Resource Bar -->
+            <div id="topResourceBar">
+                <!-- Left Resources -->
+                <div class="resource-card" data-resource="money">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-1.5v1.69c-1.32.16-2.47.68-2.8 1.82-.22.78.12 1.68.76 1.84.95.24 1.84-.3 2.25-.78.29-.34.47-.76.54-1.22H8.04c-.05.78-.36 1.57-.91 2.16-.65.7-1.54 1.11-2.58 1.22V12h1.5v1.09c1.4.12 2.67.72 3.05 1.6.3.7.1 1.5-.45 1.9-.86.62-2.09.44-2.65-.22-.36-.42-.54-.96-.54-1.5h-2.2c.05 1.72 1.41 3.08 3.19 3.67V21h1.5v-1.65c1.02-.15 1.87-.56 2.35-1.23.38-.53.26-1.22-.24-1.65-.75-.64-1.87-.72-2.55-.26-.42.28-.65.72-.68 1.23h2.21c.07-1.67-1.27-3.08-2.99-3.52v-1.1h-1.5v1.03z"/>
+                        </svg>
+                    </div>
+                    <div class="resource-data">
+                        <div class="resource-value" id="resource-money">5000</div>
+                        <div class="resource-label">Fondos
+                            <span class="resource-variation positive" id="variation-money">+5</span>
+                        </div>
+                    </div>
                 </div>
-                
-                <div id="tabContent">
-                    <div class="tab-view active" id="view-panel">
-                        <div class="section-title">Resumen del Reino</div>
-                        <div class="info-grid">
-                            <div class="info-card"><div class="info-card-label">Estabilidad del Gobierno</div><div class="info-card-value" id="stability">70%</div></div>
-                            <div class="info-card"><div class="info-card-label">Influencia Dinástica</div><div class="info-card-value" id="influence">50</div></div>
-                            <div class="info-card"><div class="info-card-label">Defensa Interna</div><div class="info-card-value" id="defense">50</div></div>
-                            <div class="info-card"><div class="info-card-label">Reputación Diplomática</div><div class="info-card-value" id="reputation">50</div></div>
-                            <div class="info-card"><div class="info-card-label">Estrés Poblacional</div><div class="info-card-value" id="stress">20%</div></div>
-                            <div class="info-card"><div class="info-card-label">Línea Temporal</div><div class="info-card-value" id="timeline">0</div></div>
+
+                <div class="resource-card" data-resource="prestige">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                    </div>
+                    <div class="resource-data">
+                        <div class="resource-value" id="resource-prestige">100</div>
+                        <div class="resource-label">Prestigio
+                            <span class="resource-variation positive" id="variation-prestige">+1</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="tab-view" id="view-enclaves">
-                        <div class="section-title">Distritos Hidráulicos</div>
-                        <div class="info-grid" id="districtsGrid"></div>
+                <!-- Center: Crest -->
+                <div id="crestMedallion" title="Resumen de Casa Portil">
+                    <div class="crest-inner">
+                        <div class="crest-shield">
+                            <svg viewBox="0 0 100 110">
+                                <path d="M50 5 L90 20 L90 50 Q90 85 50 105 Q10 85 10 50 L10 20 Z"/>
+                            </svg>
+                        </div>
+                        <div class="crest-delta">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <div class="crest-name">Portil</div>
                     </div>
+                </div>
 
-                    <div class="tab-view" id="view-criaturas">
-                        <div class="section-title">Estado de la Población</div>
-                        <div class="info-grid">
-                            <div class="info-card"><div class="info-card-label">Trabajadores</div><div class="info-card-value" id="workers">50</div></div>
-                            <div class="info-card"><div class="info-card-label">Científicos</div><div class="info-card-value" id="scientists">20</div></div>
-                            <div class="info-card"><div class="info-card-label">Guardias</div><div class="info-card-value" id="guards">10</div></div>
-                            <div class="info-card"><div class="info-card-label">Nobles</div><div class="info-card-value" id="nobles">20</div></div>
-                            <div class="info-card"><div class="info-card-label">Salud Biológica</div><div class="info-card-value" id="health">80%</div></div>
-                            <div class="info-card"><div class="info-card-label">Hidratación</div><div class="info-card-value" id="hydration">80%</div></div>
+                <!-- Right Resources -->
+                <div class="resource-card" data-resource="faith">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 4.84L15.58 12H14v2h-4v-2H8.42L12 7.84z"/>
+                        </svg>
+                    </div>
+                    <div class="resource-data">
+                        <div class="resource-value" id="resource-faith">80</div>
+                        <div class="resource-label">Fe
+                            <span class="resource-variation negative" id="variation-faith">-1</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="tab-view" id="view-construccion">
-                        <div class="section-title">Edificios Disponibles</div>
-                        <div class="building-grid" id="buildingsGrid"></div>
+                <div class="resource-card" data-resource="military">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm6 9.09c0 4-2.55 7.7-6 8.83-3.45-1.13-6-4.82-6-8.83v-4.18l6-2.25 6 2.25v4.18zM12 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                        </svg>
                     </div>
-
-                    <div class="tab-view" id="view-eventos">
-                        <div class="section-title">Cronología de Eventos</div>
-                        <div class="info-grid">
-                            <div class="info-card"><div class="info-card-label">Tiempo Transcurrido</div><div class="info-card-value" id="eventTimeline">0 ciclos</div></div>
+                    <div class="resource-data">
+                        <div class="resource-value" id="resource-military">50</div>
+                        <div class="resource-label">Armas
+                            <span class="resource-variation" id="variation-military">±0</span>
                         </div>
-                        <div id="activeEvent" style="margin-top: 16px;"></div>
-                    </div>
-
-                    <div class="tab-view" id="view-familia">
-                        <div class="section-title">Gestión Dinástica</div>
-                        <div class="family-list" id="familyList"></div>
-                    </div>
-
-                    <div class="tab-view" id="view-gobierno">
-                        <div class="section-title">Consejo de Ministers</div>
-                        <div class="ministers-list" id="ministersList"></div>
-                    </div>
-
-                    <div class="tab-view" id="view-ejercito">
-                        <div class="section-title">Fuerzas de Seguridad</div>
-                        <div class="info-grid">
-                            <div class="info-card"><div class="info-card-label">Defensa Interna</div><div class="info-card-value" id="armyDefense">50</div></div>
-                            <div class="info-card"><div class="info-card-label">Guardias Asignados</div><div class="info-card-value" id="armyGuards">20</div></div>
-                            <div class="info-card"><div class="info-card-label">Nivel de Seguridad</div><div class="info-card-value" id="securityLevel">50%</div></div>
-                        </div>
-                    </div>
-
-                    <div class="tab-view" id="view-diplomacia">
-                        <div class="section-title">Relaciones con Casas</div>
-                        <div class="houses-list" id="housesList"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="buildBar">
-            <span style="color: var(--text-secondary); font-size: 12px; margin-right: 8px;">Construir:</span>
-            <button class="build-category active" data-category="all">Todo</button>
-            <button class="build-category" data-category="Aclima">Aclima</button>
-            <button class="build-category" data-category="Exhibition">Exhibición</button>
-            <button class="build-category" data-category="Science">Ciencia</button>
-            <button class="build-category" data-category="Logistics">Logística</button>
-            <button class="build-category" data-category="Security">Seguridad</button>
-            <button class="build-category" data-category="Archive">Archivo</button>
+        <!-- Center Band: Identity + Time -->
+        <div id="centerBand">
+            <!-- Time Control -->
+            <div id="timeControlBar">
+                <div class="time-btn" id="btn-pause" title="Pausar">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                </div>
+                <div class="time-btn active" id="btn-play" title="Reproducir (1x)">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+                <div class="time-btn" id="btn-fast" title="Rapido (2x)">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 18l8-6v12l-8-6zm8 0l8-6v12l-8-6z"/>
+                    </svg>
+                </div>
+                <div class="time-btn" id="btn-veryfast" title="Muy Rapido (4x)">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 18l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6z"/>
+                    </svg>
+                </div>
+                <div class="time-divider"></div>
+                <div id="calendarDisplay">
+                    <div>
+                        <span class="calendar-label">Día</span>
+                        <span class="calendar-value" id="day-display">1</span>
+                    </div>
+                    <div>
+                        <span class="calendar-label">Mes</span>
+                        <span class="calendar-value" id="month-display">Cicloceno, 1020</span>
+                    </div>
+                    <div>
+                        <span class="calendar-label">Hora</span>
+                        <span class="calendar-value" id="hour-display">08:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game World (Middle Layer) -->
+        <div id="gameWorld">
+            <div id="worldBackground" class="world-layer"></div>
+            <div id="worldCity" class="world-layer"></div>
+            <div id="worldStructures" class="world-layer"></div>
+            <div id="worldWater" class="world-layer"></div>
+            <div id="worldFog" class="world-layer"></div>
+            <div id="worldLights" class="world-layer"></div>
+        </div>
+
+        <!-- Bottom Band: Legitimacy + Orders -->
+        <div id="bottomBand">
+            <!-- Status Indicators -->
+            <div id="statusIndicators">
+                <div class="status-meter" data-status="stability">
+                    <span class="status-label">Estabilidad</span>
+                    <div class="status-bar-container">
+                        <div class="status-bar-fill" id="stability-bar" style="width: 70%;"></div>
+                    </div>
+                    <span class="status-value" id="stability-value">70%</span>
+                    <span class="status-trend up" id="stability-trend">▲</span>
+                </div>
+                <div class="status-meter" data-status="approval">
+                    <span class="status-label">Aprobación</span>
+                    <div class="status-bar-container">
+                        <div class="status-bar-fill" id="approval-bar" style="width: 60%;"></div>
+                    </div>
+                    <span class="status-value" id="approval-value">60%</span>
+                    <span class="status-trend down" id="approval-trend">▼</span>
+                </div>
+            </div>
+
+            <!-- Command Bar -->
+            <div id="commandBar">
+                <div class="command-btn" id="btn-construction" data-panel="construction">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 7v2h20V7L12 2zm0 2.19L18.35 7H5.65L12 4.19zM4 10v8h2v-6h12v6h2v-8H4zm4 2v4h-2v-4h2zm4 0v4h-2v-4h2zm4 0v4h-2v-4h2z"/>
+                    </svg>
+                    <span class="btn-label">Obras</span>
+                    <span class="novelty-dot"></span>
+                </div>
+                <div class="command-btn" id="btn-politics" data-panel="politics">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                    <span class="btn-label">Gobierno</span>
+                </div>
+                <div class="command-btn" id="btn-research" data-panel="research">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                    </svg>
+                    <span class="btn-label">Doctrina</span>
+                </div>
+                <div class="command-btn" id="btn-diplomacy" data-panel="diplomacy">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-1.14c-.26-.81-1-1.44-1.9-1.44v1l1.79 1.79c.64-.56.98-1.37.98-2.23 0-1.29-.84-2.4-2-2.75l.54-.54c.58.21 1.13.71 1.38 1.36l1.1.88v-1.16c1.1 0 1.92.91 1.92 2.02 0 .58-.26 1.1-.66 1.48l.83.86z"/>
+                    </svg>
+                    <span class="btn-label">Relaciones</span>
+                    <span class="pending-icon"></span>
+                </div>
+                <div class="command-btn" id="alertsBtn" data-panel="alerts">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    <span class="btn-label">Alertas</span>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip">
+        <div class="tooltip-title"></div>
+        <div class="tooltip-content"></div>
+    </div>
+
+    <!-- Construction Panel (Left Side) -->
+    <div class="panel-side left" id="constructionPanel">
+        <div class="panel-header">
+            <span class="panel-title">Obras</span>
+            <button class="panel-close" onclick="closePanel('construction')">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+        <div class="category-tabs">
+            <button class="category-tab active" data-cat="all">Todas</button>
+            <button class="category-tab" data-cat="Aclima">Aclima</button>
+            <button class="category-tab" data-cat="Exhibition">Exhibición</button>
+            <button class="category-tab" data-cat="Science">Ciencia</button>
+            <button class="category-tab" data-cat="Logistics">Logística</button>
+            <button class="category-tab" data-cat="Security">Seguridad</button>
+            <button class="category-tab" data-cat="Archive">Archivo</button>
+        </div>
+        <div class="panel-content">
+            <div class="building-list" id="buildingsList"></div>
+        </div>
+    </div>
+
+    <!-- Politics Panel (Center Modal) -->
+    <div class="main-modal" id="politicsPanel">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <span class="modal-title">Gobierno</span>
+                <span class="modal-subtitle">Decretos y Políticas</span>
+                <button class="modal-close panel-close" onclick="closePanel('politics')">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="politics-list" id="politicsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Research/Doctrine Panel (Center Modal) -->
+    <div class="main-modal" id="researchPanel">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">Doctrina</span>
+                <span class="modal-subtitle">Árbol Tecnológico</span>
+                <button class="modal-close panel-close" onclick="closePanel('research')">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="research-tree" id="researchTree"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diplomacy Panel (Right Side) -->
+    <div class="panel-side right" id="diplomacyPanel">
+        <div class="panel-header">
+            <span class="panel-title">Relaciones</span>
+            <button class="panel-close" onclick="closePanel('diplomacy')">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="diplomacy-list" id="diplomacyList"></div>
+        </div>
+    </div>
+
+    <!-- Alerts Panel (Center Modal) -->
+    <div class="main-modal" id="alertsPanel">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <span class="modal-title">Alertas</span>
+                <span class="modal-subtitle">Bitácora de Eventos</span>
+                <button class="modal-close panel-close" onclick="closePanel('alerts')">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alerts-list" id="alertsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Menu Modal -->
+    <div class="main-modal" id="mainMenuModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Menú Principal</span>
+                <span class="modal-subtitle">Casa Portil</span>
+                <button class="modal-close panel-close" onclick="closePanel('mainMenu')">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <button class="modal-btn" onclick="resumeGame()">Continuar</button>
+                <button class="modal-btn" onclick="saveGame()">Guardar Partida</button>
+                <button class="modal-btn" onclick="loadGame()">Cargar Partida</button>
+                <button class="modal-btn" onclick="openPanel('alerts')">Bitácora</button>
+                <button class="modal-btn" onclick="closePanel('mainMenu')">Ajustes</button>
+                <button class="modal-btn danger" onclick="exitToMainMenu()">Salir al Menú Principal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- House Portil Summary Panel -->
+    <div class="house-panel" id="housePanel">
+        <div class="panel-header">
+            <span class="panel-title">Casa Portil</span>
+            <button class="panel-close" onclick="closePanel('house')">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="house-stats-grid">
+                <div class="house-stat-card">
+                    <div class="house-stat-label">Legitimidad</div>
+                    <div class="house-stat-value" id="house-legitimacy">80%</div>
+                    <div class="house-stat-detail">Poder dinástico</div>
+                </div>
+                <div class="house-stat-card">
+                    <div class="house-stat-label">Influencia</div>
+                    <div class="house-stat-value" id="house-influence">50</div>
+                    <div class="house-stat-detail">Rango en el Landsraad</div>
+                </div>
+                <div class="house-stat-card">
+                    <div class="house-stat-label">Riesgo</div>
+                    <div class="house-stat-value" id="house-risk">70%</div>
+                    <div class="house-stat-detail">Nivel de amenaza</div>
+                </div>
+                <div class="house-stat-card">
+                    <div class="house-stat-label">Población</div>
+                    <div class="house-stat-value" id="house-population">100</div>
+                    <div class="house-stat-detail">Súbditos</div>
+                </div>
+            </div>
+            <div class="house-section-title">Familia</div>
+            <div class="house-family-list" id="houseFamilyList"></div>
+            <div class="house-section-title" style="margin-top: 20px;">Ministros</div>
+            <div class="house-ministers-list" id="houseMinistersList"></div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationsContainer"></div>
+
+    <!-- Background Overlay for Modals -->
+    <div class="panel-overlay" id="overlay" onclick="closeActivePanel()"></div>
 
     <script src="game.js"></script>
 </body>
