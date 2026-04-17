@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casa Portil - Gestión Hidráulica Dinástica</title>
+    <title>Casa Portil - Gestión Dinástica</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,7 +15,20 @@
             --negro-pizarra-oscuro: #0f1113;
             --amber-critico: #b8860b;
             --rojo-apagado: #8b3a3a;
-            --sombra-humo: rgba(20, 25, 30, 0.95);
+            --azul-agua: #5dade2;
+            --verde-alimento: #58d68d;
+            --plomo-metal: #5a5a5a;
+            
+            /* Espaciado base */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            
+            /* Bordes */
+            --border-radius: 6px;
+            --border-radius-lg: 12px;
         }
 
         * {
@@ -28,931 +41,442 @@
             background: var(--negro-pizarra);
             color: var(--plata-fluvial);
             font-family: 'Crimson Text', 'Georgia', serif;
+            font-size: 14px;
             min-height: 100vh;
             overflow: hidden;
-            font-size: 15px;
         }
 
-        #gameContainer {
+        /* ==================== ESTRUCTURA PRINCIPAL 5 COLUMNAS ==================== */
+        #appContainer {
             display: flex;
             flex-direction: column;
             height: 100vh;
             background: linear-gradient(180deg, #0a0e12 0%, #0f1418 30%, #141a20 60%, #1a2028 100%);
         }
 
-        /* ==================== HUD ROOT ==================== */
-        #hudRoot {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* ==================== TOP BAND - SOVEREIGNTY ==================== */
-        #topBand {
+        /* HUD Superior */
+        #hudBar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 24px;
-            background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.85) 100%);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.9) 100%);
             border-bottom: 1px solid rgba(176, 179, 180, 0.15);
-            min-height: 90px;
-            position: relative;
+            min-height: 70px;
+            flex-shrink: 0;
         }
 
-        /* Menu Button (Top-Left) */
-        #menuButton {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #1f2327 0%, #15181d 100%);
-            border: 2px solid var(--plata-fluvial);
+        /* Cuerpo principal */
+        #mainBody {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 
-                0 4px 12px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(176, 179, 180, 0.1);
-            position: relative;
-        }
-
-        #menuButton:hover {
-            border-color: var(--verde-estuario);
-            box-shadow: 
-                0 0 20px rgba(43, 68, 59, 0.4),
-                0 4px 12px rgba(0, 0, 0, 0.4);
-        }
-
-        #menuButton.active {
-            border-color: var(--plata-clara);
-            box-shadow: 0 0 0 3px rgba(196, 197, 196, 0.2);
-        }
-
-        #menuButton svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--plata-fluvial);
-        }
-
-        #menuButton:hover svg {
-            fill: var(--verde-estuario);
-        }
-
-        #menuButton .alert-dot {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 10px;
-            height: 10px;
-            background: var(--amber-critico);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--amber-critico);
-            display: none;
-        }
-
-        #menuButton.has-unsaved .alert-dot {
-            display: block;
-        }
-
-        /* Resource Bar */
-        #topResourceBar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
             flex: 1;
-            justify-content: center;
-            margin: 0 80px;
+            overflow: hidden;
         }
 
-        .resource-card {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 18px;
-            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
-            border: 1px solid rgba(176, 179, 180, 0.25);
-            border-radius: 6px;
-            min-width: 120px;
-            position: relative;
-            box-shadow: 
-                0 2px 8px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(176, 179, 180, 0.08);
-        }
-
-        .resource-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(176, 179, 180, 0.15), transparent);
-        }
-
-        .resource-icon {
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(176, 179, 180, 0.1);
-            border-radius: 4px;
-        }
-
-        .resource-icon svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--plata-fluvial);
-        }
-
-        .resource-data {
+        /* Navegación lateral */
+        #navColumn {
+            width: 180px;
+            background: linear-gradient(90deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.95) 100%);
+            border-right: 1px solid rgba(176, 179, 180, 0.1);
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            flex-shrink: 0;
         }
 
-        .resource-value {
+        /* Vista central */
+        #vistaColumn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Inspector lateral */
+        #inspectorColumn {
+            width: 320px;
+            background: linear-gradient(270deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.95) 100%);
+            border-left: 1px solid rgba(176, 179, 180, 0.1);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        /* Bitácora inferior */
+        #bitacoraBar {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background: linear-gradient(0deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.95) 100%);
+            border-top: 1px solid rgba(176, 179, 180, 0.15);
+            min-height: 60px;
+            flex-shrink: 0;
+        }
+
+        /* ==================== HUD RECURSOS ==================== */
+        .hud-section {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+
+        .hud-title {
             font-family: 'Cinzel', serif;
             font-size: 18px;
-            font-weight: 600;
             color: var(--plata-clara);
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-right: var(--spacing-lg);
         }
 
-        .resource-label {
-            font-size: 10px;
+        .hud-resource {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: rgba(176, 179, 180, 0.08);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: var(--border-radius);
+        }
+
+        .hud-resource .icon {
+            font-size: 16px;
+        }
+
+        .hud-resource .value {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--plata-clara);
+        }
+
+        .hud-resource .label {
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             color: var(--plata-fluvial);
             opacity: 0.7;
         }
 
-        .resource-variation {
-            font-size: 11px;
-            font-weight: 600;
-            margin-left: 4px;
-        }
+        .hud-resource.primary .value { color: var(--plata-clara); }
+        .hud-resource.water .icon { color: var(--azul-agua); }
+        .hud-resource.food .icon { color: var(--verde-alimento); }
+        .hud-resource.warning .value { color: var(--amber-critico); }
+        .hud-resource.critical .value { color: var(--rojo-apagado); }
 
-        .resource-variation.positive {
-            color: var(--verde-estuario);
-        }
-
-        .resource-variation.negative {
-            color: var(--amber-critico);
-        }
-
-        /* ==================== CENTER BAND - IDENTITY + TIME ==================== */
-        #centerBand {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            background: linear-gradient(180deg, transparent 0%, rgba(17, 19, 23, 0.3) 50%, transparent 100%);
-            position: relative;
-        }
-
-        /* House Portil Crest Medallion */
-        #crestMedallion {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #1a1f24 0%, #0f1216 100%);
-            border: 4px solid var(--plata-fluvial);
+        .hud-tension {
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            position: relative;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.5),
-                0 0 0 2px rgba(176, 179, 180, 0.1),
-                inset 0 0 60px rgba(26, 29, 32, 0.8);
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-md);
+            background: rgba(176, 179, 180, 0.08);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: var(--border-radius);
         }
 
-        #crestMedallion::before {
-            content: '';
-            position: absolute;
-            inset: 8px;
-            border-radius: 50%;
-            border: 2px solid rgba(176, 179, 180, 0.2);
-        }
-
-        #crestMedallion::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: 50%;
-            border: 1px solid rgba(43, 68, 59, 0.3);
-        }
-
-        #crestMedallion:hover {
-            box-shadow: 
-                0 12px 48px rgba(0, 0, 0, 0.6),
-                0 0 0 2px rgba(43, 68, 59, 0.4),
-                0 0 40px rgba(43, 68, 59, 0.15),
-                inset 0 0 60px rgba(26, 29, 32, 0.8);
-        }
-
-        .crest-inner {
-            width: 140px;
-            height: 140px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .crest-shield {
+        .tension-bar {
             width: 80px;
-            height: 90px;
-            position: relative;
+            height: 8px;
+            background: var(--negro-pizarra-oscuro);
+            border-radius: 4px;
+            overflow: hidden;
         }
 
-        .crest-shield svg {
-            width: 100%;
+        .tension-bar-fill {
             height: 100%;
-            fill: var(--verde-estuario);
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+            background: linear-gradient(90deg, var(--verde-estuario), #3d5c4d);
+            transition: width 0.3s ease;
         }
 
-        .crest-delta {
+        .tension-bar-fill.warning { background: linear-gradient(90deg, #6b6b3d, #7d7d4d); }
+        .tension-bar-fill.critical { background: linear-gradient(90deg, var(--amber-critico), #8b6b3d); }
+
+        /* ==================== NAVEGACIÓN ==================== */
+        .nav-tabs {
             display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-top: 8px;
+            flex-direction: column;
+            padding: var(--spacing-sm);
+            gap: 2px;
         }
 
-        .crest-delta span {
-            width: 20px;
-            height: 4px;
-            background: var(--plata-fluvial);
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: transparent;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .nav-tab:hover {
+            background: rgba(176, 179, 180, 0.1);
+        }
+
+        .nav-tab.active {
+            background: var(--verde-estuario);
+            border: 1px solid rgba(43, 68, 59, 0.5);
+        }
+
+        .nav-tab .tab-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-tab .tab-label {
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            color: var(--plata-fluvial);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-tab.active .tab-label {
+            color: var(--plata-clara);
+        }
+
+        .nav-tab .tab-badge {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 2px 6px;
+            background: rgba(176, 179, 180, 0.2);
+            border-radius: 10px;
+            color: var(--plata-fluvial);
+        }
+
+        .nav-tab.active .tab-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--plata-clara);
+        }
+
+        /* ==================== VISTA CENTRAL ==================== */
+        .vista-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .vista-title {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            color: var(--plata-clara);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .vista-subtitle {
+            font-size: 12px;
+            color: var(--plata-fluvial);
             opacity: 0.6;
         }
 
-        .crest-delta span:nth-child(2) {
-            width: 14px;
-            opacity: 0.4;
-        }
-
-        .crest-name {
-            font-family: 'Cinzel', serif;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--plata-fluvial);
-            margin-top: 12px;
-            opacity: 0.8;
-        }
-
-        /* Time Control */
-        #timeControlBar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-top: 16px;
-            padding: 12px 24px;
-            background: linear-gradient(145deg, #181c21 0%, #101318 100%);
-            border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-
-        .time-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .time-btn:hover {
-            border-color: var(--plata-fluvial);
-            background: linear-gradient(145deg, #22282e 0%, #1a1e22 100%);
-        }
-
-        .time-btn.active {
-            border-color: var(--verde-estuario);
-            box-shadow: 0 0 12px rgba(43, 68, 59, 0.4);
-        }
-
-        .time-btn.active svg {
-            fill: var(--verde-estuario);
-        }
-
-        .time-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--plata-fluvial);
-        }
-
-        .time-divider {
-            width: 1px;
-            height: 30px;
-            background: rgba(176, 179, 180, 0.15);
-        }
-
-        #calendarDisplay {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            padding-left: 16px;
-            border-left: 1px solid rgba(176, 179, 180, 0.15);
-        }
-
-        .calendar-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--plata-fluvial);
-            opacity: 0.5;
-        }
-
-        .calendar-value {
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            color: var(--plata-clara);
-            letter-spacing: 1px;
-        }
-
-        /* ==================== BOTTOM BAND - LEGITIMACY + ORDERS ==================== */
-        #bottomBand {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 24px;
-            background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.95) 100%);
-            border-top: 1px solid rgba(176, 179, 180, 0.15);
-            min-height: 100px;
-            z-index: 100;
-        }
-
-        /* Status Indicators */
-        #statusIndicators {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-width: 200px;
-        }
-
-        .status-meter {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .status-label {
-            width: 70px;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--plata-fluvial);
-            opacity: 0.7;
-        }
-
-        .status-bar-container {
+        .vista-content {
             flex: 1;
-            height: 12px;
-            background: var(--negro-pizarra-oscuro);
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid rgba(176, 179, 180, 0.1);
-            position: relative;
+            overflow: auto;
+            padding: var(--spacing-lg);
         }
 
-        .status-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--verde-estuario), #3d5c4d);
-            border-radius: 6px;
-            transition: width 0.5s ease;
-            position: relative;
-        }
-
-        .status-bar-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent);
-        }
-
-        .status-bar-fill.warning {
-            background: linear-gradient(90deg, #6b6b3d, #7d7d4d);
-        }
-
-        .status-bar-fill.critical {
-            background: linear-gradient(90deg, var(--amber-critico), #8b6b3d);
-        }
-
-        .status-value {
-            width: 45px;
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--plata-clara);
-            text-align: right;
-        }
-
-        .status-trend {
-            font-size: 12px;
-            margin-left: 4px;
-        }
-
-        .status-trend.up {
-            color: var(--verde-estuario);
-        }
-
-        .status-trend.down {
-            color: var(--amber-critico);
-        }
-
-        /* Command Buttons */
-        #commandBar {
+        /* Subpestañas */
+        .sub-tabs {
             display: flex;
-            gap: 12px;
-        }
-
-        .command-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #1a1f24 0%, #121518 100%);
-            border: 2px solid rgba(176, 179, 180, 0.25);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            box-shadow: 
-                0 4px 16px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(176, 179, 180, 0.08);
-        }
-
-        .command-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(176, 179, 180, 0.2), transparent);
-        }
-
-        .command-btn:hover {
-            border-color: var(--plata-fluvial);
-            transform: translateY(-2px);
-            box-shadow: 
-                0 8px 24px rgba(0, 0, 0, 0.5),
-                0 0 20px rgba(43, 68, 59, 0.2);
-        }
-
-        .command-btn.selected {
-            border-color: var(--verde-estuario);
-            background: linear-gradient(145deg, #1f2924 0%, #161d1b 100%);
-            box-shadow: 
-                0 0 20px rgba(43, 68, 59, 0.4),
-                0 4px 16px rgba(0, 0, 0, 0.4);
-        }
-
-        .command-btn.blocked {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .command-btn .novelty-dot {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 8px;
-            height: 8px;
-            background: var(--verde-estuario);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--verde-estuario);
-        }
-
-        .command-btn .pending-icon {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 10px;
-            height: 10px;
-            background: var(--amber-critico);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--amber-critico);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .command-btn svg {
-            width: 28px;
-            height: 28px;
-            fill: var(--plata-fluvial);
-        }
-
-        .command-btn:hover svg {
-            fill: var(--plata-clara);
-        }
-
-        .command-btn.selected svg {
-            fill: var(--verde-estuario);
-        }
-
-        .command-btn .btn-label {
-            font-size: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--plata-fluvial);
-        }
-
-        .command-btn:hover .btn-label {
-            color: var(--plata-clara);
-        }
-
-        /* Alerts Button (smaller) */
-        #alertsBtn {
-            width: 60px;
-            height: 60px;
-        }
-
-        #alertsBtn svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        #alertsBtn .btn-label {
-            font-size: 7px;
-        }
-
-        /* ==================== GAME WORLD ==================== */
-        #gameWorld {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            margin: 0 24px;
-            border-radius: 8px;
-            border: 1px solid rgba(176, 179, 180, 0.1);
-        }
-
-        .world-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        #worldBackground {
-            background: 
-                radial-gradient(ellipse 100% 60% at 20% 0%, #1a1a2e 0%, transparent 50%),
-                radial-gradient(ellipse 80% 40% at 80% 10%, #16213e 0%, transparent 40%),
-                linear-gradient(180deg, #0a0f1a 0%, #121a28 40%, #1a2030 100%);
-        }
-
-        #worldCity {
-            background:
-                linear-gradient(to top, #0d1117 0%, #151a22 100%),
-                linear-gradient(90deg, transparent 10%, #1a1f28 10%, #1a1f28 14%, transparent 14%),
-                linear-gradient(to top, transparent 30%, #1a1f28 30%);
-        }
-
-        #worldStructures {
-            background:
-                linear-gradient(90deg, transparent 46%, #2a2520 46%, #2a2520 54%, transparent 54%),
-                linear-gradient(to top, transparent 0%, #2a2520 0%),
-                linear-gradient(90deg, transparent 42%, #252220 42%, #252220 44%, transparent 44%),
-                linear-gradient(90deg, transparent 56%, #252220 56%, #252220 58%, transparent 58%);
-        }
-
-        #worldWater {
-            background: linear-gradient(180deg, transparent 60%, rgba(20, 60, 100, 0.4) 75%, rgba(30, 80, 130, 0.5) 100%);
-        }
-
-        #worldFog {
-            background:
-                radial-gradient(ellipse 100% 20% at 50% 100%, rgba(80, 100, 130, 0.5) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 15% at 20% 80%, rgba(90, 110, 140, 0.3) 0%, transparent 50%);
-            animation: fogDrift 20s ease-in-out infinite;
-        }
-
-        @keyframes fogDrift {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
-        }
-
-        #worldLights {
-            background:
-                radial-gradient(circle 4px at 12% 42%, rgba(255, 180, 60, 0.9) 0%, transparent 100%),
-                radial-gradient(circle 3px at 32% 38%, rgba(255, 200, 80, 0.8) 0%, transparent 100%),
-                radial-gradient(circle 4px at 52% 32%, rgba(255, 170, 50, 0.85) 0%, transparent 100%),
-                radial-gradient(circle 3px at 72% 40%, rgba(255, 190, 70, 0.8) 0%, transparent 100%),
-                radial-gradient(circle 4px at 92% 45%, rgba(255, 185, 65, 0.9) 0%, transparent 100%);
-        }
-
-        /* ==================== OVERLAYS ==================== */
-        .panel-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 12, 15, 0.85);
-            z-index: 200;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .panel-overlay.active {
-            display: flex;
-        }
-
-        .panel-modal {
-            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 12px;
-            max-width: 80%;
-            max-height: 80%;
-            overflow: hidden;
-            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
-        }
-
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 24px;
-            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
-        }
-
-        .panel-title {
-            font-family: 'Cinzel', serif;
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--plata-clara);
-        }
-
-        .panel-close {
-            width: 32px;
-            height: 32px;
-            background: transparent;
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-
-        .panel-close:hover {
-            border-color: var(--plata-fluvial);
-            background: rgba(176, 179, 180, 0.1);
-        }
-
-        .panel-close svg {
-            width: 14px;
-            height: 14px;
-            fill: var(--plata-fluvial);
-        }
-
-        .panel-content {
-            padding: 24px;
-            max-height: calc(80vh - 80px);
-            overflow-y: auto;
-        }
-
-        /* Side Panels */
-        .panel-side {
-            position: fixed;
-            top: 90px;
-            bottom: 100px;
-            width: 380px;
-            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.15);
-            z-index: 150;
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .panel-side.left {
-            left: 0;
-            border-left: none;
-            border-top: none;
-            border-bottom: none;
-        }
-
-        .panel-side.right {
-            right: 0;
-            border-right: none;
-            border-top: none;
-            border-bottom: none;
-        }
-
-        .panel-side.active {
-            display: flex;
-        }
-
-        /* ==================== TOOLTIPS ==================== */
-        .tooltip {
-            position: fixed;
-            background: var(--negro-pizarra-oscuro);
-            border: 1px solid rgba(176, 179, 180, 0.25);
-            border-radius: 6px;
-            padding: 12px 16px;
-            max-width: 250px;
-            z-index: 300;
-            display: none;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-        }
-
-        .tooltip.visible {
-            display: block;
-        }
-
-        .tooltip-title {
-            font-family: 'Cinzel', serif;
-            font-size: 13px;
-            color: var(--plata-clara);
-            margin-bottom: 8px;
-        }
-
-        .tooltip-content {
-            font-size: 12px;
-            color: var(--plata-fluvial);
-            line-height: 1.5;
-        }
-
-        /* ==================== SIDE PANELS ==================== */
-        .panel-side {
-            position: fixed;
-            top: 90px;
-            bottom: 100px;
-            width: 400px;
-            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.15);
-            z-index: 150;
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .panel-side.left {
-            left: 0;
-            border-left: none;
-            border-top: none;
-            border-bottom: none;
-            border-radius: 0 12px 12px 0;
-        }
-
-        .panel-side.right {
-            right: 0;
-            border-right: none;
-            border-top: none;
-            border-bottom: none;
-            border-radius: 12px 0 0 12px;
-        }
-
-        .panel-side.active {
-            display: flex;
-        }
-
-        .panel-side .panel-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .panel-side .panel-title {
-            font-family: 'Cinzel', serif;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--plata-clara);
-        }
-
-        .panel-side .panel-close {
-            width: 28px;
-            height: 28px;
-            background: transparent;
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-
-        .panel-side .panel-close:hover {
-            border-color: var(--plata-fluvial);
-            background: rgba(176, 179, 180, 0.1);
-        }
-
-        .panel-side .panel-close svg {
-            width: 12px;
-            height: 12px;
-            fill: var(--plata-fluvial);
-        }
-
-        .panel-side .panel-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-        }
-
-        /* Category Tabs */
-        .category-tabs {
-            display: flex;
-            gap: 4px;
-            padding: 12px 16px;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-lg);
             border-bottom: 1px solid rgba(176, 179, 180, 0.1);
             flex-wrap: wrap;
         }
 
-        .category-tab {
-            padding: 6px 12px;
+        .sub-tab {
+            padding: var(--spacing-xs) var(--spacing-md);
             background: transparent;
             border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 4px;
-            font-size: 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--plata-fluvial);
-            cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
-        .category-tab:hover {
+        .sub-tab:hover {
             border-color: var(--plata-fluvial);
         }
 
-        .category-tab.active {
+        .sub-tab.active {
             background: var(--verde-estuario);
             border-color: var(--verde-estuario);
             color: var(--plata-clara);
         }
 
-        /* Building Cards */
-        .building-list {
+        /* ==================== GRILLAS Y TABLAS ==================== */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-md); }
+
+        .stat-card {
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+        }
+
+        .stat-card-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-card-value {
+            font-family: 'Cinzel', serif;
+            font-size: 28px;
+            color: var(--plata-clara);
+        }
+
+        .stat-card-detail {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            margin-top: var(--spacing-xs);
+        }
+
+        /* Tabla de datos */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+            padding: var(--spacing-sm);
+            text-align: left;
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .data-table td {
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        }
+
+        .data-table tr:hover td {
+            background: rgba(176, 179, 180, 0.05);
+        }
+
+        /* ==================== MAPA DE NODOS ==================== */
+        .node-map {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: 
+                radial-gradient(ellipse 100% 60% at 20% 0%, #1a1a2e 0%, transparent 50%),
+                linear-gradient(180deg, #0a0f1a 0%, #121a28 100%);
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+        }
+
+        .node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 2px solid var(--plata-fluvial);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover {
+            border-color: var(--verde-estuario);
+            box-shadow: 0 0 20px rgba(43, 68, 59, 0.3);
+            transform: scale(1.1);
+        }
+
+        .node.selected {
+            border-color: var(--plata-clara);
+            box-shadow: 0 0 30px rgba(196, 197, 196, 0.3);
+        }
+
+        .node .node-icon {
+            font-size: 24px;
+        }
+
+        .node .node-name {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--plata-fluvial);
+            margin-top: 2px;
+        }
+
+        .node-tension {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .node-tension.low { background: var(--verde-estuario); color: var(--plata-clara); }
+        .node-tension.medium { background: #6b6b3d; color: var(--plata-clara); }
+        .node-tension.high { background: var(--amber-critico); color: var(--plata-clara); }
+
+        /* ==================== EDIFICIOS ==================== */
+        .building-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--spacing-md);
         }
 
         .building-card {
             background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
             border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            padding: 14px;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
-        .building-card:hover:not(.built):not(.disabled) {
+        .building-card:hover:not(.built):not(.locked) {
             border-color: var(--verde-estuario);
             box-shadow: 0 0 16px rgba(43, 68, 59, 0.2);
         }
 
         .building-card.built {
-            border-color: var(--verde-estuario);
+            border-color: rgba(43, 68, 59, 0.3);
             opacity: 0.7;
         }
 
-        .building-card.disabled {
+        .building-card.locked {
             opacity: 0.4;
             cursor: not-allowed;
         }
 
-        .building-card-header {
+        .building-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
         }
 
         .building-name {
@@ -966,364 +490,265 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--plata-fluvial);
-            opacity: 0.6;
             background: rgba(176, 179, 180, 0.1);
             padding: 2px 8px;
             border-radius: 3px;
         }
 
-        .building-cost {
+        .building-costs {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-md);
             font-size: 12px;
-            color: var(--plata-fluvial);
-            margin-bottom: 6px;
+            margin-bottom: var(--spacing-sm);
         }
 
-        .building-cost span {
+        .building-cost {
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
-        .building-cost .cost-funds { color: var(--plata-clara); }
-        .building-cost .cost-water { color: #5dade2; }
-        .building-cost .cost-food { color: #58d68d; }
+        .building-cost.solari { color: var(--plata-clara); }
+        .building-cost.water { color: var(--azul-agua); }
+        .building-cost.plastiacero { color: var(--plomo-metal); }
+        .building-cost.sellos { color: var(--amber-critico); }
+        .building-cost.cuadros { color: #9b59b6; }
 
-        .building-effect {
+        .building-effects {
             font-size: 11px;
             color: var(--verde-estuario);
-            margin-top: 6px;
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-sm);
+            border-top: 1px solid rgba(176, 179, 180, 0.1);
         }
 
         .building-status {
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(176, 179, 180, 0.1);
+            margin-top: var(--spacing-sm);
         }
 
-        .building-status.built {
-            color: var(--verde-estuario);
-        }
+        .building-status.built { color: var(--verde-estuario); }
+        .building-status.locked { color: var(--plata-fluvial); }
 
-        /* ==================== MAIN MODAL ==================== */
-        .main-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 12, 15, 0.9);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .main-modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 500px;
-            overflow: hidden;
-            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
-        }
-
-        .modal-header {
-            padding: 24px;
-            text-align: center;
+        /* ==================== INSPECTOR ==================== */
+        .inspector-header {
+            padding: var(--spacing-md) var(--spacing-lg);
             border-bottom: 1px solid rgba(176, 179, 180, 0.1);
         }
 
-        .modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: var(--plata-clara);
-            margin-bottom: 4px;
-        }
-
-        .modal-subtitle {
-            font-size: 12px;
-            color: var(--plata-fluvial);
-            opacity: 0.6;
-            letter-spacing: 2px;
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        .modal-btn {
-            display: block;
-            width: 100%;
-            padding: 14px 20px;
-            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 8px;
-            color: var(--plata-clara);
+        .inspector-title {
             font-family: 'Cinzel', serif;
             font-size: 14px;
+            color: var(--plata-clara);
             text-transform: uppercase;
             letter-spacing: 2px;
-            cursor: pointer;
-            margin-bottom: 12px;
-            text-align: center;
-            transition: all 0.3s;
         }
 
-        .modal-btn:hover {
-            border-color: var(--verde-estuario);
-            box-shadow: 0 0 16px rgba(43, 68, 59, 0.2);
+        .inspector-subtitle {
+            font-size: 11px;
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+            margin-top: 2px;
         }
 
-        .modal-btn.danger {
-            border-color: rgba(139, 58, 58, 0.4);
+        .inspector-content {
+            flex: 1;
+            overflow: auto;
+            padding: var(--spacing-md);
         }
 
-        .modal-btn.danger:hover {
-            border-color: var(--rojo-apagado);
-            box-shadow: 0 0 16px rgba(139, 58, 58, 0.2);
+        .inspector-section {
+            margin-bottom: var(--spacing-lg);
         }
 
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
+        .inspector-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--plata-fluvial);
+            margin-bottom: var(--spacing-sm);
+            padding-bottom: var(--spacing-xs);
+            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
         }
 
-        /* ==================== NOTIFICATIONS / ALERTS ==================== */
-        .notification {
-            position: fixed;
-            top: 100px;
-            right: 24px;
-            width: 320px;
-            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            padding: 14px 16px;
-            z-index: 300;
-            display: none;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            animation: slideIn 0.3s ease;
-        }
-
-        .notification.active {
-            display: block;
-        }
-
-        .notification.critical {
-            border-color: var(--amber-critico);
-        }
-
-        .notification-header {
+        .inspector-stat {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .notification-title {
-            font-family: 'Cinzel', serif;
+            padding: var(--spacing-xs) 0;
             font-size: 13px;
-            color: var(--plata-clara);
         }
 
-        .notification-time {
+        .inspector-stat-label {
+            color: var(--plata-fluvial);
+        }
+
+        .inspector-stat-value {
+            color: var(--plata-clara);
+            font-family: 'Cinzel', serif;
+        }
+
+        /* ==================== BITÁCORA ==================== */
+        .bitacora-timeline {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .bitacora-entry {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: rgba(176, 179, 180, 0.05);
+            border-radius: var(--border-radius);
+            white-space: nowrap;
+        }
+
+        .bitacora-time {
             font-size: 10px;
             color: var(--plata-fluvial);
             opacity: 0.6;
         }
 
-        .notification-content {
+        .bitacora-event {
             font-size: 12px;
             color: var(--plata-fluvial);
-            line-height: 1.5;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .bitacora-entry.critical .bitacora-event {
+            color: var(--amber-critico);
         }
 
-        /* ==================== HOUSE PORTIL PANEL ==================== */
-        .house-panel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            background: linear-gradient(180deg, #1a1f24 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 16px;
-            z-index: 200;
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
-        }
-
-        .house-panel.active {
-            display: flex;
-        }
-
-        .house-panel .panel-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        .round-controls {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: var(--spacing-sm);
         }
 
-        .house-panel .panel-content {
-            padding: 24px;
-            overflow-y: auto;
-            flex: 1;
+        .round-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
+            border: 1px solid rgba(176, 179, 180, 0.2);
+            border-radius: var(--border-radius);
+            color: var(--plata-clara);
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .house-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+        .round-btn:hover {
+            border-color: var(--verde-estuario);
+            box-shadow: 0 0 12px rgba(43, 68, 59, 0.2);
         }
 
-        .house-stat-card {
-            background: rgba(176, 179, 180, 0.05);
-            border: 1px solid rgba(176, 179, 180, 0.1);
-            border-radius: 8px;
-            padding: 16px;
+        .round-btn.primary {
+            background: var(--verde-estuario);
+            border-color: var(--verde-estuario);
         }
 
-        .house-stat-label {
+        .round-display {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(176, 179, 180, 0.1);
+            border-radius: var(--border-radius);
+        }
+
+        .round-number {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            color: var(--plata-clara);
+        }
+
+        .round-label {
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--plata-fluvial);
-            opacity: 0.6;
-            margin-bottom: 4px;
         }
 
-        .house-stat-value {
+        /* ==================== FLUJO DE RECURSOS ==================== */
+        .flow-chart {
+            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+        }
+
+        .flow-node {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: rgba(176, 179, 180, 0.08);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+        }
+
+        .flow-node-value {
             font-family: 'Cinzel', serif;
             font-size: 24px;
             color: var(--plata-clara);
         }
 
-        .house-stat-detail {
-            font-size: 11px;
+        .flow-node-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             color: var(--plata-fluvial);
             margin-top: 4px;
         }
 
-        .house-section-title {
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--plata-clara);
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(176, 179, 180, 0.1);
+        .flow-arrow {
+            text-align: center;
+            font-size: 20px;
+            color: var(--verde-estuario);
+            padding: var(--spacing-sm) 0;
         }
 
-        .house-family-list, .house-ministers-list {
+        .flow-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: var(--spacing-sm);
         }
 
-        .family-member-card, .minister-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(176, 179, 180, 0.05);
-            border: 1px solid rgba(176, 179, 180, 0.1);
-            border-radius: 8px;
-            padding: 12px 16px;
-        }
-
-        .member-info {
+        /* ==================== CONTRATOS ==================== */
+        .contract-list {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: var(--spacing-md);
         }
 
-        .member-name {
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            color: var(--plata-clara);
-        }
-
-        .member-role {
-            font-size: 11px;
-            color: var(--plata-fluvial);
-            opacity: 0.7;
-        }
-
-        .member-stats {
-            display: flex;
-            gap: 6px;
-        }
-
-        .stat-badge {
-            font-size: 10px;
-            background: rgba(43, 68, 59, 0.3);
-            color: var(--plata-clara);
-            padding: 3px 8px;
-            border-radius: 4px;
-        }
-
-        /* ==================== RESEARCH TREE ==================== */
-        .research-tree {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .research-node {
+        .contract-card {
             background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
             border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
-        .research-node:hover:not(.locked) {
-            border-color: var(--verde-estuario);
+        .contract-card:hover {
+            border-color: var(--plata-fluvial);
         }
 
-        .research-node.locked {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .research-node.available {
-            border-color: rgba(43, 68, 59, 0.4);
-        }
-
-        .research-node-header {
+        .contract-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
         }
 
-        .research-name {
+        .contract-name {
             font-family: 'Cinzel', serif;
             font-size: 14px;
             color: var(--plata-clara);
         }
 
-        .research-status {
+        .contract-state {
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -1331,179 +756,152 @@
             border-radius: 4px;
         }
 
-        .research-status.available {
+        .contract-state.active {
             background: rgba(43, 68, 59, 0.3);
             color: var(--verde-estuario);
         }
 
-        .research-status.locked {
-            background: rgba(176, 179, 180, 0.1);
+        .contract-state.pending {
+            background: rgba(176, 179, 180, 0.15);
             color: var(--plata-fluvial);
         }
 
-        .research-status.unlocked {
-            background: var(--verde-estuario);
-            color: var(--plata-clara);
+        .contract-state.expired {
+            background: rgba(139, 58, 58, 0.3);
+            color: #c45050;
         }
 
-        .research-desc {
+        .contract-parties {
+            display: flex;
+            gap: var(--spacing-sm);
             font-size: 12px;
             color: var(--plata-fluvial);
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
         }
 
-        .research-cost {
-            font-size: 11px;
-            color: var(--plata-fluvial);
-            opacity: 0.7;
+        .contract-value {
+            font-size: 16px;
+            color: var(--plata-clara);
+            font-family: 'Cinzel', serif;
         }
 
-        /* ==================== DIPLOMACY PANEL ==================== */
-        .diplomacy-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        /* ==================== CUSTODIA ==================== */
+        .custodia-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: var(--spacing-md);
         }
 
-        .diplomacy-card {
+        .custodia-card {
             background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
             border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            padding: 14px 16px;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+        }
+
+        .custodia-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: var(--spacing-sm);
         }
 
-        .diplomacy-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .house-emblem {
-            width: 40px;
-            height: 40px;
-            background: rgba(176, 179, 180, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .house-details {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .house-name {
+        .custodia-class {
             font-family: 'Cinzel', serif;
             font-size: 14px;
             color: var(--plata-clara);
         }
 
-        .house-power {
-            font-size: 11px;
-            color: var(--plata-fluvial);
+        .custodia-risk {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
         }
 
-        .house-relation {
+        .custodia-risk.low { background: rgba(43, 68, 59, 0.3); color: var(--verde-estuario); }
+        .custodia-risk.medium { background: rgba(184, 134, 11, 0.3); color: var(--amber-critico); }
+        .custodia-risk.high { background: rgba(139, 58, 58, 0.3); color: #c45050; }
+
+        .custodia-stats {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 4px;
+            gap: var(--spacing-md);
+            font-size: 12px;
         }
 
-        .relation-status {
+        .custodia-stat-label {
+            color: var(--plata-fluvial);
+            opacity: 0.7;
+        }
+
+        .custodia-stat-value {
+            color: var(--plata-clara);
+        }
+
+        /* ==================== CRISIS ==================== */
+        .crisis-card {
+            background: linear-gradient(145deg, #2a1e1e 0%, #1a1212 100%);
+            border: 1px solid rgba(139, 58, 58, 0.4);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .crisis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .crisis-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            color: var(--rojo-apagado);
+        }
+
+        .crisis-severity {
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 4px 10px;
             border-radius: 4px;
+            background: rgba(139, 58, 58, 0.4);
+            color: var(--plata-clara);
         }
 
-        .relation-status.hostile {
-            background: rgba(139, 58, 58, 0.3);
-            color: #c45050;
-        }
-
-        .relation-status.neutral {
-            background: rgba(176, 179, 180, 0.15);
+        .crisis-desc {
+            font-size: 13px;
             color: var(--plata-fluvial);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.5;
         }
 
-        .relation-status.friendly {
-            background: rgba(43, 68, 59, 0.3);
-            color: var(--verde-estuario);
-        }
-
-        /* ==================== POLITICS PANEL ==================== */
-        .politics-list {
+        .crisis-options {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--spacing-sm);
         }
 
-        .politics-card {
-            background: linear-gradient(145deg, #1a1e22 0%, #121518 100%);
-            border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            padding: 16px;
-        }
-
-        .politics-header {
+        .crisis-option {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .politics-name {
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            color: var(--plata-clara);
-        }
-
-        .politics-effect {
-            font-size: 11px;
-            color: var(--plata-fluvial);
-            margin-bottom: 10px;
-        }
-
-        .politics-cost {
-            display: flex;
-            gap: 12px;
-            font-size: 11px;
-            color: var(--plata-fluvial);
-            padding-top: 10px;
-            border-top: 1px solid rgba(176, 179, 180, 0.1);
-        }
-
-        .politics-btn {
-            background: linear-gradient(145deg, #1a1e22 0%, #14181c 100%);
-            border: 1px solid rgba(176, 179, 180, 0.2);
-            border-radius: 6px;
-            padding: 10px 16px;
-            color: var(--plata-clara);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(176, 179, 180, 0.05);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: var(--border-radius);
             cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            text-align: center;
-            margin-top: 10px;
+            transition: all 0.2s ease;
         }
 
-        .politics-btn:hover {
-            border-color: var(--verde-estuario);
+        .crisis-option:hover {
+            border-color: var(--plata-fluvial);
+            background: rgba(176, 179, 180, 0.1);
         }
 
-        .politics-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+        .crisis-option-cost {
+            font-size: 12px;
+            color: var(--plata-fluvial);
         }
 
         /* ==================== START SCREEN ==================== */
@@ -1524,7 +922,7 @@
             font-size: 56px;
             text-transform: uppercase;
             letter-spacing: 8px;
-            margin-bottom: 16px;
+            margin-bottom: var(--spacing-md);
             text-shadow: 0 4px 24px rgba(176, 179, 180, 0.2);
         }
 
@@ -1537,7 +935,7 @@
         }
 
         #startScreen button {
-            padding: 16px 48px;
+            padding: var(--spacing-md) 48px;
             background: linear-gradient(145deg, #1f2327 0%, #15181d 100%);
             border: 2px solid var(--plata-fluvial);
             color: var(--plata-clara);
@@ -1545,7 +943,7 @@
             font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 3px;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -1556,9 +954,9 @@
             transform: translateY(-2px);
         }
 
-        /* ==================== SCROLLBAR ==================== */
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -1567,378 +965,422 @@
 
         ::-webkit-scrollbar-thumb {
             background: rgba(176, 179, 180, 0.3);
-            border-radius: 5px;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(176, 179, 180, 0.5);
         }
+
+        /* Utilidades */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .mb-sm { margin-bottom: var(--spacing-sm); }
+        .mb-md { margin-bottom: var(--spacing-md); }
+        .mb-lg { margin-bottom: var(--spacing-lg); }
     </style>
 </head>
 <body>
     <!-- Start Screen -->
-    <div id="startScreen">
+    <div id="startScreen" style="display: none;">
         <h1>Casa Portil</h1>
-        <p>Gestión Hidráulica Dinástica</p>
-        <button id="btnNewGame">Nueva Partida</button>
+        <p>Gestión Dinástica</p>
+        <button id="btnNewGame" onclick="iniciarPartido()">Iniciar Partido</button>
     </div>
 
-    <!-- HUD Root -->
-    <div id="hudRoot">
-        <!-- Top Band: Sovereignty -->
-        <div id="topBand">
-            <!-- Menu Button -->
-            <div id="menuButton" title="Menú Principal">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
-                </svg>
-                <span class="alert-dot"></span>
+    <!-- App Container -->
+    <div id="appContainer">
+        <!-- HUD Superior -->
+        <div id="hudBar">
+            <div class="hud-section">
+                <span class="hud-title">Portil</span>
+            </div>
+            <div class="hud-section">
+                <!-- Recursos Primarios -->
+                <div class="hud-resource primary" title="Moneda de la Casa">
+                    <span class="icon">💰</span>
+                    <span class="value" id="hud-solari">5000</span>
+                    <span class="label">Solari</span>
+                </div>
+                <div class="hud-resource water" title="Recurso crítico del ecosistema">
+                    <span class="icon">💧</span>
+                    <span class="value" id="hud-agua">1000</span>
+                    <span class="label">Agua</span>
+                </div>
+                <div class="hud-resource food" title="Abastecimiento">
+                    <span class="icon">🍖</span>
+                    <span class="value" id="hud-comida">800</span>
+                    <span class="label">Raciones</span>
+                </div>
+                <div class="hud-resource" title="Material de construcción">
+                    <span class="icon">⚙️</span>
+                    <span class="value" id="hud-plastiacero">200</span>
+                    <span class="label">Plastiacero</span>
+                </div>
+                <div class="hud-resource" title="Mano de obra">
+                    <span class="icon">👥</span>
+                    <span class="value" id="hud-cuadros">50</span>
+                    <span class="label">Cuadros</span>
+                </div>
+            </div>
+            <div class="hud-section">
+                <!-- Tensión -->
+                <div class="hud-tension">
+                    <span class="label" style="font-size: 10px; text-transform: uppercase;">Tensión</span>
+                    <div class="tension-bar">
+                        <div class="tension-bar-fill" id="tension-bar" style="width: 70%;"></div>
+                    </div>
+                    <span class="value" id="tension-value" style="font-family: Cinzel; font-size: 14px; color: var(--plata-clara);">70%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cuerpo Principal -->
+        <div id="mainBody">
+            <!-- Navegación Lateral -->
+            <div id="navColumn">
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-vista="casa">
+                        <span class="tab-icon">🏛️</span>
+                        <span class="tab-label">Casa</span>
+                    </button>
+                    <button class="nav-tab" data-vista="enclaves">
+                        <span class="tab-icon">🗺️</span>
+                        <span class="tab-label">Enclaves</span>
+                        <span class="tab-badge">3</span>
+                    </button>
+                    <button class="nav-tab" data-vista="obras">
+                        <span class="tab-icon">🔨</span>
+                        <span class="tab-label">Obras</span>
+                    </button>
+                    <button class="nav-tab" data-vista="hacienda">
+                        <span class="tab-icon">📊</span>
+                        <span class="tab-label">Hacienda</span>
+                    </button>
+                    <button class="nav-tab" data-vista="contratos">
+                        <span class="tab-icon">📜</span>
+                        <span class="tab-label">Contratos</span>
+                        <span class="tab-badge">2</span>
+                    </button>
+                    <button class="nav-tab" data-vista="custodia">
+                        <span class="tab-icon">🧬</span>
+                        <span class="tab-label">Custodia</span>
+                    </button>
+                    <button class="nav-tab" data-vista="archivo">
+                        <span class="tab-icon">📊</span>
+                        <span class="tab-label">Archivo</span>
+                    </button>
+                    <button class="nav-tab" data-vista="crisis">
+                        <span class="tab-icon">⚠️</span>
+                        <span class="tab-label">Crisis</span>
+                        <span class="tab-badge" style="background: var(--rojo-apagado); color: white;">1</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Resource Bar -->
-            <div id="topResourceBar">
-                <!-- Left Resources -->
-                <div class="resource-card" data-resource="money">
-                    <div class="resource-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-1.5v1.69c-1.32.16-2.47.68-2.8 1.82-.22.78.12 1.68.76 1.84.95.24 1.84-.3 2.25-.78.29-.34.47-.76.54-1.22H8.04c-.05.78-.36 1.57-.91 2.16-.65.7-1.54 1.11-2.58 1.22V12h1.5v1.09c1.4.12 2.67.72 3.05 1.6.3.7.1 1.5-.45 1.9-.86.62-2.09.44-2.65-.22-.36-.42-.54-.96-.54-1.5h-2.2c.05 1.72 1.41 3.08 3.19 3.67V21h1.5v-1.65c1.02-.15 1.87-.56 2.35-1.23.38-.53.26-1.22-.24-1.65-.75-.64-1.87-.72-2.55-.26-.42.28-.65.72-.68 1.23h2.21c.07-1.67-1.27-3.08-2.99-3.52v-1.1h-1.5v1.03z"/>
-                        </svg>
+            <!-- Vista Central -->
+            <div id="vistaColumn">
+                <!-- Vista Casa -->
+                <div id="vista-casa" class="vista-panel">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Casa Portil</div>
+                            <div class="vista-subtitle">Resumen ejecutivo</div>
+                        </div>
                     </div>
-                    <div class="resource-data">
-                        <div class="resource-value" id="resource-money">5000</div>
-                        <div class="resource-label">Fondos
-                            <span class="resource-variation positive" id="variation-money">+5</span>
+                    <div class="vista-content">
+                        <div class="grid-4 mb-lg">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Crédito Landsraad</div>
+                                <div class="stat-card-value" id="credito-landraad">75</div>
+                                <div class="stat-card-detail">Legitimidad política</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Participaciones CHOAM</div>
+                                <div class="stat-card-value" id="participaciones-choam">15%</div>
+                                <div class="stat-card-detail">Peso corporativo</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Enclaves activos</div>
+                                <div class="stat-card-value" id="enclaves-activos">3</div>
+                                <div class="stat-card-detail">Nodos operativos</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Obras en construcción</div>
+                                <div class="stat-card-value" id="obras-activas">1</div>
+                                <div class="stat-card-detail">En progreso</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div>
+                                <h3 style="font-family: Cinzel; font-size: 14px; color: var(--plata-clara); margin-bottom: 16px;">ALERTAS CRÍTICAS</h3>
+                                <div id="alertas-list">
+                                    <div style="padding: 12px; background: rgba(139, 58, 58, 0.2); border-left: 3px solid var(--rojo-apagado); border-radius: 4px; margin-bottom: 8px;">
+                                        <div style="font-size: 13px; color: var(--plata-clara);">Escasez de Agua</div>
+                                        <div style="font-size: 11px; color: var(--plata-fluvial); opacity: 0.7;">Los almacenes están al 25% de capacidad</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 style="font-family: Cinzel; font-size: 14px; color: var(--plata-clara); margin-bottom: 16px;">CONTRATO MÁS RENTABLE</h3>
+                                <div style="padding: 16px; background: linear-gradient(145deg, #1a1e22 0%, #121518 100%); border: 1px solid rgba(43, 68, 59, 0.3); border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-family: Cinzel; color: var(--plata-clara);">Acuerdo CHOAM</span>
+                                        <span style="background: var(--verde-estuario); padding: 2px 8px; border-radius: 4px; font-size: 10px; color: var(--plata-clara);">ACTIVO</span>
+                                    </div>
+                                    <div style="margin-top: 12px; font-size: 20px; color: var(--plata-clara); font-family: Cinzel;">+150 Solari/ronda</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="resource-card" data-resource="prestige">
-                    <div class="resource-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
+                <!-- Vista Enclaves -->
+                <div id="vista-enclaves" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Enclaves</div>
+                            <div class="vista-subtitle">Red de nodos territoriales</div>
+                        </div>
                     </div>
-                    <div class="resource-data">
-                        <div class="resource-value" id="resource-prestige">100</div>
-                        <div class="resource-label">Prestigio
-                            <span class="resource-variation positive" id="variation-prestige">+1</span>
+                    <div class="vista-content">
+                        <div class="node-map" id="nodeMap">
+                            <!-- Nodos generados dinámicamente -->
+                        </div>
+                        <div class="grid-3 mt-lg">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Aforo operativo</div>
+                                <div class="stat-card-value" id="aforo-total">120</div>
+                                <div class="stat-card-detail">Capacidad total</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Consumo de agua</div>
+                                <div class="stat-card-value" id="consuma-agua">85</div>
+                                <div class="stat-card-detail">Por ronda</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Enclaves tensionados</div>
+                                <div class="stat-card-value" id="enclaves-tension" style="color: var(--amber-critico);">1</div>
+                                <div class="stat-card-detail">Requiere atención</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Center: Crest -->
-                <div id="crestMedallion" title="Resumen de Casa Portil">
-                    <div class="crest-inner">
-                        <div class="crest-shield">
-                            <svg viewBox="0 0 100 110">
-                                <path d="M50 5 L90 20 L90 50 Q90 85 50 105 Q10 85 10 50 L10 20 Z"/>
-                            </svg>
-                        </div>
-                        <div class="crest-delta">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                        <div class="crest-name">Portil</div>
-                    </div>
-                </div>
-
-                <!-- Right Resources -->
-                <div class="resource-card" data-resource="faith">
-                    <div class="resource-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 4.84L15.58 12H14v2h-4v-2H8.42L12 7.84z"/>
-                        </svg>
-                    </div>
-                    <div class="resource-data">
-                        <div class="resource-value" id="resource-faith">80</div>
-                        <div class="resource-label">Fe
-                            <span class="resource-variation negative" id="variation-faith">-1</span>
+                <!-- Vista Obras -->
+                <div id="vista-obras" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Obras</div>
+                            <div class="vista-subtitle">Construcción y mejora</div>
                         </div>
                     </div>
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" data-sub="infra">Infraestructura</button>
+                        <button class="sub-tab" data-sub="logistica">Logística</button>
+                        <button class="sub-tab" data-sub="custodia">Custodia</button>
+                        <button class="sub-tab" data-sub="ciencia">Ciencia</button>
+                        <button class="sub-tab" data-sub="admin">Administración</button>
+                        <button class="sub-tab" data-sub="protocolo">Protocolo</button>
+                        <button class="sub-tab" data-sub="seguridad">Seguridad</button>
+                    </div>
+                    <div class="vista-content">
+                        <div class="building-grid" id="buildingsGrid"></div>
+                    </div>
                 </div>
 
-                <div class="resource-card" data-resource="military">
-                    <div class="resource-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm6 9.09c0 4-2.55 7.7-6 8.83-3.45-1.13-6-4.82-6-8.83v-4.18l6-2.25 6 2.25v4.18zM12 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-                        </svg>
+                <!-- Vista Hacienda -->
+                <div id="vista-hacienda" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Hacienda</div>
+                            <div class="vista-subtitle">Administración económica</div>
+                        </div>
                     </div>
-                    <div class="resource-data">
-                        <div class="resource-value" id="resource-military">50</div>
-                        <div class="resource-label">Armas
-                            <span class="resource-variation" id="variation-military">±0</span>
+                    <div class="vista-content">
+                        <div class="grid-3 mb-lg">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Ingreso por ronda</div>
+                                <div class="stat-card-value" id="ingreso-ronda" style="color: var(--verde-estuario);">+320</div>
+                                <div class="stat-card-detail">Solari</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Gasto por ronda</div>
+                                <div class="stat-card-value" id="gasto-ronda" style="color: var(--rojo-apagado);">-180</div>
+                                <div class="stat-card-detail">Solari</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Balance neto</div>
+                                <div class="stat-card-value" id="balance-neto" style="color: var(--verde-estuario);">+140</div>
+                                <div class="stat-card-detail">Solari/ronda</div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-family: Cinzel; font-size: 14px; color: var(--plata-clara); mb-md;">FLUJO DE RECURSOS</h3>
+                        <div class="flow-chart">
+                            <div style="display: flex; justify-content: space-around; align-items: center;">
+                                <div class="flow-group">
+                                    <div class="flow-node">
+                                        <div class="flow-node-value" id="flow-ingresos">320</div>
+                                        <div class="flow-node-label">Ingresos</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 24px; color: var(--verde-estuario);">→</div>
+                                <div class="flow-group">
+                                    <div class="flow-node">
+                                        <div class="flow-node-value" id="flow-caja">5000</div>
+                                        <div class="flow-node-label">Caja</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 24px; color: var(--rojo-apagado);">→</div>
+                                <div class="flow-group">
+                                    <div class="flow-node">
+                                        <div class="flow-node-value" id="flow-gastos">180</div>
+                                        <div class="flow-node-label">Gastos</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-family: Cinzel; font-size: 14px; color: var(--plata-clara); margin-top: 24px; margin-bottom: 16px;">PROYECCIÓN</h3>
+                        <table class="data-table" style="max-width: 400px;">
+                            <thead>
+                                <tr>
+                                    <th>Plazo</th>
+                                    <th>Proyección</th>
+                                    <th>Riesgo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1 ronda</td>
+                                    <td style="color: var(--plata-clara);">5,140</td>
+                                    <td style="color: var(--verde-estuario);">Bajo</td>
+                                </tr>
+                                <tr>
+                                    <td>3 rondas</td>
+                                    <td style="color: var(--plata-clara);">5,420</td>
+                                    <td style="color: var(--plata-fluvial);">Medio</td>
+                                </tr>
+                                <tr>
+                                    <td>6 rondas</td>
+                                    <td style="color: var(--plata-clara);">5,840</td>
+                                    <td style="color: var(--amber-critico);">Alto</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vista Contratos -->
+                <div id="vista-contratos" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Contratos</div>
+                            <div class="vista-subtitle">Negociación y audiencias</div>
+                        </div>
+                    </div>
+                    <div class="vista-content">
+                        <div class="contract-list" id="contractsList"></div>
+                    </div>
+                </div>
+
+                <!-- Vista Custodia -->
+                <div id="vista-custodia" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Custodia</div>
+                            <div class="vista-subtitle">Gestión de activos biológicos</div>
+                        </div>
+                    </div>
+                    <div class="vista-content">
+                        <div class="custodia-grid" id="custodiaGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Vista Archivo -->
+                <div id="vista-archivo" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Archivo Mentat</div>
+                            <div class="vista-subtitle">Datos, informes y predicción</div>
+                        </div>
+                    </div>
+                    <div class="vista-content">
+                        <div class="grid-2 mb-lg">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Registros de Caudal</div>
+                                <div class="stat-card-value" id="registros-caudal">1,247</div>
+                                <div class="stat-card-detail">Total acumulados</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Predicción de crisis</div>
+                                <div class="stat-card-value" id="prediccion-crisis">45%</div>
+                                <div class="stat-card-detail">Probabilidad próxima ronda</div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-family: Cinzel; font-size: 14px; color: var(--plata-clara); margin-bottom: 16px;">HISTÓRICOS DE TENSIÓN</h3>
+                        <div style="height: 120px; background: linear-gradient(145deg, #1a1e22 0%, #121518 100%); border: 1px solid rgba(176, 179, 180, 0.15); border-radius: 8px; padding: 16px; display: flex; align-items: flex-end; gap: 8px;">
+                            <div style="width: 40px; height: 60%; background: var(--verde-estuario); border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 75%; background: var(--verde-estuario); border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 65%; background: var(--verde-estuario); border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 80%; background: #6b6b3d; border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 70%; background: var(--verde-estuario); border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 85%; background: #6b6b3d; border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 70%; background: var(--verde-estuario); border-radius: 2px;"></div>
+                            <div style="width: 40px; height: 70%; background: var(--verde-estuario); border-radius: 2px;"></div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Center Band: Identity + Time -->
-        <div id="centerBand">
-            <!-- Time Control -->
-            <div id="timeControlBar">
-                <div class="time-btn" id="btn-pause" title="Pausar">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                    </svg>
-                </div>
-                <div class="time-btn active" id="btn-play" title="Reproducir (1x)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </div>
-                <div class="time-btn" id="btn-fast" title="Rapido (2x)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 18l8-6v12l-8-6zm8 0l8-6v12l-8-6z"/>
-                    </svg>
-                </div>
-                <div class="time-btn" id="btn-veryfast" title="Muy Rapido (4x)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 18l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6z"/>
-                    </svg>
-                </div>
-                <div class="time-divider"></div>
-                <div id="calendarDisplay">
-                    <div>
-                        <span class="calendar-label">Día</span>
-                        <span class="calendar-value" id="day-display">1</span>
+                <!-- Vista Crisis -->
+                <div id="vista-crisis" class="vista-panel hidden">
+                    <div class="vista-header">
+                        <div>
+                            <div class="vista-title">Crisis</div>
+                            <div class="vista-subtitle">Eventos y contingencias</div>
+                        </div>
                     </div>
-                    <div>
-                        <span class="calendar-label">Mes</span>
-                        <span class="calendar-value" id="month-display">Cicloceno, 1020</span>
+                    <div class="vista-content">
+                        <div id="crisisList"></div>
                     </div>
-                    <div>
-                        <span class="calendar-label">Hora</span>
-                        <span class="calendar-value" id="hour-display">08:00</span>
+                </div>
+            </div>
+
+            <!-- Inspector Lateral -->
+            <div id="inspectorColumn">
+                <div class="inspector-header">
+                    <div class="inspector-title" id="inspector-title">Inspector</div>
+                    <div class="inspector-subtitle" id="inspector-subtitle">Seleccione un elemento</div>
+                </div>
+                <div class="inspector-content" id="inspector-content">
+                    <div style="text-align: center; padding: 40px; color: var(--plata-fluvial); opacity: 0.5;">
+                        Seleccione un enclave, edificio o contrato para ver detalles
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Game World (Middle Layer) -->
-        <div id="gameWorld">
-            <div id="worldBackground" class="world-layer"></div>
-            <div id="worldCity" class="world-layer"></div>
-            <div id="worldStructures" class="world-layer"></div>
-            <div id="worldWater" class="world-layer"></div>
-            <div id="worldFog" class="world-layer"></div>
-            <div id="worldLights" class="world-layer"></div>
-        </div>
-
-        <!-- Bottom Band: Legitimacy + Orders -->
-        <div id="bottomBand">
-            <!-- Status Indicators -->
-            <div id="statusIndicators">
-                <div class="status-meter" data-status="stability">
-                    <span class="status-label">Estabilidad</span>
-                    <div class="status-bar-container">
-                        <div class="status-bar-fill" id="stability-bar" style="width: 70%;"></div>
-                    </div>
-                    <span class="status-value" id="stability-value">70%</span>
-                    <span class="status-trend up" id="stability-trend">▲</span>
+        <!-- Bitácora Inferior -->
+        <div id="bitacoraBar">
+            <div class="round-controls">
+                <span style="font-size: 10px; text-transform: uppercase; color: var(--plata-fluvial); margin-right: 8px;">Ronda</span>
+                <div class="round-display">
+                    <div class="round-number" id="round-number">1</div>
                 </div>
-                <div class="status-meter" data-status="approval">
-                    <span class="status-label">Aprobación</span>
-                    <div class="status-bar-container">
-                        <div class="status-bar-fill" id="approval-bar" style="width: 60%;"></div>
-                    </div>
-                    <span class="status-value" id="approval-value">60%</span>
-                    <span class="status-trend down" id="approval-trend">▼</span>
-                </div>
+                <button class="round-btn primary" id="btn-close-round">Cerrar Ronda</button>
             </div>
-
-            <!-- Command Bar -->
-            <div id="commandBar">
-                <div class="command-btn" id="btn-construction" data-panel="construction">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2L2 7v2h20V7L12 2zm0 2.19L18.35 7H5.65L12 4.19zM4 10v8h2v-6h12v6h2v-8H4zm4 2v4h-2v-4h2zm4 0v4h-2v-4h2zm4 0v4h-2v-4h2z"/>
-                    </svg>
-                    <span class="btn-label">Obras</span>
-                    <span class="novelty-dot"></span>
-                </div>
-                <div class="command-btn" id="btn-politics" data-panel="politics">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                    </svg>
-                    <span class="btn-label">Gobierno</span>
-                </div>
-                <div class="command-btn" id="btn-research" data-panel="research">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
-                    </svg>
-                    <span class="btn-label">Doctrina</span>
-                </div>
-                <div class="command-btn" id="btn-diplomacy" data-panel="diplomacy">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-1.14c-.26-.81-1-1.44-1.9-1.44v1l1.79 1.79c.64-.56.98-1.37.98-2.23 0-1.29-.84-2.4-2-2.75l.54-.54c.58.21 1.13.71 1.38 1.36l1.1.88v-1.16c1.1 0 1.92.91 1.92 2.02 0 .58-.26 1.1-.66 1.48l.83.86z"/>
-                    </svg>
-                    <span class="btn-label">Relaciones</span>
-                    <span class="pending-icon"></span>
-                </div>
-                <div class="command-btn" id="alertsBtn" data-panel="alerts">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                    </svg>
-                    <span class="btn-label">Alertas</span>
+            <div class="bitacora-timeline" id="bitacora-timeline">
+                <div class="bitacora-entry">
+                    <span class="bitacora-time">R1</span>
+                    <span class="bitacora-event">Partido iniciada</span>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Tooltip -->
-    <div class="tooltip" id="tooltip">
-        <div class="tooltip-title"></div>
-        <div class="tooltip-content"></div>
-    </div>
-
-    <!-- Construction Panel (Left Side) -->
-    <div class="panel-side left" id="constructionPanel">
-        <div class="panel-header">
-            <span class="panel-title">Obras</span>
-            <button class="panel-close" onclick="closePanel('construction')">
-                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
-        </div>
-        <div class="category-tabs">
-            <button class="category-tab active" data-cat="all">Todas</button>
-            <button class="category-tab" data-cat="Aclima">Aclima</button>
-            <button class="category-tab" data-cat="Exhibition">Exhibición</button>
-            <button class="category-tab" data-cat="Science">Ciencia</button>
-            <button class="category-tab" data-cat="Logistics">Logística</button>
-            <button class="category-tab" data-cat="Security">Seguridad</button>
-            <button class="category-tab" data-cat="Archive">Archivo</button>
-        </div>
-        <div class="panel-content">
-            <div class="building-list" id="buildingsList"></div>
-        </div>
-    </div>
-
-    <!-- Politics Panel (Center Modal) -->
-    <div class="main-modal" id="politicsPanel">
-        <div class="modal-content" style="max-width: 550px;">
-            <div class="modal-header">
-                <span class="modal-title">Gobierno</span>
-                <span class="modal-subtitle">Decretos y Políticas</span>
-                <button class="modal-close panel-close" onclick="closePanel('politics')">
-                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="politics-list" id="politicsList"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Research/Doctrine Panel (Center Modal) -->
-    <div class="main-modal" id="researchPanel">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <span class="modal-title">Doctrina</span>
-                <span class="modal-subtitle">Árbol Tecnológico</span>
-                <button class="modal-close panel-close" onclick="closePanel('research')">
-                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="research-tree" id="researchTree"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Diplomacy Panel (Right Side) -->
-    <div class="panel-side right" id="diplomacyPanel">
-        <div class="panel-header">
-            <span class="panel-title">Relaciones</span>
-            <button class="panel-close" onclick="closePanel('diplomacy')">
-                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
-        </div>
-        <div class="panel-content">
-            <div class="diplomacy-list" id="diplomacyList"></div>
-        </div>
-    </div>
-
-    <!-- Alerts Panel (Center Modal) -->
-    <div class="main-modal" id="alertsPanel">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header">
-                <span class="modal-title">Alertas</span>
-                <span class="modal-subtitle">Bitácora de Eventos</span>
-                <button class="modal-close panel-close" onclick="closePanel('alerts')">
-                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="alerts-list" id="alertsList"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Menu Modal -->
-    <div class="main-modal" id="mainMenuModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title">Menú Principal</span>
-                <span class="modal-subtitle">Casa Portil</span>
-                <button class="modal-close panel-close" onclick="closePanel('mainMenu')">
-                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <button class="modal-btn" onclick="resumeGame()">Continuar</button>
-                <button class="modal-btn" onclick="saveGame()">Guardar Partida</button>
-                <button class="modal-btn" onclick="loadGame()">Cargar Partida</button>
-                <button class="modal-btn" onclick="openPanel('alerts')">Bitácora</button>
-                <button class="modal-btn" onclick="closePanel('mainMenu')">Ajustes</button>
-                <button class="modal-btn danger" onclick="exitToMainMenu()">Salir al Menú Principal</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- House Portil Summary Panel -->
-    <div class="house-panel" id="housePanel">
-        <div class="panel-header">
-            <span class="panel-title">Casa Portil</span>
-            <button class="panel-close" onclick="closePanel('house')">
-                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
-        </div>
-        <div class="panel-content">
-            <div class="house-stats-grid">
-                <div class="house-stat-card">
-                    <div class="house-stat-label">Legitimidad</div>
-                    <div class="house-stat-value" id="house-legitimacy">80%</div>
-                    <div class="house-stat-detail">Poder dinástico</div>
-                </div>
-                <div class="house-stat-card">
-                    <div class="house-stat-label">Influencia</div>
-                    <div class="house-stat-value" id="house-influence">50</div>
-                    <div class="house-stat-detail">Rango en el Landsraad</div>
-                </div>
-                <div class="house-stat-card">
-                    <div class="house-stat-label">Riesgo</div>
-                    <div class="house-stat-value" id="house-risk">70%</div>
-                    <div class="house-stat-detail">Nivel de amenaza</div>
-                </div>
-                <div class="house-stat-card">
-                    <div class="house-stat-label">Población</div>
-                    <div class="house-stat-value" id="house-population">100</div>
-                    <div class="house-stat-detail">Súbditos</div>
-                </div>
-            </div>
-            <div class="house-section-title">Familia</div>
-            <div class="house-family-list" id="houseFamilyList"></div>
-            <div class="house-section-title" style="margin-top: 20px;">Ministros</div>
-            <div class="house-ministers-list" id="houseMinistersList"></div>
-        </div>
-    </div>
-
-    <!-- Notification Container -->
-    <div id="notificationsContainer"></div>
-
-    <!-- Background Overlay for Modals -->
-    <div class="panel-overlay" id="overlay" onclick="closeActivePanel()"></div>
 
     <script src="game.js"></script>
 </body>
