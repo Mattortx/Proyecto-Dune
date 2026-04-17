@@ -9,13 +9,16 @@ const gameState = {
     resources: { funds: 5000, water: 1000, food: 1000, prestige: 100, staff: 50 },
     population: { total: 100, workers: 50, scientists: 20, guards: 10, nobles: 20, stress: 20 },
     family: { dynastyName: 'Casa Portil', ruler: { name: 'Archivist Vanya', role: 'Regente' }, legitimacy: 80, influence: 50 },
-    government: { stability: 70 },
-    army: { defense: 50, guards: 20, security: 50 },
+    government: { stability: 70, approval: 60 },
+    army: { defense: 50, guards: 20, security: 50, power: 50, morale: 50, discipline: 50 },
     diplomacy: { reputation: 50 },
     events: { timeline: 0 },
     buildings: [],
     districts: [],
-    riskLevel: 70
+    riskLevel: 70,
+    production: { water: 2, food: 2, funds: 1 },
+    faith: 80,
+    military: 50
 };
 
 // ============================================
@@ -87,12 +90,15 @@ async function loadGameData() {
 function initOfflineData() {
     gameState.buildings = [
         { id: 'hydraulic_chamber', name: 'Cámara Hidráulica', category: 'Aclima', cost: { funds: 1000, water: 200 }, effects: { waterGeneration: 50 }, isBuilt: false },
+        { id: 'granja', name: 'Granja Hidráulica', category: 'Logistics', cost: { funds: 600, water: 50 }, effects: { foodGeneration: 5 }, isBuilt: false },
+        { id: 'almacen_alimento', name: 'Almacén de Alimentos', category: 'Logistics', cost: { funds: 400 }, effects: { foodStorage: 20 }, isBuilt: false },
+        { id: 'canal_riego', name: 'Canal de Riego', category: 'Aclima', cost: { funds: 800, water: 100 }, effects: { foodGeneration: 2, waterDistribution: 10 }, isBuilt: false },
         { id: 'ceremonial_plaza', name: 'Plaza Ceremonial', category: 'Exhibition', cost: { funds: 800, prestige: 50 }, effects: { prestigeGeneration: 20 }, isBuilt: false },
         { id: 'biology_lab', name: 'Laboratorio Biológico', category: 'Science', cost: { funds: 1500, staff: 10 }, effects: { foodGeneration: 10 }, isBuilt: false },
         { id: 'water_plant', name: 'Planta de Agua', category: 'Logistics', cost: { funds: 2000, water: 100 }, effects: { waterGeneration: 100 }, isBuilt: false },
-        { id: 'water_wall', name: 'Muro Hidráulico', category: 'Security', cost: { funds: 1200, containment: 200 }, effects: { securityBonus: 30 }, isBuilt: false },
-        { id: 'data_chamber', name: 'Cámara de Datos', category: 'Archive', cost: { funds: 600, bioData: 50 }, effects: { prestigeGeneration: 10 }, isBuilt: false },
-        { id: 'water_depot', name: 'Depósito de Agua', category: 'Logistics', cost: { funds: 500, containment: 100 }, effects: { waterGeneration: 20 }, isBuilt: false },
+        { id: 'water_wall', name: 'Muro Hidráulico', category: 'Security', cost: { funds: 1200, water: 200 }, effects: { securityBonus: 30 }, isBuilt: false },
+        { id: 'data_chamber', name: 'Cámara de Datos', category: 'Archive', cost: { funds: 600, prestige: 50 }, effects: { prestigeGeneration: 10 }, isBuilt: false },
+        { id: 'water_depot', name: 'Depósito de Agua', category: 'Logistics', cost: { funds: 500, water: 100 }, effects: { waterGeneration: 20 }, isBuilt: false },
         { id: 'filtration_plant', name: 'Planta de Filtrado', category: 'Logistics', cost: { funds: 800, staff: 5 }, effects: { foodGeneration: 30 }, isBuilt: false }
     ];
     gameState.districts = [
@@ -184,6 +190,13 @@ function updateArmyView() {
     document.getElementById('armyDefense').textContent = gameState.army.defense;
     document.getElementById('armyGuards').textContent = gameState.army.guards;
     document.getElementById('securityLevel').textContent = `${gameState.army.security}%`;
+    
+    const armyPowerEl = document.getElementById('armyPower');
+    if (armyPowerEl) armyPowerEl.textContent = gameState.army.power || 50;
+    const armyMoraleEl = document.getElementById('armyMorale');
+    if (armyMoraleEl) armyMoraleEl.textContent = gameState.army.morale || 50;
+    const armyDisciplineEl = document.getElementById('armyDiscipline');
+    if (armyDisciplineEl) armyDisciplineEl.textContent = gameState.army.discipline || 50;
 }
 
 function updateDiplomacyView() {
@@ -275,12 +288,48 @@ async function gameTick() {
 }
 
 function offlineTick() {
+    const speed = 1;
+    const waterBaseProduction = 2;
+    const foodBaseProduction = 2;
+    const fundsBaseProduction = 1;
+    
+    let waterGen = waterBaseProduction;
+    let foodGen = foodBaseProduction;
+    let fundsGen = fundsBaseProduction;
+    
+    for (const building of gameState.buildings) {
+        if (building.isBuilt && building.effects) {
+            if (building.effects.waterGeneration) waterGen += building.effects.waterGeneration;
+            if (building.effects.foodGeneration) foodGen += building.effects.foodGeneration;
+            if (building.effects.fundsGeneration) fundsGen += building.effects.fundsGeneration;
+        }
+    }
+    
+    const consumption = Math.floor(gameState.population.total * 0.3);
+    
+    gameState.resources.water = Math.max(0, Math.min(100000, gameState.resources.water + waterGen - consumption));
+    gameState.resources.food = Math.max(0, Math.min(100000, gameState.resources.food + foodGen - consumption));
+    gameState.resources.funds = Math.max(0, Math.min(100000, gameState.resources.funds + fundsGen));
+    
+    function randomVariation() {
+        return Math.floor(Math.random() * 3) - 1;
+    }
+    
+    gameState.population.workers = Math.max(10, Math.min(200, gameState.population.workers + randomVariation()));
+    gameState.population.total = Math.max(10, Math.min(500, gameState.population.total + randomVariation()));
+    gameState.resources.prestige = Math.max(0, Math.min(1000, gameState.resources.prestige + randomVariation()));
+    gameState.family.influence = Math.max(0, Math.min(100, gameState.family.influence + randomVariation()));
+    gameState.government.stability = Math.max(0, Math.min(100, gameState.government.stability + randomVariation()));
+    gameState.government.approval = Math.max(0, Math.min(100, gameState.government.approval + randomVariation()));
+    gameState.army.defense = Math.max(0, Math.min(100, gameState.army.defense + randomVariation()));
+    gameState.army.power = Math.max(0, Math.min(100, gameState.army.power + randomVariation()));
+    gameState.army.morale = Math.max(0, Math.min(100, gameState.army.morale + randomVariation()));
+    gameState.army.discipline = Math.max(0, Math.min(100, gameState.army.discipline + randomVariation()));
+    gameState.faith = Math.max(0, Math.min(100, gameState.faith + randomVariation()));
+    gameState.military = Math.max(0, Math.min(100, gameState.military + randomVariation()));
+    
     gameState.events.timeline++;
-    gameState.resources.funds += 10;
-    gameState.resources.water += 5;
-    gameState.resources.food += 5;
-    gameState.resources.water -= Math.floor(gameState.population.total * 0.5);
-    gameState.resources.food -= Math.floor(gameState.population.total * 0.5);
+    
     updateAllUI();
 }
 
@@ -288,4 +337,18 @@ function offlineTick() {
 // Initialize
 // ============================================
 
-document.addEventListener('DOMContentLoaded', initUI);
+document.addEventListener('DOMContentLoaded', function() {
+    const startScreen = document.getElementById('startScreen');
+    const gameContainer = document.getElementById('gameContainer');
+    const btnNewGame = document.getElementById('btnNewGame');
+    
+    if (btnNewGame && startScreen && gameContainer) {
+        btnNewGame.addEventListener('click', function() {
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'flex';
+            initUI();
+        });
+    } else {
+        initUI();
+    }
+});

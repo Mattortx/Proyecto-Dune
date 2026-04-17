@@ -90,6 +90,8 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
         }
 
         .palace-header {
@@ -147,9 +149,10 @@
             background: var(--bg-panel);
             border-top: 2px solid var(--bronze);
             padding: 20px;
-            overflow-y: scroll;
+            overflow-y: auto;
             overflow-x: hidden;
             min-height: 200px;
+            max-height: calc(100vh - 300px);
         }
 
 .visual-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -305,7 +308,13 @@
     </style>
 </head>
 <body>
-    <div id="gameContainer">
+    <div id="startScreen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(180deg,#0a0f14 0%,#121820 50%,#1a1f28 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <h1 style="color:#d4a76a;font-size:48px;margin-bottom:16px;font-family:'Cinzel',Georgia,serif;text-transform:uppercase;letter-spacing:4px;">Casa Portil</h1>
+        <p style="color:#8b949e;font-size:18px;margin-bottom:48px;font-style:italic;">Gestión Hidráulica Dinástica</p>
+        <button id="btnNewGame" style="padding:16px 48px;font-size:18px;background:#21262d;border:2px solid #d4a76a;color:#d4a76a;border-radius:8px;cursor:pointer;font-family:'Cinzel',Georgia,serif;transition:all 0.3s;">Nueva Partida</button>
+    </div>
+
+    <div id="gameContainer" style="display:none;">
         <div id="hud">
             <div class="resource-item"><span class="resource-icon">💰</span><div><div class="resource-value" id="funds">5000</div><div class="resource-label">Fondos</div></div></div>
             <div class="resource-item"><span class="resource-icon">💧</span><div><div class="resource-value" id="water">1000</div><div class="resource-label">Agua</div></div></div>
