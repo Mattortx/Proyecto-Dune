@@ -216,33 +216,35 @@
             position: relative;
         }
 
-        /* Nuevo: Contenedor central para tiempo (velocidad - escudo - calendario) */
-        #centerTimeBlock {
+        /* Controles de tiempo inferiores (debajo de recursos) */
+        #timeControlsRow {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            margin-top: 16px;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 700px;
+            margin-top: 24px;
+            padding: 0 20px;
         }
 
-        /* Controles de velocidad a la izquierda */
+        /* Velocidad DEBAJO de Fondos/Prestigio (izquierda) */
         #timeControlBar {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
+            gap: 6px;
+            padding: 8px 12px;
             background: linear-gradient(145deg, #181c21 0%, #101318 100%);
             border: 1px solid rgba(176, 179, 180, 0.15);
             border-radius: 8px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
-        /* Calendario a la derecha */
+        /* Calendario DEBAJO de Fe/Armas (derecha) */
         #calendarDisplay {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 10px 20px;
+            gap: 12px;
+            padding: 8px 16px;
             background: linear-gradient(145deg, #181c21 0%, #101318 100%);
             border: 1px solid rgba(176, 179, 180, 0.15);
             border-radius: 8px;
@@ -441,6 +443,28 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+        }
+
+        /* ESQUINA INFERIOR DERECHA - Alertas */
+        #alertsCorner {
+            position: fixed;
+            bottom: 16px;
+            right: 24px;
+            z-index: 110;
+        }
+
+        #alertsCorner .command-btn {
+            width: 56px;
+            height: 56px;
+        }
+
+        #alertsCorner .command-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        #alertsCorner .btn-label {
+            font-size: 7px;
         }
 
         /* Status Indicators - integrados en la botonera */
@@ -1732,9 +1756,9 @@
 
         <!-- Center Band: Identity + Time -->
         <div id="centerBand">
-            <!-- Nuevo: Bloque central de tiempo -->
-            <div id="centerTimeBlock">
-                <!-- Controles de velocidad (izquierda) -->
+            <!-- Nuevo: Bloque inferior de tiempo (separado del escudo) -->
+            <div id="timeControlsRow">
+                <!-- Izquierda: Botones de velocidad DEBAJO de Fondos/Prestigio -->
                 <div id="timeControlBar">
                     <div class="time-btn" id="btn-pause" title="Pausar">
                         <svg viewBox="0 0 24 24">
@@ -1758,7 +1782,7 @@
                     </div>
                 </div>
 
-                <!-- Calendario (derecha) -->
+                <!-- Derecha: Calendario DEBAJO de Fe/Armas -->
                 <div id="calendarDisplay">
                     <div class="calendar-time-group">
                         <span class="calendar-label">Día</span>
@@ -1843,8 +1867,10 @@
                     <span class="btn-label">Relaciones</span>
                     <span class="pending-icon"></span>
                 </div>
+            </div>
 
-                <!-- Botón Alertas -->
+            <!-- Botón Alertas en ESQUINA INFERIOR DERECHA -->
+            <div id="alertsCorner">
                 <div class="command-btn" id="alertsBtn" data-panel="alerts">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
