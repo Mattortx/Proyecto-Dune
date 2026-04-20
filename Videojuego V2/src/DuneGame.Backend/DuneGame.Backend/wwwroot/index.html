@@ -127,6 +127,8 @@
             margin: 0 80px;
         }
 
+        
+
         .resource-card {
             display: flex;
             align-items: center;
@@ -212,6 +214,46 @@
             padding: 20px 0;
             background: linear-gradient(180deg, transparent 0%, rgba(17, 19, 23, 0.3) 50%, transparent 100%);
             position: relative;
+        }
+
+        /* Nuevo: Contenedor central para tiempo (velocidad - escudo - calendario) */
+        #centerTimeBlock {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        /* Controles de velocidad a la izquierda */
+        #timeControlBar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: linear-gradient(145deg, #181c21 0%, #101318 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Calendario a la derecha */
+        #calendarDisplay {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 20px;
+            background: linear-gradient(145deg, #181c21 0%, #101318 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        #calendarDisplay .calendar-time-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
 
         /* House Portil Crest Medallion */
@@ -309,19 +351,6 @@
             opacity: 0.8;
         }
 
-        /* Time Control */
-        #timeControlBar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-top: 16px;
-            padding: 12px 24px;
-            background: linear-gradient(145deg, #181c21 0%, #101318 100%);
-            border: 1px solid rgba(176, 179, 180, 0.15);
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-
         .time-btn {
             width: 40px;
             height: 40px;
@@ -353,6 +382,10 @@
             width: 18px;
             height: 18px;
             fill: var(--plata-fluvial);
+        }
+
+        #btn-fast svg, #btn-veryfast svg {
+            transform: scaleX(-1);
         }
 
         .time-divider {
@@ -393,42 +426,55 @@
             right: 0;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             padding: 16px 24px;
             background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.95) 100%);
             border-top: 1px solid rgba(176, 179, 180, 0.15);
             min-height: 100px;
             z-index: 100;
+            gap: 16px;
         }
 
-        /* Status Indicators */
+        /* Nuevo: contenedor de botones con indicadores integrados */
+        #lowerCommandBlock {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Status Indicators - integrados en la botonera */
         #statusIndicators {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-width: 200px;
+            flex-direction: row;
+            gap: 12px;
+            padding: 8px 12px;
+            background: linear-gradient(145deg, #181c21 0%, #101318 100%);
+            border: 1px solid rgba(176, 179, 180, 0.15);
+            border-radius: 8px;
         }
 
         .status-meter {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
         }
 
-        .status-label {
-            width: 70px;
-            font-size: 10px;
+        .status-meter .status-label {
+            width: auto;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             color: var(--plata-fluvial);
             opacity: 0.7;
+            white-space: nowrap;
         }
 
-        .status-bar-container {
-            flex: 1;
-            height: 12px;
+        .status-meter .status-bar-container {
+            width: 80px;
+            height: 10px;
             background: var(--negro-pizarra-oscuro);
-            border-radius: 6px;
+            border-radius: 5px;
             overflow: hidden;
             border: 1px solid rgba(176, 179, 180, 0.1);
             position: relative;
@@ -437,7 +483,7 @@
         .status-bar-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--verde-estuario), #3d5c4d);
-            border-radius: 6px;
+            border-radius: 5px;
             transition: width 0.5s ease;
             position: relative;
         }
@@ -460,8 +506,10 @@
             background: linear-gradient(90deg, var(--amber-critico), #8b6b3d);
         }
 
-        .status-value {
-            width: 45px;
+        .status-meter .status-value {
+            width: 35px;
+            font-size: 12px;
+        }
             font-family: 'Cinzel', serif;
             font-size: 14px;
             font-weight: 600;
@@ -1058,6 +1106,8 @@
 
         .modal-body {
             padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
         }
 
         .modal-btn {
@@ -1109,13 +1159,17 @@
             border-radius: 8px;
             padding: 14px 16px;
             z-index: 300;
-            display: none;
+            display: block;
+            opacity: 0;
+            transform: translateX(100%);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            animation: slideIn 0.3s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .notification.active {
             display: block;
+            opacity: 1;
+            transform: translateX(0);
         }
 
         .notification.critical {
@@ -1595,6 +1649,8 @@
                 <span class="alert-dot"></span>
             </div>
 
+            
+
             <!-- Resource Bar -->
             <div id="topResourceBar">
                 <!-- Left Resources -->
@@ -1676,39 +1732,43 @@
 
         <!-- Center Band: Identity + Time -->
         <div id="centerBand">
-            <!-- Time Control -->
-            <div id="timeControlBar">
-                <div class="time-btn" id="btn-pause" title="Pausar">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                    </svg>
+            <!-- Nuevo: Bloque central de tiempo -->
+            <div id="centerTimeBlock">
+                <!-- Controles de velocidad (izquierda) -->
+                <div id="timeControlBar">
+                    <div class="time-btn" id="btn-pause" title="Pausar">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                    </div>
+                    <div class="time-btn active" id="btn-play" title="Reproducir (1x)">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                    <div class="time-btn" id="btn-fast" title="Rapido (2x)">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8 18l8-6v12l-8-6zm8 0l8-6v12l-8-6z"/>
+                        </svg>
+                    </div>
+                    <div class="time-btn" id="btn-veryfast" title="Muy Rapido (4x)">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 18l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6z"/>
+                        </svg>
+                    </div>
                 </div>
-                <div class="time-btn active" id="btn-play" title="Reproducir (1x)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </div>
-                <div class="time-btn" id="btn-fast" title="Rapido (2x)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 18l8-6v12l-8-6zm8 0l8-6v12l-8-6z"/>
-                    </svg>
-                </div>
-                <div class="time-btn" id="btn-veryfast" title="Muy Rapido (4x)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 18l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6zm4 0l4-6v12l-4-6z"/>
-                    </svg>
-                </div>
-                <div class="time-divider"></div>
+
+                <!-- Calendario (derecha) -->
                 <div id="calendarDisplay">
-                    <div>
+                    <div class="calendar-time-group">
                         <span class="calendar-label">Día</span>
                         <span class="calendar-value" id="day-display">1</span>
                     </div>
-                    <div>
+                    <div class="calendar-time-group">
                         <span class="calendar-label">Mes</span>
                         <span class="calendar-value" id="month-display">Cicloceno, 1020</span>
                     </div>
-                    <div>
+                    <div class="calendar-time-group">
                         <span class="calendar-label">Hora</span>
                         <span class="calendar-value" id="hour-display">08:00</span>
                     </div>
@@ -1728,28 +1788,9 @@
 
         <!-- Bottom Band: Legitimacy + Orders -->
         <div id="bottomBand">
-            <!-- Status Indicators -->
-            <div id="statusIndicators">
-                <div class="status-meter" data-status="stability">
-                    <span class="status-label">Estabilidad</span>
-                    <div class="status-bar-container">
-                        <div class="status-bar-fill" id="stability-bar" style="width: 70%;"></div>
-                    </div>
-                    <span class="status-value" id="stability-value">70%</span>
-                    <span class="status-trend up" id="stability-trend">▲</span>
-                </div>
-                <div class="status-meter" data-status="approval">
-                    <span class="status-label">Aprobación</span>
-                    <div class="status-bar-container">
-                        <div class="status-bar-fill" id="approval-bar" style="width: 60%;"></div>
-                    </div>
-                    <span class="status-value" id="approval-value">60%</span>
-                    <span class="status-trend down" id="approval-trend">▼</span>
-                </div>
-            </div>
-
-            <!-- Command Bar -->
-            <div id="commandBar">
+            <!-- Command Bar con indicadores integrados -->
+            <div id="lowerCommandBlock">
+                <!-- Botón Obras -->
                 <div class="command-btn" id="btn-construction" data-panel="construction">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2L2 7v2h20V7L12 2zm0 2.19L18.35 7H5.65L12 4.19zM4 10v8h2v-6h12v6h2v-8H4zm4 2v4h-2v-4h2zm4 0v4h-2v-4h2zm4 0v4h-2v-4h2z"/>
@@ -1757,18 +1798,44 @@
                     <span class="btn-label">Obras</span>
                     <span class="novelty-dot"></span>
                 </div>
+                
+                <!-- Botón Gobierno -->
                 <div class="command-btn" id="btn-politics" data-panel="politics">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                     </svg>
                     <span class="btn-label">Gobierno</span>
                 </div>
+
+                <!-- Indicadores políticos integrados: Estabilidad y Aprobación -->
+                <div id="statusIndicators">
+                    <div class="status-meter" data-status="stability">
+                        <span class="status-label">Estab.</span>
+                        <div class="status-bar-container">
+                            <div class="status-bar-fill" id="stability-bar" style="width: 70%;"></div>
+                        </div>
+                        <span class="status-value" id="stability-value">70%</span>
+                        <span class="status-trend up" id="stability-trend">▲</span>
+                    </div>
+                    <div class="status-meter" data-status="approval">
+                        <span class="status-label">Aprob.</span>
+                        <div class="status-bar-container">
+                            <div class="status-bar-fill" id="approval-bar" style="width: 60%;"></div>
+                        </div>
+                        <span class="status-value" id="approval-value">60%</span>
+                        <span class="status-trend down" id="approval-trend">▼</span>
+                    </div>
+                </div>
+
+                <!-- Botón Doctrina -->
                 <div class="command-btn" id="btn-research" data-panel="research">
                     <svg viewBox="0 0 24 24">
                         <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
                     </svg>
                     <span class="btn-label">Doctrina</span>
                 </div>
+                
+                <!-- Botón Relaciones -->
                 <div class="command-btn" id="btn-diplomacy" data-panel="diplomacy">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-1.14c-.26-.81-1-1.44-1.9-1.44v1l1.79 1.79c.64-.56.98-1.37.98-2.23 0-1.29-.84-2.4-2-2.75l.54-.54c.58.21 1.13.71 1.38 1.36l1.1.88v-1.16c1.1 0 1.92.91 1.92 2.02 0 .58-.26 1.1-.66 1.48l.83.86z"/>
@@ -1776,6 +1843,8 @@
                     <span class="btn-label">Relaciones</span>
                     <span class="pending-icon"></span>
                 </div>
+
+                <!-- Botón Alertas -->
                 <div class="command-btn" id="alertsBtn" data-panel="alerts">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
