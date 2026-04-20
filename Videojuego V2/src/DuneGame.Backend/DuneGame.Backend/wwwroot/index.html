@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Casa Portil - Gestión Hidráulica Dinástica</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCu2RVHXg6dfkalPETHHKHApDIN4GR90nA",
+            authDomain: "dune-the-measure-552c5.firebaseapp.com",
+            projectId: "dune-the-measure-552c5",
+            storageBucket: "dune-the-measure-552c5.appspot.com",
+            messagingSenderId: "726504253064",
+            appId: "1:726504253064:web:63bf13865acf309a67213d",
+            measurementId: "G-CC17095JCQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+        console.log('Firebase connected:', firebase.app().name);
+    </script>
     <style>
         :root {
             --verde-estuario: #2B443B;
@@ -52,7 +68,6 @@
         /* ==================== TOP BAND - SOVEREIGNTY ==================== */
         #topBand {
             display: flex;
-            /* align-items: center; */
             justify-content: space-between;
             padding: 16px 24px;
             background: linear-gradient(180deg, var(--sombra-panel) 0%, rgba(17, 19, 23, 0.85) 100%);
