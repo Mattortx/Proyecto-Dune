@@ -2,8 +2,16 @@
 // HYDRAULIC DYNASTY MANAGER - Frontend UI
 // ============================================
 
+// Global error handler
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    console.error('[GLOBAL ERROR]', msg, 'Line:', lineNo, 'Col:', columnNo);
+    return false;
+};
+
 const API_BASE = '';
 const DEBUG_MODE = true;
+const SAVE_INTERVAL = 15000;
+const TICK_INTERVAL = 2000;
 
 function logDebug(component, message, data = null) {
     if (!DEBUG_MODE) return;
@@ -13,58 +21,161 @@ function logDebug(component, message, data = null) {
 
 const STORAGE_KEY = 'hydraulic_dynasty_save';
 
-function saveGameState() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-        logDebug('SAVE', 'Partida guardada', { day: gameState.events.day, funds: gameState.resources.funds });
-    } catch (e) {
-        logDebug('SAVE', 'Error al guardar', e.message);
-    }
-}
+// ============================================
+// RESOURCE SYSTEM (Canonical Registry)
+// ============================================
 
-function loadGameState() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            Object.assign(gameState, parsed);
-            logDebug('LOAD', 'Partida cargada', { day: gameState.events.day, funds: gameState.resources.funds });
-            return true;
+const ResourceRegistry = {
+    KEYS: ['funds', 'water', 'food', 'prestige', 'staff', 'faith', 'military'],
+    _lock: null,
+    _pendingOperation: null,
+    
+    validate(value) {
+        if (typeof value !== 'number' || isNaN(value)) return 0;
+        return Math.floor(value);
+    },
+    
+    async acquireLock(operationId, timeout = 500) {
+        const start = Date.now();
+        while (this._lock !== null && this._lock !== operationId) {
+            if (Date.now() - start > timeout) {
+                console.log('[RESOURCE] Lock timeout, retrying...');
+                return false;
+            }
+            await new Promise(r => setTimeout(r, 10));
         }
-    } catch (e) {
-        logDebug('LOAD', 'Error al cargar', e.message);
+        this._lock = operationId;
+        this._pendingOperation = operationId;
+        return true;
+    },
+    
+    releaseLock(operationId) {
+        if (this._lock === operationId) {
+            this._lock = null;
+            this._pendingOperation = null;
+        }
+    },
+    
+    isLocked() {
+        return this._lock !== null;
+    },
+    
+    canAfford(resources, costMap) {
+        for (const [key, amount] of Object.entries(costMap)) {
+            const has = resources[key];
+            if (has === undefined || has < amount) return false;
+        }
+        return true;
+    },
+    
+    deduct(resources, costMap, operationId) {
+        if (!this.acquireLock(operationId)) {
+            console.log('[RESOURCE] Could not acquire lock for deduction');
+            return false;
+        }
+        
+        try {
+            if (!this.canAfford(resources, costMap)) {
+                return false;
+            }
+            
+            for (const [key, amount] of Object.entries(costMap)) {
+                if (resources[key] !== undefined) {
+                    const newValue = resources[key] - amount;
+                    if (newValue < 0) {
+                        console.error(`[RESOURCE] Negative value prevented for ${key}: ${resources[key]} - ${amount}`);
+                        return false;
+                    }
+                    console.log(`[RESOURCE] DEDUCT ${key}: ${resources[key]} - ${amount} = ${newValue}`);
+                    resources[key] = newValue;
+                }
+            }
+            console.log('[RESOURCE] Deduction complete, resources:', JSON.stringify(resources));
+            return true;
+        } finally {
+            this.releaseLock(operationId);
+        }
+    },
+    
+    addResources(resources, additions) {
+        const operationId = 'add_' + Date.now() + '_' + Math.random();
+        if (!this.acquireLock(operationId)) {
+            return false;
+        }
+        
+        try {
+            for (const [key, amount] of Object.entries(additions)) {
+                if (resources[key] !== undefined && typeof amount === 'number') {
+                    const newValue = resources[key] + amount;
+                    resources[key] = Math.max(0, Math.floor(newValue));
+                }
+            }
+            return true;
+        } finally {
+            this.releaseLock(operationId);
+        }
     }
-    return false;
-}
+};
 
-// Game State - Portil HUD Compatible
-const gameState = {
-    resources: { funds: 5000, water: 1000, food: 1000, prestige: 100, staff: 50 },
-    population: { total: 100, workers: 50, scientists: 20, guards: 10, nobles: 20, stress: 20 },
-    family: { dynastyName: 'Casa Portil', ruler: { name: 'Archivist Vanya', role: 'Regente' }, legitimacy: 80, influence: 50 },
-    government: { stability: 70, approval: 60 },
-    army: { defense: 50, guards: 20, security: 50, power: 50, morale: 50, discipline: 50 },
-    diplomacy: { reputation: 50 },
-    events: { timeline: 0, day: 1, month: 'Cicloceno', year: 1020, hour: 8 },
+// ============================================
+// GAME STATE (Single Source of Truth)
+// ============================================
+
+const DEFAULT_STATE = () => ({
+    resources: {
+        funds: 5000,
+        water: 1000,
+        food: 1000,
+        prestige: 100,
+        staff: 50
+    },
+    population: {
+        total: 100,
+        workers: 50,
+        scientists: 20,
+        guards: 10,
+        nobles: 20,
+        stress: 20
+    },
+    government: {
+        stability: 70,
+        approval: 60
+    },
+    army: {
+        defense: 50,
+        guards: 20,
+        security: 50,
+        power: 50,
+        morale: 50,
+        discipline: 50
+    },
+    diplomacy: {
+        reputation: 50
+    },
+    events: {
+        timeline: 0,
+        day: 1,
+        month: 'Cicloceno',
+        year: 1020,
+        hour: 8
+    },
+    family: {
+        dynastyName: 'Casa Portil',
+        ruler: { name: 'Archivist Vanya', role: 'Regente' },
+        legitimacy: 80,
+        influence: 50
+    },
     buildings: [],
     districts: [],
     riskLevel: 70,
-    production: { water: 2, food: 2, funds: 1 },
     faith: 80,
     military: 50,
     timeSpeed: 1,
     isPaused: false,
-    hasUnsavedChanges: false,
     tickCount: 0
-};
+});
 
-// Resource variations tracking
-const resourceVariations = {
-    funds: 0,
-    prestige: 0,
-    faith: 0,
-    military: 0
-};
+let gameState = DEFAULT_STATE();
 
 // Status trends
 const statusTrends = {
@@ -73,20 +184,379 @@ const statusTrends = {
 };
 
 // ============================================
-// UI System - Portil HUD
+// STORAGE SERVICE (Safe)
+// ============================================
+
+const StorageService = {
+    save(state) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            return true;
+        } catch (e) {
+            console.error('SAVE ERROR:', e);
+            return false;
+        }
+    },
+
+    load() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('LOAD ERROR:', e);
+        }
+        return null;
+    },
+
+    delete() {
+        localStorage.removeItem(STORAGE_KEY);
+    }
+};
+
+function saveGameState() {
+    StorageService.save(gameState);
+}
+
+function loadGameState() {
+    const data = StorageService.load();
+    if (data) {
+        // Deep merge to preserve all default values
+        gameState = deepMerge(DEFAULT_STATE(), data);
+        return true;
+    }
+    return false;
+}
+
+function deepMerge(defaults, saved) {
+    const result = { ...defaults };
+    for (const key of Object.keys(defaults)) {
+        if (saved[key] !== undefined) {
+            if (typeof saved[key] === 'object' && saved[key] !== null && !Array.isArray(saved[key])) {
+                result[key] = deepMerge(defaults[key], saved[key]);
+            } else {
+                result[key] = saved[key];
+            }
+        }
+    }
+    return result;
+}
+
+// ============================================
+// GAME SIMULATION ENGINE
+// ============================================
+
+const Simulation = {
+    // Base production per cycle (before buildings)
+    baseProduction: { funds: 5, water: 2, food: 2, prestige: 1 },
+    
+    // Base consumption per capita per cycle
+    baseConsumption: { water: 0.5, food: 0.5 },
+    
+    tick() {
+        if (gameState.isPaused) {
+            console.log('[TICK] PAUSADO - no se procesa');
+            return;
+        }
+        
+        gameState.tickCount++;
+        const tick = gameState.tickCount;
+        
+        // Debug first ticks
+        if (tick <= 3) {
+            console.log(`[TICK ${tick}] INICIO`);
+            console.log('  Fondos antes:', gameState.resources.funds);
+        }
+        const pop = gameState.population.total;
+        const res = gameState.resources;
+        const gov = gameState.government;
+        
+        // 1. Calculate production from buildings
+        let buildingProduction = { funds: 0, water: 0, food: 0, prestige: 0 };
+        for (const building of gameState.buildings) {
+            if (building.isBuilt && building.effects) {
+                if (building.effects.fundsGeneration) buildingProduction.funds += building.effects.fundsGeneration;
+                if (building.effects.waterGeneration) buildingProduction.water += building.effects.waterGeneration;
+                if (building.effects.foodGeneration) buildingProduction.food += building.effects.foodGeneration;
+                if (building.effects.prestigeGeneration) buildingProduction.prestige += building.effects.prestigeGeneration;
+            }
+        }
+        
+        // 2. Calculate total production
+        const totalProduction = {
+            funds: this.baseProduction.funds + buildingProduction.funds,
+            water: this.baseProduction.water + buildingProduction.water,
+            food: this.baseProduction.food + buildingProduction.food,
+            prestige: this.baseProduction.prestige + buildingProduction.prestige
+        };
+        
+        // 3. Calculate consumption
+        const totalConsumption = {
+            water: Math.floor(pop * this.baseConsumption.water),
+            food: Math.floor(pop * this.baseConsumption.food)
+        };
+        
+        // 4. Apply economic changes (atomic calculation to avoid visual fluctuations)
+        const netFunds = totalProduction.funds;
+        const netWater = totalProduction.water - totalConsumption.water;
+        const netFood = totalProduction.food - totalConsumption.food;
+        
+        if (netFunds > 0) res.funds = Math.min(res.funds + netFunds, 100000);
+        else res.funds = Math.max(0, res.funds + netFunds);
+        
+        if (netWater > 0) res.water = Math.min(res.water + netWater, 10000);
+        else res.water = Math.max(0, res.water + netWater);
+        
+        if (netFood > 0) res.food = Math.min(res.food + netFood, 10000);
+        else res.food = Math.max(0, res.food + netFood);
+        
+        res.prestige = Math.max(0, Math.min(100, res.prestige + totalProduction.prestige));
+        
+        // 5. Political stability factors
+        const buildingsCount = gameState.buildings.filter(b => b.isBuilt).length;
+        let stabilityDelta = 0;
+        let approvalDelta = 0;
+        
+        if (res.funds > 3000) stabilityDelta += 1;
+        if (res.water > 500) stabilityDelta += 1;
+        if (res.food > 500) approvalDelta += 1;
+        if (res.water < 200) { stabilityDelta -= 2; approvalDelta -= 1; }
+        if (res.food < 200) approvalDelta -= 2;
+        if (pop.stress > 70) { stabilityDelta -= 1; approvalDelta -= 1; }
+        if (buildingsCount > 0) { stabilityDelta += 1; approvalDelta += 1; }
+        
+        // 6. Apply political changes with clamping
+        gov.stability = Math.max(0, Math.min(100, gov.stability + stabilityDelta));
+        gov.approval = Math.max(0, Math.min(100, gov.approval + approvalDelta));
+        
+        // 7. Update trends
+        statusTrends.stability = stabilityDelta >= 0 ? 'up' : 'down';
+        statusTrends.approval = approvalDelta >= 0 ? 'up' : 'down';
+        
+        // 8. Population changes (slower)
+        if (tick % 5 === 0) {
+            const popDelta = (res.food > 300 && res.water > 300) ? 1 : (res.food < 100 || res.water < 100) ? -1 : 0;
+            gameState.population.total = Math.max(10, Math.min(500, gameState.population.total + popDelta));
+        }
+        
+        // 9. Advance time
+        this.advanceTime();
+        
+        if (tick <= 3) {
+            console.log(`[TICK ${tick}] DESPUÉS`);
+            console.log('  Fondos:', res.funds);
+            console.log('  Agua:', res.water);
+            console.log('  Comida:', res.food);
+            console.log('  Estabilidad:', gov.stability);
+            console.log('  Aprobación:', gov.approval);
+        }
+        
+        logDebug('SIM', 'Tick processed', {
+            tick: tick,
+            funds: res.funds,
+            water: res.water,
+            food: res.food,
+            stability: gov.stability,
+            approval: gov.approval
+        });
+    },
+    
+    advanceTime() {
+        if (gameState.timeSpeed <= 0) return;
+        
+        gameState.events.hour += gameState.timeSpeed;
+        
+        while (gameState.events.hour >= 24) {
+            gameState.events.hour -= 24;
+            gameState.events.day++;
+            
+            if (gameState.events.day > 30) {
+                gameState.events.day = 1;
+                const months = ['Cicloceno', 'Deshielo', 'Sequía', 'Aridez', 'Vendaval'];
+                const idx = months.indexOf(gameState.events.month);
+                gameState.events.month = months[(idx + 1) % months.length];
+                
+                if ((idx + 1) % months.length === 0) {
+                    gameState.events.year++;
+                }
+            }
+        }
+        gameState.events.timeline++;
+    }
+};
+
+// ============================================
+// GAME LOOP
+// ============================================
+
+let tickInterval = null;
+let saveInterval = null;
+
+function startGameLoop() {
+    console.log('[LOOP] === INICIANDO SIMULACIÓN ===');
+    console.log('[LOOP] Interval:', TICK_INTERVAL, 'ms');
+    
+    // Simulation tick
+    tickInterval = setInterval(() => {
+        Simulation.tick();
+        updateHUD();
+    }, TICK_INTERVAL);
+    
+    // Auto-save
+    saveInterval = setInterval(() => {
+        StorageService.save(gameState);
+    }, SAVE_INTERVAL);
+    
+    console.log('[LOOP] Simulación activa');
+}
+
+// ============================================
+// BUILDING SYSTEM (Fully Functional)
+// ============================================
+
+const BUILDINGS_DB = [
+    { id: 'hydraulic_chamber', name: 'Cámara Hidráulica', category: 'Aclima', 
+      cost: { funds: 1000, water: 200 }, 
+      effects: { waterGeneration: 50 }, isBuilt: false },
+    { id: 'granja', name: 'Granja Hidráulica', category: 'Logistics', 
+      cost: { funds: 600, water: 50 }, 
+      effects: { foodGeneration: 5 }, isBuilt: false },
+    { id: 'almacen_alimento', name: 'Almacén de Alimentos', category: 'Logistics', 
+      cost: { funds: 400 }, 
+      effects: { foodStorage: 20 }, isBuilt: false },
+    { id: 'canal_riego', name: 'Canal de Riego', category: 'Aclima', 
+      cost: { funds: 800, water: 100 }, 
+      effects: { foodGeneration: 2 }, isBuilt: false },
+    { id: 'ceremonial_plaza', name: 'Plaza Ceremonial', category: 'Exhibition', 
+      cost: { funds: 800, prestige: 50 }, 
+      effects: { prestigeGeneration: 20 }, isBuilt: false },
+    { id: 'biology_lab', name: 'Laboratorio Biológico', category: 'Science', 
+      cost: { funds: 1500, staff: 10 }, 
+      effects: { foodGeneration: 10 }, isBuilt: false },
+    { id: 'water_plant', name: 'Planta de Agua', category: 'Logistics', 
+      cost: { funds: 2000, water: 100 }, 
+      effects: { waterGeneration: 100 }, isBuilt: false },
+    { id: 'water_wall', name: 'Muro Hidráulico', category: 'Security', 
+      cost: { funds: 1200, water: 200 }, 
+      effects: { securityBonus: 30 }, isBuilt: false },
+    { id: 'data_chamber', name: 'Cámara de Datos', category: 'Archive', 
+      cost: { funds: 600, prestige: 50 }, 
+      effects: { prestigeGeneration: 10 }, isBuilt: false },
+    { id: 'water_depot', name: 'Depósito de Agua', category: 'Logistics', 
+      cost: { funds: 500, water: 100 }, 
+      effects: { waterGeneration: 20 }, isBuilt: false },
+    { id: 'filtration_plant', name: 'Planta de Filtrado', category: 'Logistics', 
+      cost: { funds: 800, staff: 5 }, 
+      effects: { foodGeneration: 30 }, isBuilt: false }
+];
+
+function initOfflineData() {
+    // Initialize with building DB and copy effects
+    gameState.buildings = BUILDINGS_DB.map(b => ({ ...b }));
+    gameState.districts = [
+        { id: 'd1', name: 'Distrito del Palacio', population: 50, waterUsage: 100 },
+        { id: 'd2', name: 'Distrito Comercial', population: 30, waterUsage: 60 },
+        { id: 'd3', name: 'Distrito de Investigación', population: 20, waterUsage: 40 }
+    ];
+}
+
+function buildBuilding(buildingId) {
+    const operationId = 'build_' + buildingId + '_' + Date.now();
+    
+    if (ResourceRegistry.isLocked()) {
+        console.log('[BUILD] Operation in progress, please wait...');
+        showNotification('Espera', 'Operación en progreso', true);
+        return;
+    }
+    
+    console.log('[BUILD] Intentando:', buildingId);
+    
+    const building = gameState.buildings.find(b => b.id === buildingId);
+    if (!building || building.isBuilt) {
+        console.log('[BUILD] Error: no disponible o ya construido');
+        showNotification('Error', 'Edificio no disponible o ya construido', true);
+        return;
+    }
+    
+    const res = gameState.resources;
+    const cost = building.cost;
+    
+    console.log('[BUILD] ========== INICIO CONSTRUCCION ==========');
+    console.log('[BUILD] Edificio:', buildingId, '- Coste:', JSON.stringify(cost));
+    console.log('[BUILD] Recursos ANTES de procesar:', JSON.stringify(res));
+    
+    if (!ResourceRegistry.canAfford(res, cost)) {
+        console.log('[BUILD] Error: recursos insuficientes');
+        const missingResources = [];
+        for (const [key, amount] of Object.entries(cost)) {
+            const has = res[key] || 0;
+            console.log(`  - ${key}: tiene ${has}, necesita ${amount}`);
+            if (has < amount) {
+                const name = { funds: 'Fondos', water: 'Agua', food: 'Alimento', prestige: 'Prestigio' }[key] || key;
+                missingResources.push(`${name}: necesitas ${amount}, tienes ${has}`);
+            }
+        }
+        showNotification('Recursos Insuficientes', missingResources.join(', '), true);
+        return;
+    }
+    
+    const deductionSuccess = ResourceRegistry.deduct(res, cost, operationId);
+    if (!deductionSuccess) {
+        console.log('[BUILD] Falló la deducción atómica');
+        showNotification('Error', 'No se pudieron deducir recursos', true);
+        return;
+    }
+    
+    building.isBuilt = true;
+    
+    console.log('[BUILD] ========== RESULTADO FINAL ==========');
+    console.log('[BUILD] Fondos ANTES:', cost.funds ? res.funds + cost.funds : res.funds, '-> DESPUÉS:', res.funds, '(-' + cost.funds + ')');
+    console.log('[BUILD] Agua ANTES:', cost.water ? res.water + cost.water : res.water, '-> DESPUÉS:', res.water, '(-' + cost.water + ')');
+    console.log('[BUILD] Comida ANTES:', cost.food ? res.food + cost.food : res.food, '-> DESPUÉS:', res.food, '(-' + cost.food + ')');
+    console.log('[BUILD] Recursos finales:', JSON.stringify(res));
+    logDebug('BUILD', 'Construido', { id: buildingId, name: building.name });
+    showNotification('Obra Completada', building.name + ' construida');
+    renderBuildingsList();
+    updateHUD();
+    console.log('[BUILD] UI actualizada, verificanco valores en DOM:');
+    console.log('  resource-money:', document.getElementById('resource-money')?.textContent);
+    console.log('  resource-water:', document.getElementById('resource-water')?.textContent);
+    console.log('  resource-food:', document.getElementById('resource-food')?.textContent);
+}
+
+// ============================================
+// UI SYSTEM
 // ============================================
 
 function initUI() {
-    // Intentar cargar partida guardada
-    const hasSave = loadGameState();
-    if (!hasSave) {
-        // Si no hay partida guardada, cargar datos iniciales
-        loadGameData();
+    // FORZAR LOG AL INICIO
+    console.log('%c[INIT] === EJECUTANDO initUI ===', 'color: lime; font-size: 16px; font-weight: bold');
+    console.log('[INIT] Limpiando localStorage...');
+    
+    try {
+        // Clear broken saves - use fresh state
+        localStorage.removeItem(STORAGE_KEY);
+        
+        // Reset to clean state
+        gameState = DEFAULT_STATE();
+        initOfflineData();
+        
+        console.log('%c[INIT] ✅ Estado limpio: Fondos=' + gameState.resources.funds + ', Agua=' + gameState.resources.water + ', Comida=' + gameState.resources.food, 'color: cyan; font-weight: bold');
+        
+        setupHUDEvents();
+        console.log('[INIT] HUDEvents configurados');
+        
+        updateHUD();
+        console.log('[INIT] HUD actualizado');
+        
+        startGameLoop();
+        console.log('[INIT] Game loop iniciado');
+        
+        console.log('%c[INIT] ✅ UI COMPLETAMENTE INICIALIZADA', 'color: lime; font-size: 20px');
+    } catch (e) {
+        console.error('[INIT] ERROR:', e);
     }
-    setupHUDEvents();
-    updateHUD();
-    startGameLoop();
-    logDebug('INIT', hasSave ? 'Partida cargada' : 'Nueva partida');
 }
 
 // ============================================
@@ -94,10 +564,13 @@ function initUI() {
 // ============================================
 
 function setupHUDEvents() {
+    console.log('[EVENTS] Configurando eventos...');
+    
     // Menu Button
     const menuBtn = document.getElementById('menuButton');
     if (menuBtn) {
         menuBtn.addEventListener('click', () => {
+            console.log('[EVENTS] Click: Menu');
             menuBtn.classList.toggle('active');
             openPanel('mainMenu');
         });
@@ -106,16 +579,21 @@ function setupHUDEvents() {
     // Crest Medallion
     const crest = document.getElementById('crestMedallion');
     if (crest) {
-        crest.addEventListener('click', () => {
-            openPanel('house');
-        });
+        crest.addEventListener('click', () => console.log('[EVENTS] Click: Crest'));
     }
 
     // Time Control Buttons
-    document.getElementById('btn-pause')?.addEventListener('click', () => setTimeSpeed(0));
-    document.getElementById('btn-play')?.addEventListener('click', () => setTimeSpeed(1));
-    document.getElementById('btn-fast')?.addEventListener('click', () => setTimeSpeed(2));
-    document.getElementById('btn-veryfast')?.addEventListener('click', () => setTimeSpeed(4));
+    const btnIds = ['btn-pause', 'btn-play', 'btn-fast', 'btn-veryfast'];
+    btnIds.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const speed = { 'btn-pause': 0, 'btn-play': 1, 'btn-fast': 2, 'btn-veryfast': 4 }[id];
+                console.log('[EVENTS] Click tiempo:', id, 'speed:', speed);
+                setTimeSpeed(speed);
+            });
+        }
+    });
 
     // Command Bar Buttons
     document.querySelectorAll('.command-btn').forEach(btn => {
@@ -219,16 +697,17 @@ function resumeGame() {
 }
 
 function saveGame() {
-    saveGameState();
-    showNotification('Partida Guardada', 'Tu progreso ha sido guardado.');
+    const success = StorageService.save(gameState);
+    showNotification('Partida Guardada', success ? 'Guardado correctamente.' : 'Error al guardar.');
 }
 
 function loadGame() {
-    const loaded = loadGameState();
     closePanel('mainMenu');
-    if (loaded) {
+    const data = StorageService.load();
+    if (data) {
+        Object.assign(gameState, data);
         updateHUD();
-        showNotification('Partida Cargada', 'Tu progreso ha sido restaurado.');
+        showNotification('Partida Cargada', 'Partida restaurada.');
     } else {
         showNotification('Sin Partida', 'No hay partida guardada.');
     }
@@ -557,6 +1036,7 @@ function renderHousePanel() {
 function setTimeSpeed(speed) {
     gameState.timeSpeed = speed;
     gameState.isPaused = speed === 0;
+    console.log('[TIME] Velocidad:', speed, '- Pausado:', gameState.isPaused);
     
     // Update button states
     document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
@@ -610,14 +1090,35 @@ async function loadGameData() {
 
         if (stateRes?.ok) {
             const state = await stateRes.json();
-            Object.assign(gameState.resources, state.resources);
-            Object.assign(gameState.population, state.population);
-            gameState.family = state.family;
-            gameState.government = state.government;
-            gameState.army = state.army;
-            gameState.diplomacy = state.diplomacy;
-            gameState.events = state.events;
-            gameState.riskLevel = state.riskLevel;
+            
+            if (state.resources) {
+                const serverFunds = Math.max(0, Math.floor(state.resources.funds || 0));
+                const serverWater = Math.max(0, Math.floor(state.resources.water || 0));
+                const serverFood = Math.max(0, Math.floor(state.resources.food || 0));
+                const serverPrestige = Math.max(0, Math.floor(state.resources.prestige || 0));
+                const serverStaff = Math.max(0, Math.floor(state.resources.staff || 0));
+                
+                gameState.resources = {
+                    funds: serverFunds,
+                    water: serverWater,
+                    food: serverFood,
+                    prestige: serverPrestige,
+                    staff: serverStaff
+                };
+            }
+            
+            if (state.population) {
+                gameState.population = {
+                    ...gameState.population,
+                    ...state.population
+                };
+            }
+            if (state.family) gameState.family = state.family;
+            if (state.government) gameState.government = state.government;
+            if (state.army) gameState.army = state.army;
+            if (state.diplomacy) gameState.diplomacy = state.diplomacy;
+            if (state.events) gameState.events = state.events;
+            if (typeof state.riskLevel === 'number') gameState.riskLevel = state.riskLevel;
         }
 
         if (buildingsRes?.ok) {
@@ -649,76 +1150,78 @@ function initOfflineData() {
         { id: 'd2', name: 'Distrito Comercial', population: 30, waterUsage: 60 },
         { id: 'd3', name: 'Distrito de Investigación', population: 20, waterUsage: 40 }
     ];
-    renderBuildings(gameState.buildings);
-    renderDistricts();
-}
-
-// ============================================
-// UI Updates
-// ============================================
-
-function updateAllUI() {
-    updateHUD();
-}
-
-function updateHUD() {
-    // Update resource cards
-    const moneyEl = document.getElementById('resource-money');
-    if (moneyEl) moneyEl.textContent = gameState.resources.funds;
     
-    const prestigeEl = document.getElementById('resource-prestige');
-    if (prestigeEl) prestigeEl.textContent = gameState.resources.prestige;
-    
-    const faithEl = document.getElementById('resource-faith');
-    if (faithEl) faithEl.textContent = gameState.faith;
-    
-    const militaryEl = document.getElementById('resource-military');
-    if (militaryEl) militaryEl.textContent = gameState.military;
-
-    // Update variations
-    updateVariation('variation-money', resourceVariations.funds);
-    updateVariation('variation-prestige', resourceVariations.prestige);
-    updateVariation('variation-faith', resourceVariations.faith);
-    updateVariation('variation-military', resourceVariations.military);
-
-    // Update calendar/time display
-    const dayEl = document.getElementById('day-display');
-    if (dayEl) dayEl.textContent = gameState.events.day || 1;
-    
-    const monthEl = document.getElementById('month-display');
-    if (monthEl) monthEl.textContent = `${gameState.events.month || 'Cicloceno'}, ${gameState.events.year || 1020}`;
-    
-    const hourEl = document.getElementById('hour-display');
-    if (hourEl) hourEl.textContent = String(gameState.events.hour || 8).padStart(2, '0') + ':00';
-
-    // Update stability meter
-    updateStatusMeter('stability', gameState.government.stability);
-    updateStatusMeter('approval', gameState.government.approval);
-
-    // Update menu button unsaved indicator
-    const menuBtn = document.getElementById('menuButton');
-    if (menuBtn) {
-        if (gameState.hasUnsavedChanges) {
-            menuBtn.classList.add('has-unsaved');
-        } else {
-            menuBtn.classList.remove('has-unsaved');
+    // Solo renderizar si los elementos existen
+    try {
+        if (document.getElementById('buildingsGrid')) {
+            renderBuildings(gameState.buildings);
         }
+        if (document.getElementById('districtsGrid')) {
+            renderDistricts();
+        }
+    } catch(e) {
+        console.log('[INIT] Grid elements not found, skipping render');
     }
 }
 
-function updateVariation(elementId, variation) {
+// ============================================
+// UI Updates (Safe with canonical resources)
+// ============================================
+
+function updateHUD() {
+    const res = gameState.resources;
+    const gov = gameState.government;
+    
+    // Resources - safe display
+    const setEl = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (typeof value === 'number' && isFinite(value)) ? Math.floor(value) : '0';
+    };
+    
+    setEl('resource-money', res.funds);
+    setEl('resource-prestige', res.prestige);
+    setEl('resource-water', res.water);
+    setEl('resource-food', res.food);
+    setEl('resource-faith', gameState.faith);
+    setEl('resource-military', gameState.military);
+
+    // Variations
+    updateVariation('variation-money', Simulation.baseProduction.funds);
+    updateVariation('variation-water', Simulation.baseProduction.water);
+    updateVariation('variation-food', Simulation.baseProduction.food);
+    updateVariation('variation-prestige', Simulation.baseProduction.prestige);
+
+    // Calendar
+    const ev = gameState.events;
+    const dayEl = document.getElementById('day-display');
+    if (dayEl) dayEl.textContent = ev.day || 1;
+    const monthEl = document.getElementById('month-display');
+    if (monthEl) monthEl.textContent = `${ev.month || 'Cicloceno'}, ${ev.year || 1020}`;
+    const hourEl = document.getElementById('hour-display');
+    if (hourEl) hourEl.textContent = String(ev.hour || 8).padStart(2, '0') + ':00';
+
+    // Stability/Approval - SAFE (never NaN)
+    updateStatusMeter('stability', gov.stability);
+    updateStatusMeter('approval', gov.approval);
+}
+
+function updateVariation(elementId, value) {
     const el = document.getElementById(elementId);
     if (!el) return;
     
-    const sign = variation >= 0 ? '+' : '';
-    el.textContent = sign + variation;
-    
+    value = (typeof value === 'number' && isFinite(value)) ? value : 0;
+    const sign = value >= 0 ? '+' : '';
+    el.textContent = sign + value;
     el.classList.remove('positive', 'negative');
-    if (variation > 0) el.classList.add('positive');
-    else if (variation < 0) el.classList.add('negative');
+    if (value > 0) el.classList.add('positive');
+    else if (value < 0) el.classList.add('negative');
 }
 
 function updateStatusMeter(type, value) {
+    // SAFE: always finite
+    value = (typeof value === 'number' && isFinite(value)) ? value : 0;
+    value = Math.max(0, Math.min(100, value));
+    
     const bar = document.getElementById(`${type}-bar`);
     const valueEl = document.getElementById(`${type}-value`);
     const trendEl = document.getElementById(`${type}-trend`);
@@ -726,7 +1229,6 @@ function updateStatusMeter(type, value) {
     if (bar) {
         bar.style.width = value + '%';
         bar.classList.remove('warning', 'critical');
-        
         if (value < 30) bar.classList.add('critical');
         else if (value < 50) bar.classList.add('warning');
     }
@@ -813,6 +1315,7 @@ function updateDiplomacyView() {
 
 function renderBuildings(buildings) {
     const grid = document.getElementById('buildingsGrid');
+    if (!grid) return;
     grid.innerHTML = buildings.map(b => `
         <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
             <div class="building-name">${b.name}</div>
@@ -831,31 +1334,9 @@ function filterBuildings(category) {
     }
 }
 
-async function buildBuilding(buildingId) {
-    const building = gameState.buildings.find(b => b.id === buildingId);
-    if (!building || building.isBuilt) return;
-
-    const cost = building.cost;
-    if (gameState.resources.funds < cost.funds || (cost.water && gameState.resources.water < cost.water)) {
-        alert('¡Recursos insuficientes!');
-        return;
-    }
-
-    gameState.resources.funds -= cost.funds;
-    if (cost.water) gameState.resources.water -= cost.water;
-    building.isBuilt = true;
-
-    gameState.resources.funds += building.effects.fundsGeneration || 0;
-    gameState.resources.water += building.effects.waterGeneration || 0;
-    gameState.resources.food += building.effects.foodGeneration || 0;
-    gameState.resources.prestige += building.effects.prestigeGeneration || 0;
-
-    renderBuildings(gameState.buildings);
-    updateAllUI();
-}
-
 function renderDistricts() {
     const grid = document.getElementById('districtsGrid');
+    if (!grid) return;
     grid.innerHTML = gameState.districts.map(d => `
         <div class="info-card">
             <div class="info-card-label">${d.name}</div>
@@ -866,215 +1347,30 @@ function renderDistricts() {
 }
 
 // ============================================
-// IA System - Funciones de control
+// Note: Using LOCAL simulation (Simulation engine)
+// startGameLoop is defined earlier in Simulation section
 // ============================================
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
-
-function randomRange(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function updateAI() {
-    if (gameState.isPaused) return;
-    
-    gameState.tickCount++;
-    const tick = gameState.tickCount;
-    
-    const pop = gameState.population;
-    const res = gameState.resources;
-    const gov = gameState.government;
-    const army = gameState.army;
-    const fam = gameState.family;
-    
-    // Track previous values for variation calculation
-    const prevFunds = res.funds;
-    const prevPrestige = res.prestige;
-    const prevFaith = gameState.faith;
-    const prevMilitary = gameState.military;
-    const prevStability = gov.stability;
-    const prevApproval = gov.approval;
-    
-    // Producción BASE mejorada para ser perceptible
-    let waterProduction = 3;
-    let foodProduction = 3;
-    let fundsProduction = 5;
-    
-    // Calcular efectos de edificios construidos
-    let buildingsBuilt = 0;
-    for (const building of gameState.buildings) {
-        if (building.isBuilt && building.effects) {
-            buildingsBuilt++;
-            if (building.effects.waterGeneration) waterProduction += building.effects.waterGeneration;
-            if (building.effects.foodGeneration) foodProduction += building.effects.foodGeneration;
-            if (building.effects.fundsGeneration) fundsProduction += building.effects.fundsGeneration;
-        }
-    }
-    
-    // Consumo básico
-    const waterConsumption = Math.max(1, Math.floor(pop.total * 0.15));
-    const foodConsumption = Math.max(1, Math.floor(pop.total * 0.15));
-    
-    // Aplicar cambios económicos
-    const fundsChange = fundsProduction + randomRange(-1, 2);
-    const waterChange = waterProduction - waterConsumption;
-    const foodChange = foodProduction - foodConsumption;
-    const prestigeChange = randomRange(-1, 1);
-    
-    res.funds = clamp(res.funds + fundsChange, 0, 999999);
-    res.water = clamp(res.water + waterChange, 0, 9999);
-    res.food = clamp(res.food + foodChange, 0, 9999);
-    res.prestige = clamp(res.prestige + prestigeChange, 0, 100);
-    
-    // Variaciones percibidas
-    resourceVariations.funds = fundsChange;
-    resourceVariations.prestige = prestigeChange;
-    resourceVariations.faith = randomRange(-1, 1);
-    resourceVariations.military = randomRange(-1, 1);
-    
-    // Cambios en población (más lentos)
-    if (tick % 3 === 0) {
-        pop.total = clamp(pop.total + randomRange(-1, 1), 10, 500);
-    }
-    if (tick % 2 === 0) {
-        pop.stress = clamp(pop.stress + randomRange(-1, 1), 0, 100);
-    }
-    
-    // Cambios en estabilidad y aprobación (respuesta al estado)
-    let stabilityChange = randomRange(-1, 1);
-    let approvalChange = randomRange(-1, 1);
-    
-    //bonificaciones por estado positivo
-    if (res.funds > 3000) stabilityChange += 1;
-    if (res.water > 500) stabilityChange += 1;
-    if (res.food > 500) approvalChange += 1;
-    if (pop.stress > 70) { stabilityChange -= 1; approvalChange -= 1; }
-    if (buildingsBuilt > 0) { stabilityChange += 1; approvalChange += 1; }
-    
-    gov.stability = clamp(gov.stability + stabilityChange, 0, 100);
-    gov.approval = clamp(gov.approval + approvalChange, 0, 100);
-    
-    // Tendencias
-    statusTrends.stability = gov.stability >= prevStability ? 'up' : 'down';
-    statusTrends.approval = gov.approval >= prevApproval ? 'up' : 'down';
-    
-    // Familia
-    fam.influence = clamp(fam.influence + randomRange(-1, 1), 0, 100);
-    fam.legitimacy = clamp(fam.legitimacy + randomRange(-1, 1), 0, 100);
-    
-    // Ejército (más lento)
-    if (tick % 2 === 0) {
-        army.defense = clamp(army.defense + randomRange(-1, 1), 0, 100);
-        army.morale = clamp(army.morale + randomRange(-1, 1), 0, 100);
-    }
-    
-    // Fe y military
-    gameState.faith = clamp(gameState.faith + randomRange(-1, 1), 0, 100);
-    gameState.military = clamp(gameState.military + randomRange(-1, 1), 0, 100);
-    
-    // Riesgo
-    gameState.riskLevel = clamp(gameState.riskLevel + randomRange(-2, 2), 0, 100);
-    
-    // Eventos aleatorios (raros)
-    if (randomRange(0, 50) === 1) {
-        const eventType = randomRange(0, 3);
-        if (eventType === 0) {
-            res.prestige = clamp(res.prestige + 3, 0, 100);
-            logDebug('EVENT', 'Evento: Aumento de prestigio', { prestige: res.prestige });
-        } else if (eventType === 1) {
-            res.funds = clamp(res.funds + 10, 0, 999999);
-            logDebug('EVENT', 'Evento: Ingreso extra', { funds: res.funds });
-        } else if (eventType === 2) {
-            res.food = clamp(res.food - 5, 0, 9999);
-            logDebug('EVENT', 'Evento: Escasez de comida', { food: res.food });
-        } else {
-            gov.stability = clamp(gov.stability + 5, 0, 100);
-            logDebug('EVENT', 'Evento: Estabilidad mejorada', { stability: gov.stability });
-        }
-    }
-    
-    gameState.events.timeline++;
-    
-    // Update time based on speed (only if not paused - timeSpeed > 0)
-    if (gameState.timeSpeed > 0 && !gameState.isPaused) {
-        gameState.events.hour += gameState.timeSpeed;
-        
-        while (gameState.events.hour >= 24) {
-            gameState.events.hour -= 24;
-            gameState.events.day++;
-            
-            if (gameState.events.day > 30) {
-                gameState.events.day = 1;
-                const months = ['Cicloceno', 'Deshielo', 'Sequía', 'Aridez', 'Vendaval'];
-                const currentIdx = months.indexOf(gameState.events.month);
-                gameState.events.month = months[(currentIdx + 1) % months.length];
-                
-                if ((currentIdx + 1) % months.length === 0) {
-                    gameState.events.year++;
-                }
-            }
-        }
-    }
-    
-    updateHUD();
-}
-
-// ============================================
-// Game Loop
-// ============================================
-
-let gameLoopInterval = null;
-let aiLoopInterval = null;
-let saveInterval = null;
-
-function startGameLoop() {
-    if (gameLoopInterval) clearInterval(gameLoopInterval);
-    if (aiLoopInterval) clearInterval(aiLoopInterval);
-    if (saveInterval) clearInterval(saveInterval);
-    
-    // Tick rápido para sensación de progreso (500ms)
-    const baseInterval = 500;
-    aiLoopInterval = setInterval(updateAI, baseInterval);
-    
-    // Auto-guardado cada 30 segundos
-    saveInterval = setInterval(() => {
-        saveGameState();
-        logDebug('AUTO', 'Auto-guardado', { day: gameState.events.day });
-    }, 30000);
-    
-    // Sync with server less frequently
-    gameLoopInterval = setInterval(gameTick, 5000);
-    
-    logDebug('LOOP', 'Game loop started', { interval: baseInterval });
-}
-
-async function gameTick() {
-    try {
-        await fetch(`${API_BASE}/api/hydraulic/tick`, { method: 'POST' });
-        await loadGameData();
-        updateAllUI();
-    } catch (e) {
-        logDebug('TICK', 'Modo offline - IA activa');
-    }
-}
 
 // ============================================
 // Initialize - Portil HUD
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('%c[BOOT] DOM Cargado', 'color: yellow');
+    
     const startScreen = document.getElementById('startScreen');
     const hudRoot = document.getElementById('hudRoot');
     const btnNewGame = document.getElementById('btnNewGame');
     
     if (btnNewGame && startScreen && hudRoot) {
         btnNewGame.addEventListener('click', function() {
+            console.log('[BOOT] Click en Nuevo Juego');
             startScreen.style.display = 'none';
             initUI();
         });
     } else {
+        // Auto-start for testing
+        if (startScreen) startScreen.style.display = 'none';
         initUI();
     }
 });

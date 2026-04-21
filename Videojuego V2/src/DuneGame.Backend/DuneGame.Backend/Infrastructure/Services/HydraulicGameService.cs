@@ -1,5 +1,6 @@
 using DuneGame.Backend.Application.Interfaces;
 using DuneGame.Backend.Domain.Models;
+using System.Threading;
 
 namespace DuneGame.Backend.Infrastructure.Services;
 
@@ -9,6 +10,7 @@ public class HydraulicGameService : IHydraulicGameService
 
     private readonly HydraulicConfig _config;
     private FullGameState _gameState;
+    private readonly SemaphoreSlim _resourceLock = new(1, 1);
 
     #endregion
 
@@ -40,42 +42,101 @@ public class HydraulicGameService : IHydraulicGameService
 
     #endregion
 
+    #region Gestión Atómica de Recursos
+
+    private bool TryConsumeResources(ResourceCost cost)
+    {
+        _resourceLock.Wait();
+        try
+        {
+            var res = _gameState.Resources;
+            if (res.Funds < cost.Funds || res.Water < cost.Water || res.Food < cost.Food ||
+                res.ContainmentMaterial < cost.Containment || res.SpecializedStaff < cost.Staff ||
+                res.Prestige < cost.Prestige || res.BiologicalData < cost.BioData)
+            {
+                return false;
+            }
+
+            res.Funds -= cost.Funds;
+            res.Water -= cost.Water;
+            res.Food -= cost.Food;
+            res.ContainmentMaterial -= cost.Containment;
+            res.SpecializedStaff -= cost.Staff;
+            res.Prestige -= cost.Prestige;
+            res.BiologicalData -= cost.BioData;
+
+            return true;
+        }
+        finally
+        {
+            _resourceLock.Release();
+        }
+    }
+
+    private void ReleaseResources(ResourceCost cost)
+    {
+        _resourceLock.Wait();
+        try
+        {
+            var res = _gameState.Resources;
+            res.Funds += cost.Funds;
+            res.Water += cost.Water;
+            res.Food += cost.Food;
+            res.ContainmentMaterial += cost.Containment;
+            res.SpecializedStaff += cost.Staff;
+            res.Prestige += cost.Prestige;
+            res.BiologicalData += cost.BioData;
+        }
+        finally
+        {
+            _resourceLock.Release();
+        }
+    }
+
+    #endregion
+
     #region Construcción de Edificios
 
     public bool Build(string buildingId)
     {
-        var building = _gameState.Buildings.FirstOrDefault(b => b.Id == buildingId);
-        if (building == null || building.IsBuilt) return false;
+        _resourceLock.Wait();
+        try
+        {
+            var building = _gameState.Buildings.FirstOrDefault(b => b.Id == buildingId);
+            if (building == null || building.IsBuilt) return false;
 
-        var res = _gameState.Resources;
-        var cost = building.Cost;
+            var res = _gameState.Resources;
+            var cost = building.Cost;
 
-        if (res.Funds < cost.Funds || res.Water < cost.Water || res.Food < cost.Food ||
-            res.SpecializedStaff < cost.Staff || res.Prestige < cost.Prestige)
-            return false;
+            if (res.Funds < cost.Funds || res.Water < cost.Water || res.Food < cost.Food ||
+                res.ContainmentMaterial < cost.Containment || res.SpecializedStaff < cost.Staff ||
+                res.Prestige < cost.Prestige || res.BiologicalData < cost.BioData)
+            {
+                return false;
+            }
 
-        res.Funds -= cost.Funds;
-        res.Water -= cost.Water;
-        res.Food -= cost.Food;
-        res.SpecializedStaff -= cost.Staff;
-        res.Prestige -= cost.Prestige;
+            res.Funds -= cost.Funds;
+            res.Water -= cost.Water;
+            res.Food -= cost.Food;
+            res.ContainmentMaterial -= cost.Containment;
+            res.SpecializedStaff -= cost.Staff;
+            res.Prestige -= cost.Prestige;
+            res.BiologicalData -= cost.BioData;
 
-        building.IsBuilt = true;
-        ApplyBuildingEffects(building);
-        return true;
-    }
+            building.IsBuilt = true;
 
-    private void ApplyBuildingEffects(Building building)
-    {
-        var effects = building.Effects;
-        var res = _gameState.Resources;
-        var pop = _gameState.Population;
+            res.Funds = Math.Min(res.MaxFunds, res.Funds + building.Effects.FundsGeneration);
+            res.Water = Math.Min(res.MaxWater, res.Water + building.Effects.WaterGeneration);
+            res.Food = Math.Min(res.MaxFood, res.Food + building.Effects.FoodGeneration);
+            res.Prestige = Math.Min(res.MaxPrestige, res.Prestige + building.Effects.PrestigeGeneration);
+            _gameState.Population.Total += building.Effects.PopulationCapacity;
 
-        res.Funds += effects.FundsGeneration;
-        res.Water += effects.WaterGeneration;
-        res.Food += effects.FoodGeneration;
-        res.Prestige += effects.PrestigeGeneration;
-        pop.Total += effects.PopulationCapacity;
+            return true;
+        }
+        finally
+        {
+            _resourceLock.Release();
+        }
     }
 
     #endregion
@@ -84,32 +145,48 @@ public class HydraulicGameService : IHydraulicGameService
 
     public bool ProcessEventChoice(string eventId, string choiceId)
     {
-        var evt = _gameState.Events.ActiveEvent;
-        if (evt == null || evt.Id != eventId) return false;
+        _resourceLock.Wait();
+        try
+        {
+            var evt = _gameState.Events.ActiveEvent;
+            if (evt == null || evt.Id != eventId) return false;
 
-        var choice = evt.Choices.FirstOrDefault(c => c.Id == choiceId);
-        if (choice == null) return false;
+            var choice = evt.Choices.FirstOrDefault(c => c.Id == choiceId);
+            if (choice == null) return false;
 
-        var res = _gameState.Resources;
-        var req = choice.Requirements;
+            var res = _gameState.Resources;
+            var req = choice.Requirements;
 
-        if (res.Funds < req.Funds || res.Water < req.Water || res.Food < req.Food)
-            return false;
+            if (res.Funds < req.Funds || res.Water < req.Water || res.Food < req.Food ||
+                res.ContainmentMaterial < req.Containment || res.SpecializedStaff < req.Staff ||
+                res.Prestige < req.Prestige || res.BiologicalData < req.BioData)
+            {
+                return false;
+            }
 
-        res.Funds -= req.Funds;
-        res.Water -= req.Water;
-        res.Food -= req.Food;
+            res.Funds -= req.Funds;
+            res.Water -= req.Water;
+            res.Food -= req.Food;
+            res.ContainmentMaterial -= req.Containment;
+            res.SpecializedStaff -= req.Staff;
+            res.Prestige -= req.Prestige;
+            res.BiologicalData -= req.BioData;
 
-        var cons = choice.Consequences;
-        res.Funds += cons.FundsChange;
-        res.Water += cons.WaterChange;
-        res.Food += cons.FoodChange;
-        res.Prestige += cons.PrestigeChange;
-        _gameState.Government.Stability += cons.StabilityChange;
-        _gameState.Population.Total += cons.PopulationChange;
+            var cons = choice.Consequences;
+            res.Funds = Math.Min(res.MaxFunds, res.Funds + cons.FundsChange);
+            res.Water = Math.Min(res.MaxWater, res.Water + cons.WaterChange);
+            res.Food = Math.Min(res.MaxFood, res.Food + cons.FoodChange);
+            res.Prestige = Math.Min(res.MaxPrestige, res.Prestige + cons.PrestigeChange);
+            _gameState.Government.Stability = Math.Clamp(_gameState.Government.Stability + cons.StabilityChange, 0, 100);
+            _gameState.Population.Total += cons.PopulationChange;
 
-        _gameState.Events.ActiveEvent = null;
-        return true;
+            _gameState.Events.ActiveEvent = null;
+            return true;
+        }
+        finally
+        {
+            _resourceLock.Release();
+        }
     }
 
     #endregion
@@ -118,24 +195,36 @@ public class HydraulicGameService : IHydraulicGameService
 
     public void Tick()
     {
-        _gameState.Events.Timeline++;
-
-        foreach (var b in _gameState.Buildings.Where(b => b.IsBuilt))
+        _resourceLock.Wait();
+        try
         {
-            _gameState.Resources.Funds += b.Effects.FundsGeneration;
-            _gameState.Resources.Water += b.Effects.WaterGeneration;
-            _gameState.Resources.Food += b.Effects.FoodGeneration;
-            _gameState.Resources.Prestige += b.Effects.PrestigeGeneration;
+            _gameState.Events.Timeline++;
+
+            foreach (var b in _gameState.Buildings.Where(b => b.IsBuilt))
+            {
+                _gameState.Resources.Funds = Math.Min(_gameState.Resources.MaxFunds, 
+                    _gameState.Resources.Funds + b.Effects.FundsGeneration);
+                _gameState.Resources.Water = Math.Min(_gameState.Resources.MaxWater, 
+                    _gameState.Resources.Water + b.Effects.WaterGeneration);
+                _gameState.Resources.Food = Math.Min(_gameState.Resources.MaxFood, 
+                    _gameState.Resources.Food + b.Effects.FoodGeneration);
+                _gameState.Resources.Prestige = Math.Min(_gameState.Resources.MaxPrestige, 
+                    _gameState.Resources.Prestige + b.Effects.PrestigeGeneration);
+            }
+
+            var pop = _gameState.Population;
+            _gameState.Resources.Water = Math.Max(0, _gameState.Resources.Water - pop.Total);
+            _gameState.Resources.Food = Math.Max(0, _gameState.Resources.Food - pop.Total);
+
+            _gameState.RiskLevel = CalculateRiskLevelInternal();
         }
-
-        var pop = _gameState.Population;
-        _gameState.Resources.Water -= pop.Total * 1;
-        _gameState.Resources.Food -= pop.Total * 1;
-
-        _gameState.RiskLevel = CalculateRiskLevel();
+        finally
+        {
+            _resourceLock.Release();
+        }
     }
 
-    private int CalculateRiskLevel()
+    private int CalculateRiskLevelInternal()
     {
         var army = _gameState.Army;
         var gov = _gameState.Government;

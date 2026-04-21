@@ -5,22 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Casa Portil - Gestión Hidráulica Dinástica</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCu2RVHXg6dfkalPETHHKHApDIN4GR90nA",
-            authDomain: "dune-the-measure-552c5.firebaseapp.com",
-            projectId: "dune-the-measure-552c5",
-            storageBucket: "dune-the-measure-552c5.appspot.com",
-            messagingSenderId: "726504253064",
-            appId: "1:726504253064:web:63bf13865acf309a67213d",
-            measurementId: "G-CC17095JCQ"
-        };
-        firebase.initializeApp(firebaseConfig);
-        window.db = firebase.firestore();
-        console.log('Firebase connected:', firebase.app().name);
-    </script>
+    <!-- Firebase disabled - using localStorage only -->
     <style>
         :root {
             --verde-estuario: #2B443B;
@@ -1774,7 +1759,7 @@
             <div id="topResourceBar">
                 <!-- Left Group: Fondos+Prestigio + Velocidad -->
                 <div class="resource-group-left">
-                    <!-- Fila superior: Fondos + Prestigio -->
+                    <!-- Fila superior: Fondos + Prestigio + Agua -->
                     <div class="resource-row">
                         <div class="resource-card" data-resource="money">
                             <div class="resource-icon">
@@ -1800,6 +1785,20 @@
                                 <div class="resource-value" id="resource-prestige">100</div>
                                 <div class="resource-label">Prestigio
                                     <span class="resource-variation positive" id="variation-prestige">+1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource="water">
+                            <div class="resource-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/>
+                                </svg>
+                            </div>
+                            <div class="resource-data">
+                                <div class="resource-value" id="resource-water">1000</div>
+                                <div class="resource-label">Agua
+                                    <span class="resource-variation positive" id="variation-water">+3</span>
                                 </div>
                             </div>
                         </div>
@@ -1847,9 +1846,9 @@
                     </div>
                 </div>
 
-                <!-- Right Group: Fe+Armas (fila superior) + Calendario (fila inferior) -->
+                <!-- Right Group: Fe+Armas+Alimento (fila superior) + Calendario (fila inferior) -->
                 <div class="resource-group-right">
-                    <!-- Fila superior: Fe + Armas -->
+                    <!-- Fila superior: Fe + Armas + Alimento -->
                     <div class="resource-row">
                         <div class="resource-card" data-resource="faith">
                             <div class="resource-icon">
@@ -1873,8 +1872,22 @@
                             </div>
                             <div class="resource-data">
                                 <div class="resource-value" id="resource-military">50</div>
-                                <div class="resource-label">Armas
+                                <div class="resource-label">Ejercito
                                     <span class="resource-variation" id="variation-military">±0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource="food">
+                            <div class="resource-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05l-1.99-.12-.89-2.92h-4.29l-1.92 2.92-.99.12L16.91 15c-.12.82.51 1.56 1.33 1.68l.82.23V22.99zM1 21.99h15.03l1.66-16.51-1.99-.13-1.03 1.47L14.67 6.82 13.71 5H8.99l-.98 1.82-1.03-1.47-1.99.13L1 21.99zm14.97-12.48c.48 0 .88.4.88.88s-.4.88-.88.88-.88-.4-.88-.88.4-.88.88-.88zm8.94-4.49c0 1.11-.9 2.02-2.02 2.02s-2.02-.9-2.02-2.02.9-2.02 2.02-2.02 2.02.9 2.02 2.02zM3.99 5.52c0 1.11-.9 2.02-2.02 2.02S0 6.63 0 5.52.9 3.5 1.97 3.5 3.99 4.41 3.99 5.52z"/>
+                                </svg>
+                            </div>
+                            <div class="resource-data">
+                                <div class="resource-value" id="resource-food">1000</div>
+                                <div class="resource-label">Alimento
+                                    <span class="resource-variation positive" id="variation-food">+3</span>
                                 </div>
                             </div>
                         </div>
