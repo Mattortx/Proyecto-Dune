@@ -248,32 +248,54 @@ function deepMerge(defaults, saved) {
 // ============================================
 
 const Simulation = {
-    // Base production per cycle (before buildings)
-    baseProduction: { funds: 5, water: 2, food: 2, prestige: 1 },
+    // Base production per cycle (before buildings) - AJUSTADO PARA EARLY GAME VIABLE
+    // Tier I: Early game balance - player can survive and build up
+    // Production must exceed base population consumption × 1.5 for early game
+    baseProduction: { 
+        funds: 8,      // +50% from original 5 - basic Solari generation
+        water: 4,     // +100% from original 2 - hydraulic baseline
+        food: 6,      // +200% from original 2 - CRITICAL: must exceed consumption
+        prestige: 1 
+    },
     
-    // Base consumption per capita per cycle
-    baseConsumption: { water: 0.5, food: 0.5 },
+    // Base consumption per capita per cycle - gradually increases with game progress
+    // Early game: 0.3 (was 0.5) to allow player to build food infrastructure
+    // Late game: scales up when player has more buildings
+    baseConsumption: { water: 0.3, food: 0.3 },
+    
+    // Consumption scaling factor (increases as game develops)
+    consumptionScale: 1.0,
+    
+    // Production multipliers from buildings (cumulative)
+    buildingMultipliers: {
+        food: 0,
+        water: 0,
+        funds: 0,
+        prestige: 0
+    },
     
     tick() {
         if (gameState.isPaused) {
-            console.log('[TICK] PAUSADO - no se procesa');
             return;
         }
         
         gameState.tickCount++;
         const tick = gameState.tickCount;
         
-        // Debug first ticks
-        if (tick <= 3) {
-            console.log(`[TICK ${tick}] INICIO`);
-            console.log('  Fondos antes:', gameState.resources.funds);
+        // Log every 10 ticks to confirm loop is running
+        if (tick % 10 === 0) {
+            console.log(`[TICK ${tick}] Ejecución activa - timeSpeed:`, gameState.timeSpeed, 'hour:', gameState.events.hour);
         }
         const pop = gameState.population.total;
         const res = gameState.resources;
         const gov = gameState.government;
         
+        // Count buildings BEFORE using it
+        const buildingsCount = gameState.buildings.filter(b => b.isBuilt).length;
+        
         // 1. Calculate production from buildings
         let buildingProduction = { funds: 0, water: 0, food: 0, prestige: 0 };
+        
         for (const building of gameState.buildings) {
             if (building.isBuilt && building.effects) {
                 if (building.effects.fundsGeneration) buildingProduction.funds += building.effects.fundsGeneration;
@@ -283,18 +305,25 @@ const Simulation = {
             }
         }
         
-        // 2. Calculate total production
+        // 2. Calculate total production with multipliers
+        // Multipliers increase as player builds more infrastructure
+        const foodMultiplier = 1 + (buildingsCount * 0.05);
+        const waterMultiplier = 1 + (buildingsCount * 0.05);
+        
         const totalProduction = {
-            funds: this.baseProduction.funds + buildingProduction.funds,
-            water: this.baseProduction.water + buildingProduction.water,
-            food: this.baseProduction.food + buildingProduction.food,
+            funds: (this.baseProduction.funds + buildingProduction.funds),
+            water: Math.floor((this.baseProduction.water + buildingProduction.water) * waterMultiplier),
+            food: Math.floor((this.baseProduction.food + buildingProduction.food) * foodMultiplier),
             prestige: this.baseProduction.prestige + buildingProduction.prestige
         };
         
-        // 3. Calculate consumption
+        // 3. Calculate consumption - scales with population but capped early game
+        // Progressive consumption: starts low, increases as game develops
+        const consumptionFactor = Math.min(this.consumptionScale, 1.0 + (buildingsCount * 0.02));
+        
         const totalConsumption = {
-            water: Math.floor(pop * this.baseConsumption.water),
-            food: Math.floor(pop * this.baseConsumption.food)
+            water: Math.floor(pop * this.baseConsumption.water * consumptionFactor),
+            food: Math.floor(pop * this.baseConsumption.food * consumptionFactor)
         };
         
         // 4. Apply economic changes (atomic calculation to avoid visual fluctuations)
@@ -313,26 +342,76 @@ const Simulation = {
         
         res.prestige = Math.max(0, Math.min(100, res.prestige + totalProduction.prestige));
         
-        // 5. Political stability factors
-        const buildingsCount = gameState.buildings.filter(b => b.isBuilt).length;
+        // 5. Political stability factors - DYNAMIC SYSTEM
+        // Approval: varies based on resource abundance, not just one direction
         let stabilityDelta = 0;
         let approvalDelta = 0;
         
-        if (res.funds > 3000) stabilityDelta += 1;
-        if (res.water > 500) stabilityDelta += 1;
-        if (res.food > 500) approvalDelta += 1;
-        if (res.water < 200) { stabilityDelta -= 2; approvalDelta -= 1; }
-        if (res.food < 200) approvalDelta -= 2;
-        if (pop.stress > 70) { stabilityDelta -= 1; approvalDelta -= 1; }
-        if (buildingsCount > 0) { stabilityDelta += 1; approvalDelta += 1; }
+        // === APPROVAL SYSTEM (multi-factor) ===
+        // Food affects approval significantly
+        if (res.food > 1000) approvalDelta += 2;      // Abundance
+        else if (res.food > 500) approvalDelta += 1;   // Good
+        else if (res.food > 200) approvalDelta += 0;    // Baseline - no change
+        else if (res.food > 100) approvalDelta -= 1;  // Scarcity warning
+        else approvalDelta -= 3;                      // Critical - major drop
         
-        // 6. Apply political changes with clamping
-        gov.stability = Math.max(0, Math.min(100, gov.stability + stabilityDelta));
-        gov.approval = Math.max(0, Math.min(100, gov.approval + approvalDelta));
+        // Water affects approval
+        if (res.water > 800) approvalDelta += 2;
+        else if (res.water > 400) approvalDelta += 1;
+        else if (res.water > 150) approvalDelta += 0;
+        else if (res.water > 75) approvalDelta -= 1;
+        else approvalDelta -= 3;
         
-        // 7. Update trends
-        statusTrends.stability = stabilityDelta >= 0 ? 'up' : 'down';
-        statusTrends.approval = approvalDelta >= 0 ? 'up' : 'down';
+        // Funds stability affects approval (player can afford things)
+        if (res.funds > 2000) approvalDelta += 1;
+        else if (res.funds < 200) approvalDelta -= 1;
+        
+        // Buildings provide development bonus (player progress = approval gain)
+        if (buildingsCount >= 3) approvalDelta += 1;
+        if (buildingsCount >= 6) approvalDelta += 1;
+        
+        // Stress penalty - high stress reduces approval
+        if (pop.stress > 70) approvalDelta -= 2;
+        else if (pop.stress > 50) approvalDelta -= 1;
+        
+        // === STABILITY SYSTEM (multi-factor) ===
+        // Water critical for stability (desert context)
+        if (res.water > 600) stabilityDelta += 2;
+        else if (res.water > 300) stabilityDelta += 1;
+        else if (res.water > 100) stabilityDelta += 0;
+        else if (res.water > 50) stabilityDelta -= 2;
+        else stabilityDelta -= 4;
+        
+        // Funds for infrastructure
+        if (res.funds > 2500) stabilityDelta += 1;
+        else if (res.funds > 500) stabilityDelta += 0;
+        else if (res.funds < 150) stabilityDelta -= 1;
+        
+        // Prestige affects stability
+        if (res.prestige > 50) stabilityDelta += 1;
+        
+        // Buildings provide social order
+        if (buildingsCount >= 4) stabilityDelta += 1;
+        if (buildingsCount >= 8) stabilityDelta += 1;
+        
+        // Population stress affects stability
+        if (pop.stress > 80) stabilityDelta -= 2;
+        else if (pop.stress > 60) stabilityDelta -= 1;
+        
+        // 6. Apply political changes with clamping and randomization
+        // Add small random factor to prevent static behavior
+        const randomFactor = () => Math.floor(Math.random() * 3) - 1; // -1, 0, or +1
+        
+        gov.stability = Math.max(0, Math.min(100, gov.stability + stabilityDelta + randomFactor()));
+        gov.approval = Math.max(0, Math.min(100, gov.approval + approvalDelta + randomFactor()));
+        
+        // 7. Update trends - ensure they reflect actual movement, not just direction
+        // Also show stability if no change
+        const prevStability = gov.stability - stabilityDelta;
+        const prevApproval = gov.approval - approvalDelta;
+        
+        statusTrends.stability = stabilityDelta > 0 ? 'up' : (stabilityDelta < 0 ? 'down' : 'stable');
+        statusTrends.approval = approvalDelta > 0 ? 'up' : (approvalDelta < 0 ? 'down' : 'stable');
         
         // 8. Population changes (slower)
         if (tick % 5 === 0) {
@@ -641,11 +720,18 @@ function openPanel(panelName) {
         'diplomacy': 'diplomacyPanel',
         'alerts': 'alertsPanel',
         'mainMenu': 'mainMenuModal',
-        'house': 'housePanel'
+        'house': 'housePanel',
+        'army': 'armyPanel' // PREPARED - future implementation
     };
     
     const panelId = panelMap[panelName];
     if (!panelId) return;
+    
+    // Check if button is blocked (for army placeholder)
+    if (panelName === 'army') {
+        showNotification('Próximamente', 'El sistema de ejército está en desarrollo.', true);
+        return;
+    }
     
     document.getElementById(panelId)?.classList.add('active');
     
@@ -1052,17 +1138,21 @@ function showTooltip(e, resource) {
     if (!tooltip) return;
     
     const titles = {
-        money: 'Fondos - Tesorería de la Casa',
+        money: 'Solari - Tesoro de la Casa',
         prestige: 'Prestigio - Capital Simbólico',
         faith: 'Fe - Legitimidad Ritual',
-        military: 'Fuerzas Armadas - Defensa'
+        military: 'Fuerzas Armadas - Defensa',
+        water: 'Agua - Recurso Hídrico',
+        food: 'Comida - Raciones de Servicio'
     };
     
     const contents = {
-        money: 'Recursos financieros disponibles para construcciones, mantenimiento y diplomático.',
-        prestige: 'Rango efectivo dentro del Landsraad. Afecta relaciones exteriores.',
-        faith: 'Adhesión doctrinal al Rito del Río. Mantiene legitimidad interna.',
-        military: 'Preparación militar de la Casa. No indica tropas desplegadas.'
+        money: 'Recursos financieros disponibles. Usado para construcciones, mantenimiento y operaciones diplomáticas.',
+        prestige: 'Rango efectivo dentro del Landsraad. Afecta relaciones exteriores y contratos.',
+        faith: 'Adhesión doctrinal al Rito del Río. Mantiene legitimidad interna y rituales.',
+        military: 'Preparación militar de la Casa. No indica tropas desplegadas actualmente.',
+        water: 'Agua recuperada y purificada. Consumo básico: ' + Math.floor(gameState.population.total * Simulation.baseConsumption.water) + '/ciclo. Almacenamiento máximo: ' + (gameState.resources.water > 8000 ? '10,000' : 'variable') + '.',
+        food: 'Raciones de servicio. Consumo básico: ' + Math.floor(gameState.population.total * Simulation.baseConsumption.food) + '/ciclo. Producción base: +' + Simulation.baseProduction.food + '/ciclo. Almacenamiento máximo: 10,000.'
     };
     
     tooltip.querySelector('.tooltip-title').textContent = titles[resource] || '';
@@ -1185,10 +1275,25 @@ function updateHUD() {
     setEl('resource-faith', gameState.faith);
     setEl('resource-military', gameState.military);
 
-    // Variations
+    // Variations - show NET production (production - consumption)
+    // This gives player accurate picture of resource flow
+    const buildingsCount = gameState.buildings.filter(b => b.isBuilt).length;
+    const buildingFoodProd = gameState.buildings
+        .filter(b => b.isBuilt && b.effects?.foodGeneration)
+        .reduce((sum, b) => sum + b.effects.foodGeneration, 0);
+    const buildingWaterProd = gameState.buildings
+        .filter(b => b.isBuilt && b.effects?.waterGeneration)
+        .reduce((sum, b) => sum + b.effects.waterGeneration, 0);
+    
+    const netWater = Simulation.baseProduction.water + buildingWaterProd - 
+        Math.floor(gameState.population.total * Simulation.baseConsumption.water);
+    const netFood = Simulation.baseProduction.food + buildingFoodProd - 
+        Math.floor(gameState.population.total * Simulation.baseConsumption.food);
+    
+    // Display net change (what player actually gains/loses per cycle)
     updateVariation('variation-money', Simulation.baseProduction.funds);
-    updateVariation('variation-water', Simulation.baseProduction.water);
-    updateVariation('variation-food', Simulation.baseProduction.food);
+    updateVariation('variation-water', netWater);
+    updateVariation('variation-food', netFood);
     updateVariation('variation-prestige', Simulation.baseProduction.prestige);
 
     // Calendar

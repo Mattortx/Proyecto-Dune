@@ -1979,6 +1979,15 @@
                     <span class="btn-label">Relaciones</span>
                     <span class="pending-icon"></span>
                 </div>
+                
+                <!-- Botón Ejército (PREPARADO - Futuro) -->
+                <div class="command-btn blocked" id="btn-army" data-panel="army" title="Próximamente - Sistema de Ejército">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c2.21 0 4 1.79 4 4h-8c0-2.21 1.79-4 4-4zm0 16c-2.21 0-4-1.79-4-4h8c0 2.21-1.79 4-4 4z"/>
+                    </svg>
+                    <span class="btn-label">Ejército</span>
+                    <span class="novelty-dot"></span>
+                </div>
             </div>
 
             <!-- Botón Alertas en ESQUINA INFERIOR DERECHA -->
@@ -2078,6 +2087,32 @@
             </div>
             <div class="modal-body">
                 <div class="alerts-list" id="alertsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Army Panel (PREPARED - Future Implementation) -->
+    <div class="main-modal" id="armyPanel">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <span class="modal-title">Ejército</span>
+                <span class="modal-subtitle">Fuerzas de la Casa</span>
+                <button class="modal-close panel-close" onclick="closePanel('army')">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="placeholder-message">
+                    <div class="placeholder-icon">⚔️</div>
+                    <div class="placeholder-title">Sistema en Desarrollo</div>
+                    <div class="placeholder-text">El sistema de ejército estará disponible en una actualización futura.</div>
+                    <div class="placeholder-features">
+                        <div class="feature-item">• Gestión de tropas</div>
+                        <div class="feature-item">• Entrenamiento</div>
+                        <div class="feature-item">• Deployment estratégico</div>
+                        <div class="feature-item">• Equipo y suministros</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
