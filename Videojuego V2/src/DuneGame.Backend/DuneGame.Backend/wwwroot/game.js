@@ -982,17 +982,65 @@ function resumeGame() {
 }
 
 function saveGame() {
-    const success = StorageService.save(gameState);
-    showNotification('Partida Guardada', success ? 'Guardado correctamente.' : 'Error al guardar.');
+    // Save to Firebase (cloud)
+    const userId = FirebaseService.getUserId();
+    const saveId = FirebaseService.generateSaveId();
+    
+    FirebaseService.SaveService.save(userId, saveId, 'Casa Portil', gameState)
+        .then(result => {
+            if (result.success) {
+                // Also save to localStorage as backup
+                StorageService.save(gameState);
+                showNotification('Partida Guardada', 'Guardado en la nube.');
+            } else {
+                showNotification('Error', 'No se pudo guardar: ' + result.error);
+            }
+        });
 }
 
 function loadGame() {
-    closePanel('mainMenu');
+    // Try to load from Firebase first
+    const userId = FirebaseService.getUserId();
+    
+    FirebaseService.SaveService.listSaves(userId)
+        .then(result => {
+            closePanel('mainMenu');
+            
+            if (result.success && result.saves.length > 0) {
+                // Load most recent save
+                const latestSave = result.saves.sort((a, b) => {
+                    const aTime = a.createdAt?.seconds || 0;
+                    const bTime = b.createdAt?.seconds || 0;
+                    return bTime - aTime;
+                })[0];
+                
+                if (latestSave.gameState) {
+                    Object.assign(gameState, latestSave.gameState);
+                    updateHUD();
+                    renderBuildingsList();
+                    showNotification('Partida Cargada', 'Partida restaurada de la nube.');
+                } else {
+                    // Fallback to localStorage
+                    loadFromLocalStorage();
+                }
+            } else {
+                // Fallback to localStorage
+                loadFromLocalStorage();
+            }
+        })
+        .catch(() => {
+            closePanel('mainMenu');
+            loadFromLocalStorage();
+        });
+}
+
+function loadFromLocalStorage() {
     const data = StorageService.load();
     if (data) {
         Object.assign(gameState, data);
         updateHUD();
-        showNotification('Partida Cargada', 'Partida restaurada.');
+        renderBuildingsList();
+        showNotification('Partida Cargada', 'Partida restaurada (local).');
     } else {
         showNotification('Sin Partida', 'No hay partida guardada.');
     }

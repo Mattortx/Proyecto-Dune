@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Casa Portil - Gestión Hidráulica Dinástica</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
-    <!-- Firebase disabled - using localStorage only -->
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --verde-estuario: #2B443B;
@@ -2184,5 +2186,6 @@
     <div class="panel-overlay" id="overlay" onclick="closeActivePanel()"></div>
 
     <script src="game.js"></script>
+    <script src="firebase.js"></script>
 </body>
 </html>
