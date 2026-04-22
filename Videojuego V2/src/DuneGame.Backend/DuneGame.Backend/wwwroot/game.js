@@ -127,7 +127,24 @@ const DEFAULT_STATE = () => ({
         water: 1000,
         food: 1000,
         prestige: 100,
-        staff: 50
+        staff: 50,
+        plastiacero: 0,
+        sellos: 5,
+        credito: 0,
+        choam: 0,
+        registros: 0
+    },
+    // Source of truth for monthly deltas (set by Simulation, read by UI)
+    monthlyDeltas: {
+        funds: 0,
+        water: 0,
+        food: 0,
+        prestige: 0,
+        plastiacero: 0,
+        sellos: 0,
+        credito: 0,
+        choam: 0,
+        registros: 0
     },
     population: {
         total: 100,
@@ -293,20 +310,22 @@ const Simulation = {
         // Count buildings BEFORE using it
         const buildingsCount = gameState.buildings.filter(b => b.isBuilt).length;
         
-        // 1. Calculate production from buildings
-        let buildingProduction = { funds: 0, water: 0, food: 0, prestige: 0 };
+        // 1. Calculate production from buildings using new format (output field)
+        let buildingProduction = { funds: 0, water: 0, food: 0, prestige: 0, plastiacero: 0, sellos: 0, credito: 0, choam: 0, registros: 0 };
         
         for (const building of gameState.buildings) {
-            if (building.isBuilt && building.effects) {
-                if (building.effects.fundsGeneration) buildingProduction.funds += building.effects.fundsGeneration;
-                if (building.effects.waterGeneration) buildingProduction.water += building.effects.waterGeneration;
-                if (building.effects.foodGeneration) buildingProduction.food += building.effects.foodGeneration;
-                if (building.effects.prestigeGeneration) buildingProduction.prestige += building.effects.prestigeGeneration;
+            if (building.isBuilt && building.output) {
+                if (building.output.funds) buildingProduction.funds += building.output.funds;
+                if (building.output.water) buildingProduction.water += building.output.water;
+                if (building.output.food) buildingProduction.food += building.output.food;
+                if (building.output.plastiacero) buildingProduction.plastiacero += building.output.plastiacero;
+                if (building.output.credito) buildingProduction.credito += building.output.credito;
+                if (building.output.choam) buildingProduction.choam += building.output.choam;
+                if (building.output.registros) buildingProduction.registros += building.output.registros;
             }
         }
         
         // 2. Calculate total production with multipliers
-        // Multipliers increase as player builds more infrastructure
         const foodMultiplier = 1 + (buildingsCount * 0.05);
         const waterMultiplier = 1 + (buildingsCount * 0.05);
         
@@ -314,11 +333,14 @@ const Simulation = {
             funds: (this.baseProduction.funds + buildingProduction.funds),
             water: Math.floor((this.baseProduction.water + buildingProduction.water) * waterMultiplier),
             food: Math.floor((this.baseProduction.food + buildingProduction.food) * foodMultiplier),
-            prestige: this.baseProduction.prestige + buildingProduction.prestige
+            prestige: this.baseProduction.prestige,
+            plastiacero: buildingProduction.plastiacero,
+            credito: buildingProduction.credito,
+            choam: buildingProduction.choam,
+            registros: buildingProduction.registros
         };
         
         // 3. Calculate consumption - scales with population but capped early game
-        // Progressive consumption: starts low, increases as game develops
         const consumptionFactor = Math.min(this.consumptionScale, 1.0 + (buildingsCount * 0.02));
         
         const totalConsumption = {
@@ -326,10 +348,24 @@ const Simulation = {
             food: Math.floor(pop * this.baseConsumption.food * consumptionFactor)
         };
         
-        // 4. Apply economic changes (atomic calculation to avoid visual fluctuations)
+        // 4. Calculate net deltas BEFORE applying (source of truth for UI)
         const netFunds = totalProduction.funds;
         const netWater = totalProduction.water - totalConsumption.water;
         const netFood = totalProduction.food - totalConsumption.food;
+        
+        // Store deltas in state (Source of Truth for UI)
+        gameState.monthlyDeltas = {
+            funds: netFunds,
+            water: netWater,
+            food: netFood,
+            prestige: this.baseProduction.prestige,
+            plastiacero: buildingProduction.plastiacero,
+            credito: buildingProduction.credito,
+            choam: buildingProduction.choam,
+            registros: buildingProduction.registros
+        };
+        
+        // 5. Apply economic changes
         
         if (netFunds > 0) res.funds = Math.min(res.funds + netFunds, 100000);
         else res.funds = Math.max(0, res.funds + netFunds);
@@ -340,7 +376,13 @@ const Simulation = {
         if (netFood > 0) res.food = Math.min(res.food + netFood, 10000);
         else res.food = Math.max(0, res.food + netFood);
         
-        res.prestige = Math.max(0, Math.min(100, res.prestige + totalProduction.prestige));
+        // Apply secondary resources
+        if (totalProduction.plastiacero) res.plastiacero = (res.plastiacero || 0) + totalProduction.plastiacero;
+        if (totalProduction.credito) res.credito = (res.credito || 0) + totalProduction.credito;
+        if (totalProduction.choam) res.choam = (res.choam || 0) + totalProduction.choam;
+        if (totalProduction.registros) res.registros = (res.registros || 0) + totalProduction.registros;
+        
+        res.prestige = Math.max(0, Math.min(100, res.prestige + this.baseProduction.prestige));
         
         // 5. Political stability factors - DYNAMIC SYSTEM
         // Approval: varies based on resource abundance, not just one direction
@@ -491,48 +533,198 @@ function startGameLoop() {
 }
 
 // ============================================
-// BUILDING SYSTEM (Fully Functional)
+// BUILDING SYSTEM - Data-Driven (Synced with Backend)
 // ============================================
+// All buildings sourced from BuildingCatalog.cs definitions
+// Format: { id, name, category, tier, cost, upkeep, output, effects, description }
 
 const BUILDINGS_DB = [
-    { id: 'hydraulic_chamber', name: 'Cámara Hidráulica', category: 'Aclima', 
-      cost: { funds: 1000, water: 200 }, 
-      effects: { waterGeneration: 50 }, isBuilt: false },
-    { id: 'granja', name: 'Granja Hidráulica', category: 'Logistics', 
-      cost: { funds: 600, water: 50 }, 
-      effects: { foodGeneration: 5 }, isBuilt: false },
-    { id: 'almacen_alimento', name: 'Almacén de Alimentos', category: 'Logistics', 
-      cost: { funds: 400 }, 
-      effects: { foodStorage: 20 }, isBuilt: false },
-    { id: 'canal_riego', name: 'Canal de Riego', category: 'Aclima', 
-      cost: { funds: 800, water: 100 }, 
-      effects: { foodGeneration: 2 }, isBuilt: false },
-    { id: 'ceremonial_plaza', name: 'Plaza Ceremonial', category: 'Exhibition', 
-      cost: { funds: 800, prestige: 50 }, 
-      effects: { prestigeGeneration: 20 }, isBuilt: false },
-    { id: 'biology_lab', name: 'Laboratorio Biológico', category: 'Science', 
-      cost: { funds: 1500, staff: 10 }, 
-      effects: { foodGeneration: 10 }, isBuilt: false },
-    { id: 'water_plant', name: 'Planta de Agua', category: 'Logistics', 
-      cost: { funds: 2000, water: 100 }, 
-      effects: { waterGeneration: 100 }, isBuilt: false },
-    { id: 'water_wall', name: 'Muro Hidráulico', category: 'Security', 
-      cost: { funds: 1200, water: 200 }, 
-      effects: { securityBonus: 30 }, isBuilt: false },
-    { id: 'data_chamber', name: 'Cámara de Datos', category: 'Archive', 
-      cost: { funds: 600, prestige: 50 }, 
-      effects: { prestigeGeneration: 10 }, isBuilt: false },
-    { id: 'water_depot', name: 'Depósito de Agua', category: 'Logistics', 
-      cost: { funds: 500, water: 100 }, 
-      effects: { waterGeneration: 20 }, isBuilt: false },
-    { id: 'filtration_plant', name: 'Planta de Filtrado', category: 'Logistics', 
-      cost: { funds: 800, staff: 5 }, 
-      effects: { foodGeneration: 30 }, isBuilt: false }
+    // ========== ALIMENTACIÓN ==========
+    {
+        id: 'despensa_guarnicion', name: 'Despensa de Guarnición', category: 'Alimentacion', tier: 1,
+        cost: { funds: 120 }, upkeep: { funds: 8 }, output: { food: 4 }, effects: {},
+        description: 'Almacén básico de alimentos para la guarnición.'
+    },
+    {
+        id: 'cocina_estiba', name: 'Cocina de Estiba', category: 'Alimentacion', tier: 2,
+        cost: { funds: 260 }, upkeep: { funds: 14 }, output: { food: 8 }, effects: {},
+        description: 'Cocina industrial para procesar alimentos para enclaves pequeños.'
+    },
+    {
+        id: 'refectorio_cuenca', name: 'Refectorio de Cuenca', category: 'Alimentacion', tier: 3,
+        cost: { funds: 420 }, upkeep: { funds: 22 }, output: { food: 13 }, effects: {},
+        description: 'Comedor comunitario de capacidad intermedia.'
+    },
+    {
+        id: 'huerta_niebla', name: 'Huerta de Niebla', category: 'Alimentacion', tier: 4,
+        cost: { funds: 700 }, upkeep: { funds: 30, water: 3 }, output: { food: 24 }, effects: { seguridadAlimentaria: 5 },
+        description: 'Cultivo hidropónico con niebla artificial.'
+    },
+    {
+        id: 'complejo_hidrocultivo', name: 'Complejo de Hidrocultivo de Vindeiro', category: 'Alimentacion', tier: 5,
+        cost: { funds: 1100 }, upkeep: { funds: 42, water: 6 }, output: { food: 38 }, effects: { seguridadAlimentaria: 10 },
+        description: 'Instalación de cultivo avanzado de alto rendimiento.',
+        prerequisites: ['huerta_niebla']
+    },
+
+    // ========== INFRAESTRUCTURA HÍDRICA ==========
+    {
+        id: 'torre_niebla', name: 'Torre de Niebla', category: 'InfraestructuraHidrica', tier: 1,
+        cost: { funds: 160 }, upkeep: { funds: 10 }, output: { water: 2 }, effects: { reduccionEventosClimaticos: 5 },
+        description: 'Captadores de niebla para recolección de agua.'
+    },
+    {
+        id: 'planta_recuperacion_hidrica', name: 'Planta de Recuperación Hídrica', category: 'InfraestructuraHidrica', tier: 2,
+        cost: { funds: 320 }, upkeep: { funds: 18 }, output: { water: 10 }, effects: {},
+        description: 'Sistema de reciclaje y purificación de agua.'
+    },
+    {
+        id: 'red_filtrado_salino', name: 'Red de Filtrado Salino', category: 'InfraestructuraHidrica', tier: 3,
+        cost: { funds: 620 }, upkeep: { funds: 28 }, output: { water: 22 }, effects: {},
+        description: 'Sistema de desalinización para agua.'
+    },
+    {
+        id: 'cisternas_mayores', name: 'Cisternas Mayores', category: 'InfraestructuraHidrica', tier: 4,
+        cost: { funds: 900 }, upkeep: { funds: 24 }, output: { water: 4 }, effects: { capacidadAgua: 500 },
+        description: 'Reservorios de gran capacidad.'
+    },
+
+    // ========== LOGÍSTICA Y RESERVAS ==========
+    {
+        id: 'camara_abastos', name: 'Cámara de Abastos', category: 'LogisticaReservas', tier: 1,
+        cost: { funds: 140 }, upkeep: { funds: 8 }, output: {}, effects: { capacidadRaciones: 25 },
+        description: 'Almacén de alimentos básico.'
+    },
+    {
+        id: 'almacen_estiba', name: 'Almacén de Estiba', category: 'LogisticaReservas', tier: 2,
+        cost: { funds: 280 }, upkeep: { funds: 16 }, output: {}, effects: { capacidadGeneral: 35 },
+        description: 'Almacén de capacidad mixta.'
+    },
+    {
+        id: 'patio_transferencia', name: 'Patio de Transferencia', category: 'LogisticaReservas', tier: 3,
+        cost: { funds: 500 }, upkeep: { funds: 24 }, output: {}, effects: { velocidadLogistica: 15, costeTraslado: -10 },
+        description: 'Zona de carga y descarga.'
+    },
+    {
+        id: 'deposito_plastiacero', name: 'Depósito de Plastiacero', category: 'LogisticaReservas', tier: 4,
+        cost: { funds: 780 }, upkeep: { funds: 26 }, output: { plastiacero: 4 }, effects: { capacidadMaterial: 20 },
+        description: 'Almacén de material de construcción.'
+    },
+
+    // ========== CUSTODIA Y CONTROL BIOLÓGICO ==========
+    {
+        id: 'camara_transito', name: 'Cámara de Tráns ito', category: 'CustodiaBiologica', tier: 1,
+        cost: { funds: 180 }, upkeep: { funds: 12 }, output: {}, effects: { reduccionEstres: 10, capacidadSensible: 2 },
+        description: 'Zona de paso y control inicial.'
+    },
+    {
+        id: 'patio_cuarentena', name: 'Patio de Cuarentena', category: 'CustodiaBiologica', tier: 2,
+        cost: { funds: 360 }, upkeep: { funds: 18, water: 1 }, output: {}, effects: { reduccionBrote: 20, contencion: 12 },
+        description: 'Zona de aislamiento preventivo.'
+    },
+    {
+        id: 'camara_linea_sensible', name: 'Cámara de Línea Sensible', category: 'CustodiaBiologica', tier: 3,
+        cost: { funds: 620 }, upkeep: { funds: 26, water: 1, sellos: 1 }, output: {}, effects: { estabilidadLinea: 8, reduccionFuga: 15 },
+        description: 'Control de línea biológica.'
+    },
+    {
+        id: 'casa_biocontrol', name: 'Casa de Biocontrol', category: 'CustodiaBiologica', tier: 4,
+        cost: { funds: 980 }, upkeep: { funds: 38, water: 2 }, output: { registros: 10 }, effects: { recuperacionSanitaria: 20 },
+        description: 'Centro de control biológico avanzado.'
+    },
+
+    // ========== ARCHIVO, ADMINISTRACIÓN Y ANÁLISIS ==========
+    {
+        id: 'archivo_caudales', name: 'Archivo de Caudales', category: 'Administracion', tier: 1,
+        cost: { funds: 200 }, upkeep: { funds: 12 }, output: { registros: 6 }, effects: {},
+        description: 'Centro de registro de datos hidrológicos.'
+    },
+    {
+        id: 'sala_aforos', name: 'Sala de Aforos', category: 'Administracion', tier: 2,
+        cost: { funds: 420 }, upkeep: { funds: 22 }, output: {}, effects: { aforoOperativo: 10 },
+        description: 'Área de capacidad operativa.',
+        prerequisites: ['archivo_caudales']
+    },
+    {
+        id: 'camara_mentat', name: 'Cámara Mentat', category: 'Administracion', tier: 3,
+        cost: { funds: 900 }, upkeep: { funds: 40 }, output: { registros: 16 }, effects: { reduccionImpactoCrisis: 10 },
+        description: 'Centro de análisis estratégico.',
+        prerequisites: ['sala_aforos']
+    },
+    {
+        id: 'cancilleria_cuencas', name: 'Cancillería de Cuencas', category: 'Administracion', tier: 4,
+        cost: { funds: 1240 }, upkeep: { funds: 52 }, output: { credito: 2 }, effects: { costeAdministrativo: -10 },
+        description: 'Administración central.',
+        prerequisites: ['camara_mentat']
+    },
+
+    // ========== PRESTIGIO, PROTOCOLO Y CONTRATOS ==========
+    {
+        id: 'pabellon_audiencia', name: 'Pabellón de Audiencia', category: 'Prestigio', tier: 1,
+        cost: { funds: 300 }, upkeep: { funds: 16, water: 1 }, output: { funds: 14, credito: 1 }, effects: {},
+        description: 'Sala de recepción oficial.'
+    },
+    {
+        id: 'sala_protocolo', name: 'Sala de Protocolo', category: 'Prestigio', tier: 2,
+        cost: { funds: 520 }, upkeep: { funds: 24 }, output: { credito: 2 }, effects: {},
+        description: 'Gestión de protocolos oficiales.',
+        prerequisites: ['pabellon_audiencia']
+    },
+    {
+        id: 'terraza_patrocinio', name: 'Terraza de Patrocinio', category: 'Prestigio', tier: 3,
+        cost: { funds: 860 }, upkeep: { funds: 34, water: 1 }, output: { funds: 18, choam: 1 }, effects: {},
+        description: 'Área de eventos y patrocinio.',
+        prerequisites: ['sala_protocolo']
+    },
+    {
+        id: 'oficina_choam', name: 'Oficina CHOAM', category: 'Prestigio', tier: 4,
+        cost: { funds: 1200 }, upkeep: { funds: 46 }, output: { funds: 24, choam: 2 }, effects: {},
+        description: 'Representación del consorcio.',
+        prerequisites: ['terraza_patrocinio']
+    },
+
+    // ========== SEGURIDAD Y ORDEN ==========
+    {
+        id: 'anillo_custodia', name: 'Anillo de Custodia', category: 'Seguridad', tier: 1,
+        cost: { funds: 220, sellos: 1 }, upkeep: { funds: 14 }, output: {}, effects: { proyeccion: 10, reduccionSabotaje: 8 },
+        description: 'Perímetro de control perimetral.'
+    },
+    {
+        id: 'cuartel_guardapuertas', name: 'Cuartel de Guardapuertas', category: 'Seguridad', tier: 2,
+        cost: { funds: 480 }, upkeep: { funds: 26 }, output: {}, effects: { proyeccion: 20, respuestaIncidentes: 10 },
+        description: 'Alojamiento de tropa.'
+    },
+    {
+        id: 'torre_vigia', name: 'Torre de Vigía', category: 'Seguridad', tier: 3,
+        cost: { funds: 650 }, upkeep: { funds: 28 }, output: {}, effects: { deteccion: 12, reduccionFuga: 10 },
+        description: 'Torre de observación.'
+    },
+    {
+        id: 'compuerta_sello', name: 'Compuerta de Sello', category: 'Seguridad', tier: 4,
+        cost: { funds: 980, sellos: 2 }, upkeep: { funds: 38 }, output: {}, effects: { contencion: 25 },
+        description: 'Sistema de cierre automático.'
+    },
+    {
+        id: 'ala_intervencion', name: 'Ala de Intervención', category: 'Seguridad', tier: 5,
+        cost: { funds: 1400 }, upkeep: { funds: 52 }, output: {}, effects: { respuestaTactica: 35, reduccionDanoCrisis: 20 },
+        description: 'Unidad de respuesta táctica.'
+    }
 ];
 
 function initOfflineData() {
-    // Initialize with building DB and copy effects
-    gameState.buildings = BUILDINGS_DB.map(b => ({ ...b }));
+    gameState.buildings = BUILDINGS_DB.map(b => ({
+        id: b.id,
+        name: b.name,
+        category: b.category,
+        tier: b.tier,
+        cost: b.cost,
+        upkeep: b.upkeep,
+        output: b.output,
+        effects: b.effects,
+        prerequisites: b.prerequisites || [],
+        isBuilt: false
+    }));
+    
     gameState.districts = [
         { id: 'd1', name: 'Distrito del Palacio', population: 50, waterUsage: 100 },
         { id: 'd2', name: 'Distrito Comercial', population: 30, waterUsage: 60 },
@@ -568,11 +760,15 @@ function buildBuilding(buildingId) {
     if (!ResourceRegistry.canAfford(res, cost)) {
         console.log('[BUILD] Error: recursos insuficientes');
         const missingResources = [];
+        const resourceNames = {
+            funds: 'Solari', water: 'Agua', food: 'Comida', sellos: 'Sellos',
+            credito: 'Crédito', choam: 'CHOAM', registros: 'Registros', plastiacero: 'Plastiacero'
+        };
         for (const [key, amount] of Object.entries(cost)) {
             const has = res[key] || 0;
             console.log(`  - ${key}: tiene ${has}, necesita ${amount}`);
             if (has < amount) {
-                const name = { funds: 'Fondos', water: 'Agua', food: 'Alimento', prestige: 'Prestigio' }[key] || key;
+                const name = resourceNames[key] || key;
                 missingResources.push(`${name}: necesitas ${amount}, tienes ${has}`);
             }
         }
@@ -628,6 +824,9 @@ function initUI() {
         
         updateHUD();
         console.log('[INIT] HUD actualizado');
+        
+        renderBuildingsList();
+        console.log('[INIT] Edificios renderizados');
         
         startGameLoop();
         console.log('[INIT] Game loop iniciado');
@@ -814,27 +1013,46 @@ function renderBuildingsList() {
     const list = document.getElementById('buildingsList');
     if (!list) return;
     
+    const tierNames = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
+    const resourceIcons = {
+        funds: '💰', water: '💧', food: '🍖', sellos: '📜',
+        credito: '🏦', choam: '⚗️', registros: '📋', plastiacero: '🔩'
+    };
+    
     list.innerHTML = gameState.buildings.map(b => {
-        const costHTML = [];
-        if (b.cost.funds) costHTML.push(`<span class="cost-funds">💰 ${b.cost.funds}</span>`);
-        if (b.cost.water) costHTML.push(`<span class="cost-water">💧 ${b.cost.water}</span>`);
-        if (b.cost.food) costHTML.push(`<span class="cost-food">🍖 ${b.cost.food}</span>`);
+        // Cost display
+        const costHTML = Object.entries(b.cost)
+            .map(([key, amount]) => `<span class="cost-${key}">${resourceIcons[key] || key} ${amount}</span>`)
+            .join('');
         
-        const effectsHTML = [];
-        if (b.effects.waterGeneration) effectsHTML.push(`+${b.effects.waterGeneration} agua/ciclo`);
-        if (b.effects.foodGeneration) effectsHTML.push(`+${b.effects.foodGeneration} comida/ciclo`);
-        if (b.effects.fundsGeneration) effectsHTML.push(`+${b.effects.fundsGeneration} fondos/ciclo`);
-        if (b.effects.prestigeGeneration) effectsHTML.push(`+${b.effects.prestigeGeneration} prestigio/ciclo`);
-        if (b.effects.securityBonus) effectsHTML.push(`+${b.effects.securityBonus} seguridad`);
+        // Upkeep display
+        const upkeepHTML = Object.entries(b.upkeep)
+            .map(([key, amount]) => `<span class="upkeep-${key}">-${amount} ${resourceIcons[key] || key}/mes</span>`)
+            .join('');
+        
+        // Output display
+        const outputHTML = Object.entries(b.output)
+            .map(([key, amount]) => `<span class="output-${key}">+${amount} ${resourceIcons[key] || key}/mes</span>`)
+            .join('');
+        
+        // Effects display
+        const effectsEntries = Object.entries(b.effects);
+        const effectsHTML = effectsEntries.length 
+            ? `<div class="building-effects">${effectsEntries.map(([k, v]) => `<span>${k}: ${v > 0 ? '+' : ''}${v}</span>`).join(', ')}</div>` 
+            : '';
         
         return `
             <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
                 <div class="building-card-header">
                     <span class="building-name">${b.name}</span>
-                    <span class="building-category">${b.category}</span>
+                    <span class="building-tier">Tier ${tierNames[b.tier] || b.tier}</span>
                 </div>
-                <div class="building-cost">${costHTML.join('')}</div>
-                ${effectsHTML.length ? `<div class="building-effect">${effectsHTML.join(', ')}</div>` : ''}
+                <div class="building-description">${b.description || ''}</div>
+                <div class="building-cost">${costHTML}</div>
+                <div class="building-upkeep">${upkeepHTML}</div>
+                <div class="building-output">${outputHTML}</div>
+                ${effectsHTML}
+                ${b.prerequisites?.length ? `<div class="building-prereq">Req: ${b.prerequisites.join(', ')}</div>` : ''}
                 ${b.isBuilt ? '<div class="building-status built">✓ Construido</div>' : ''}
             </div>
         `;
@@ -850,25 +1068,29 @@ function renderBuildingsByCategory(category) {
         buildings = buildings.filter(b => b.category === category);
     }
     
+    const tierNames = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
+    const resourceIcons = {
+        funds: '💰', water: '💧', food: '🍖', sellos: '📜',
+        credito: '🏦', choam: '⚗️', registros: '📋', plastiacero: '🔩'
+    };
+    
     list.innerHTML = buildings.map(b => {
-        const costHTML = [];
-        if (b.cost.funds) costHTML.push(`<span class="cost-funds">💰 ${b.cost.funds}</span>`);
-        if (b.cost.water) costHTML.push(`<span class="cost-water">💧 ${b.cost.water}</span>`);
-        if (b.cost.food) costHTML.push(`<span class="cost-food">🍖 ${b.cost.food}</span>`);
+        const costHTML = Object.entries(b.cost)
+            .map(([key, amount]) => `<span class="cost-${key}">${resourceIcons[key] || key} ${amount}</span>`)
+            .join('');
         
-        const effectsHTML = [];
-        if (b.effects.waterGeneration) effectsHTML.push(`+${b.effects.waterGeneration} agua/ciclo`);
-        if (b.effects.foodGeneration) effectsHTML.push(`+${b.effects.foodGeneration} comida/ciclo`);
-        if (b.effects.fundsGeneration) effectsHTML.push(`+${b.effects.fundsGeneration} fondos/ciclo`);
+        const outputHTML = Object.entries(b.output)
+            .map(([key, amount]) => `<span class="output-${key}">+${amount} ${resourceIcons[key] || key}/mes</span>`)
+            .join('');
         
         return `
             <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
                 <div class="building-card-header">
                     <span class="building-name">${b.name}</span>
-                    <span class="building-category">${b.category}</span>
+                    <span class="building-tier">Tier ${tierNames[b.tier] || b.tier}</span>
                 </div>
-                <div class="building-cost">${costHTML.join('')}</div>
-                ${effectsHTML.length ? `<div class="building-effect">${effectsHTML.join(', ')}</div>` : ''}
+                <div class="building-cost">${costHTML}</div>
+                <div class="building-output">${outputHTML}</div>
                 ${b.isBuilt ? '<div class="building-status built">✓ Construido</div>' : ''}
             </div>
         `;
@@ -1221,39 +1443,6 @@ async function loadGameData() {
     }
 }
 
-function initOfflineData() {
-    gameState.buildings = [
-        { id: 'hydraulic_chamber', name: 'Cámara Hidráulica', category: 'Aclima', cost: { funds: 1000, water: 200 }, effects: { waterGeneration: 50 }, isBuilt: false },
-        { id: 'granja', name: 'Granja Hidráulica', category: 'Logistics', cost: { funds: 600, water: 50 }, effects: { foodGeneration: 5 }, isBuilt: false },
-        { id: 'almacen_alimento', name: 'Almacén de Alimentos', category: 'Logistics', cost: { funds: 400 }, effects: { foodStorage: 20 }, isBuilt: false },
-        { id: 'canal_riego', name: 'Canal de Riego', category: 'Aclima', cost: { funds: 800, water: 100 }, effects: { foodGeneration: 2, waterDistribution: 10 }, isBuilt: false },
-        { id: 'ceremonial_plaza', name: 'Plaza Ceremonial', category: 'Exhibition', cost: { funds: 800, prestige: 50 }, effects: { prestigeGeneration: 20 }, isBuilt: false },
-        { id: 'biology_lab', name: 'Laboratorio Biológico', category: 'Science', cost: { funds: 1500, staff: 10 }, effects: { foodGeneration: 10 }, isBuilt: false },
-        { id: 'water_plant', name: 'Planta de Agua', category: 'Logistics', cost: { funds: 2000, water: 100 }, effects: { waterGeneration: 100 }, isBuilt: false },
-        { id: 'water_wall', name: 'Muro Hidráulico', category: 'Security', cost: { funds: 1200, water: 200 }, effects: { securityBonus: 30 }, isBuilt: false },
-        { id: 'data_chamber', name: 'Cámara de Datos', category: 'Archive', cost: { funds: 600, prestige: 50 }, effects: { prestigeGeneration: 10 }, isBuilt: false },
-        { id: 'water_depot', name: 'Depósito de Agua', category: 'Logistics', cost: { funds: 500, water: 100 }, effects: { waterGeneration: 20 }, isBuilt: false },
-        { id: 'filtration_plant', name: 'Planta de Filtrado', category: 'Logistics', cost: { funds: 800, staff: 5 }, effects: { foodGeneration: 30 }, isBuilt: false }
-    ];
-    gameState.districts = [
-        { id: 'd1', name: 'Distrito del Palacio', population: 50, waterUsage: 100 },
-        { id: 'd2', name: 'Distrito Comercial', population: 30, waterUsage: 60 },
-        { id: 'd3', name: 'Distrito de Investigación', population: 20, waterUsage: 40 }
-    ];
-    
-    // Solo renderizar si los elementos existen
-    try {
-        if (document.getElementById('buildingsGrid')) {
-            renderBuildings(gameState.buildings);
-        }
-        if (document.getElementById('districtsGrid')) {
-            renderDistricts();
-        }
-    } catch(e) {
-        console.log('[INIT] Grid elements not found, skipping render');
-    }
-}
-
 // ============================================
 // UI Updates (Safe with canonical resources)
 // ============================================
@@ -1275,26 +1464,13 @@ function updateHUD() {
     setEl('resource-faith', gameState.faith);
     setEl('resource-military', gameState.military);
 
-    // Variations - show NET production (production - consumption)
-    // This gives player accurate picture of resource flow
-    const buildingsCount = gameState.buildings.filter(b => b.isBuilt).length;
-    const buildingFoodProd = gameState.buildings
-        .filter(b => b.isBuilt && b.effects?.foodGeneration)
-        .reduce((sum, b) => sum + b.effects.foodGeneration, 0);
-    const buildingWaterProd = gameState.buildings
-        .filter(b => b.isBuilt && b.effects?.waterGeneration)
-        .reduce((sum, b) => sum + b.effects.waterGeneration, 0);
+    // Variations - read from Source of Truth (monthlyDeltas set by Simulation)
+    const deltas = gameState.monthlyDeltas || { funds: 0, water: 0, food: 0, prestige: 0 };
     
-    const netWater = Simulation.baseProduction.water + buildingWaterProd - 
-        Math.floor(gameState.population.total * Simulation.baseConsumption.water);
-    const netFood = Simulation.baseProduction.food + buildingFoodProd - 
-        Math.floor(gameState.population.total * Simulation.baseConsumption.food);
-    
-    // Display net change (what player actually gains/loses per cycle)
-    updateVariation('variation-money', Simulation.baseProduction.funds);
-    updateVariation('variation-water', netWater);
-    updateVariation('variation-food', netFood);
-    updateVariation('variation-prestige', Simulation.baseProduction.prestige);
+    updateVariation('variation-money', deltas.funds);
+    updateVariation('variation-water', deltas.water);
+    updateVariation('variation-food', deltas.food);
+    updateVariation('variation-prestige', deltas.prestige);
 
     // Calendar
     const ev = gameState.events;
