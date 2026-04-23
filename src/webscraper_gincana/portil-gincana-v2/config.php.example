@@ -1,11 +1,11 @@
 <?php
 /**
- * Copia este archivo como config.php y rellena tus datos reales de Hostinger.
- * IMPORTANTE: no subas credenciales reales a Git.
+ * Copia este archivo como config.php y rellena credenciales reales de Hostinger.
+ * No subas credenciales reales al repositorio.
  */
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'hpanel_db_name');
+define('DB_NAME', 'dune');
 define('DB_USER', 'hpanel_db_user');
 define('DB_PASSWORD', 'hpanel_db_password');
 define('DB_CHARSET', 'utf8mb4');
