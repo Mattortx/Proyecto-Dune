@@ -3,1694 +3,533 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Archivo Vivo — Casa Portil</title>
+<title>¿A qué Casa perteneces? — Casa Portil · Proyecto Dune</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
-/* ================================================================
-   TOKENS & RESET
-   ================================================================ */
 :root{
-  --g0:#050807; --g1:#0b100e; --g2:#111a16; --g3:#182420;
-  --g4:#1e3028; --g5:#2a4a38;
-  --ve:#1e4a3c; --vm:#2d6650; --vb:#3e8468; --vg:#52a882;
-  --vi:rgba(82,168,130,.12); --vglow:rgba(82,168,130,.35);
-  --pl:#b6ccb0; --pb:#cfdec8; --pw:#e8f2e4;
-  --or:#8a7030; --ob:#b09040; --og:#d4b460;
-  --tx:#b0c4a8; --td:#5a6e58; --ts:#3a4e38;
-  --rd:#b84040; --rdl:rgba(184,64,64,.12);
-  --brl:rgba(182,204,176,.10); --brm:rgba(182,204,176,.22);
-  --brh:rgba(182,204,176,.40);
-  --shadow:0 24px 60px rgba(0,0,0,.7);
-  --transition:all .35s cubic-bezier(.4,0,.2,1);
+  --bg:#050806;--bg1:#090d0b;--bg2:#0f1510;--bg3:#162018;--bg4:#1c2b20;
+  --vg:#4e9a6e;--vgb:#6ab88a;--vgl:rgba(78,154,110,.14);--vglow:rgba(78,154,110,.32);
+  --pl:#b8ccb0;--pb:#ccdec4;--pw:#e6f2de;
+  --og:#c8a840;--ogl:rgba(200,168,64,.12);--oglow:rgba(200,168,64,.3);
+  --tx:#a8bca0;--td:#566850;--ts:#2e3e2a;
+  --brl:rgba(184,204,176,.10);--brm:rgba(184,204,176,.22);--brh:rgba(184,204,176,.40);
+  --rd:#b03030;
+  --T:all .32s cubic-bezier(.4,0,.2,1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{
-  background:var(--g0);
-  color:var(--tx);
-  font-family:'Cormorant Garamond',Georgia,serif;
-  font-weight:400;
-  font-size:18px;
-  line-height:1.7;
-  overflow-x:hidden;
-  min-height:100vh;
-  cursor:default;
-}
-::selection{background:var(--vi);color:var(--pw)}
-
-/* ================================================================
-   CUSTOM CURSOR
-   ================================================================ */
-.cursor-dot{
-  position:fixed;width:6px;height:6px;
-  background:var(--vg);border-radius:50%;
-  pointer-events:none;z-index:9999;
-  transform:translate(-50%,-50%);
-  transition:opacity .3s;
-}
-.cursor-ring{
-  position:fixed;width:28px;height:28px;
-  border:1px solid rgba(82,168,130,.4);
-  border-radius:50%;pointer-events:none;z-index:9998;
-  transform:translate(-50%,-50%);
-  transition:width .3s,height .3s,border-color .3s;
-}
-body:hover .cursor-dot{opacity:1}
-
-/* ================================================================
-   CANVAS / AMBIENT
-   ================================================================ */
-#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
-
-/* ================================================================
-   PANTALLA GENÉRICA
-   ================================================================ */
-.screen{
-  position:relative;z-index:10;
-  min-height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;
-  padding:2.5rem 1.5rem;
-}
-.screen.off{display:none}
-
-/* ================================================================
-   UTILIDADES
-   ================================================================ */
-.appear{animation:appear .7s cubic-bezier(.4,0,.2,1) both}
-.appear-2{animation:appear .7s .12s cubic-bezier(.4,0,.2,1) both}
-.appear-3{animation:appear .7s .24s cubic-bezier(.4,0,.2,1) both}
-.appear-4{animation:appear .7s .36s cubic-bezier(.4,0,.2,1) both}
-@keyframes appear{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-
-.divider{width:48px;height:1px;background:var(--vg);opacity:.5;margin:.8rem 0}
-.divider.center{margin:.8rem auto}
-.divider.full{width:100%;opacity:.2}
-
-.eyebrow{
-  font-family:'Cinzel',serif;
-  font-size:.62rem;letter-spacing:.45em;text-transform:uppercase;
-  color:var(--vg);opacity:.8;
-}
-.heading{
-  font-family:'Cinzel Decorative',serif;
-  color:var(--pb);line-height:1.1;
-  text-shadow:0 0 50px var(--vglow),0 4px 20px rgba(0,0,0,.8);
-}
-.lede{
-  font-style:italic;
-  color:var(--pl);opacity:.8;line-height:1.85;
-}
-
-/* ================================================================
-   SCREEN 1 — PORTADA
-   ================================================================ */
-#s-intro{text-align:center;overflow:hidden}
-.intro-bg{
-  position:absolute;inset:0;
-  background:url('img/sede.png') center 30%/cover no-repeat;
-  filter:brightness(.11) saturate(.5);
-  animation:bgPan 30s ease-in-out infinite alternate;
-}
-@keyframes bgPan{
-  0%{transform:scale(1) translate(0,0)}
-  100%{transform:scale(1.08) translate(-1%,-2%)}
-}
-.intro-veil{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 50%,transparent 20%,var(--g0) 100%),
-    linear-gradient(to bottom,var(--g0) 0%,transparent 18%,transparent 70%,var(--g0) 100%);
-}
-
-.intro-body{
-  position:relative;z-index:2;
-  max-width:680px;
-  display:flex;flex-direction:column;align-items:center;gap:1.4rem;
-}
-
-.crest{
-  width:120px;
-  filter:drop-shadow(0 0 30px var(--vglow)) drop-shadow(0 0 70px rgba(82,168,130,.2));
-  animation:crestBreath 5s ease-in-out infinite;
-}
-@keyframes crestBreath{
-  0%,100%{filter:drop-shadow(0 0 30px var(--vglow)) drop-shadow(0 0 70px rgba(82,168,130,.2))}
-  50%{filter:drop-shadow(0 0 50px rgba(82,168,130,.7)) drop-shadow(0 0 100px rgba(82,168,130,.35))}
-}
-
-.intro-body .heading{font-size:clamp(2.4rem,7.5vw,5.2rem)}
-
-.intro-pull{
-  border-left:2px solid var(--vg);
-  padding:.9rem 1.4rem;
-  background:rgba(82,168,130,.04);
-  max-width:520px;text-align:left;
-}
-.intro-pull p{
-  font-style:italic;color:var(--pl);font-size:clamp(.85rem,1.6vw,1rem);
-  line-height:1.9;opacity:.8;
-}
-.intro-pull cite{
-  display:block;margin-top:.5rem;
-  font-family:'Cinzel',serif;font-style:normal;
-  font-size:.58rem;letter-spacing:.25em;text-transform:uppercase;
-  color:var(--vg);opacity:.6;
-}
-
-/* Corner ornaments */
-.orn{position:absolute;width:55px;height:55px;opacity:.2}
-.orn.tl{top:14px;left:14px;border-top:1px solid var(--vg);border-left:1px solid var(--vg)}
-.orn.tr{top:14px;right:14px;border-top:1px solid var(--vg);border-right:1px solid var(--vg)}
-.orn.bl{bottom:14px;left:14px;border-bottom:1px solid var(--vg);border-left:1px solid var(--vg)}
-.orn.br{bottom:14px;right:14px;border-bottom:1px solid var(--vg);border-right:1px solid var(--vg)}
-
-/* ================================================================
-   BOTÓN PRINCIPAL
-   ================================================================ */
-.btn{
-  font-family:'Cinzel',serif;
-  font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;
-  padding:.95rem 2.4rem;
-  background:transparent;
-  border:1px solid var(--vg);
-  color:var(--pb);
-  cursor:pointer;
-  position:relative;overflow:hidden;
-  transition:var(--transition);
-}
-.btn::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,transparent,rgba(82,168,130,.1),transparent);
-  transform:translateX(-110%);transition:transform .45s ease;
-}
+body{background:var(--bg);color:var(--tx);font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+::selection{background:var(--vgl);color:var(--pw)}
+#ambient{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.45}
+#cd{position:fixed;width:5px;height:5px;background:var(--vg);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s}
+#cr{position:fixed;width:26px;height:26px;border:1px solid rgba(78,154,110,.38);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .25s,height .25s,border-color .25s}
+.view{position:relative;z-index:10;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:2.5rem 1.5rem}
+.view.off{display:none}
+.rise{animation:rise .65s cubic-bezier(.4,0,.2,1) both}
+.rise2{animation:rise .65s .1s cubic-bezier(.4,0,.2,1) both}
+.rise3{animation:rise .65s .2s cubic-bezier(.4,0,.2,1) both}
+.rise4{animation:rise .65s .3s cubic-bezier(.4,0,.2,1) both}
+.rise5{animation:rise .65s .4s cubic-bezier(.4,0,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.orn{position:absolute;width:52px;height:52px;opacity:.2}
+.orn.tl{top:12px;left:12px;border-top:1px solid var(--vg);border-left:1px solid var(--vg)}
+.orn.tr{top:12px;right:12px;border-top:1px solid var(--vg);border-right:1px solid var(--vg)}
+.orn.bl{bottom:12px;left:12px;border-bottom:1px solid var(--vg);border-left:1px solid var(--vg)}
+.orn.br{bottom:12px;right:12px;border-bottom:1px solid var(--vg);border-right:1px solid var(--vg)}
+.hdiv{width:50px;height:1px;background:linear-gradient(to right,transparent,var(--vg),transparent);opacity:.55}
+.hdiv.c{margin:.7rem auto}
+.eyebrow{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.48em;text-transform:uppercase;color:var(--vg);opacity:.8}
+.title{font-family:'Cinzel Decorative',serif;color:var(--pb);line-height:1.08;text-shadow:0 0 60px var(--vglow),0 4px 24px rgba(0,0,0,.8)}
+.lede{font-style:italic;color:var(--pl);opacity:.78;line-height:1.88}
+.btn{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;padding:.88rem 2.2rem;background:transparent;border:1px solid var(--vg);color:var(--pb);cursor:pointer;position:relative;overflow:hidden;transition:var(--T)}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(78,154,110,.1),transparent);transform:translateX(-110%);transition:transform .42s ease}
 .btn:hover::before{transform:translateX(110%)}
-.btn:hover{
-  border-color:var(--pb);
-  box-shadow:0 0 30px var(--vglow),inset 0 0 16px rgba(82,168,130,.06);
-  color:#fff;
-}
+.btn:hover{border-color:var(--pb);box-shadow:0 0 28px var(--vglow);color:#fff}
 .btn:disabled{opacity:.3;pointer-events:none}
-.btn-ghost{border-color:var(--brm);color:var(--td)}
-.btn-ghost:hover{border-color:var(--vg);color:var(--pl)}
-.btn-gold{border-color:var(--og);color:var(--og)}
-.btn-gold:hover{box-shadow:0 0 25px rgba(212,180,96,.3);color:var(--pw)}
-.btn-wide{width:100%}
+.btn.gold{border-color:var(--og);color:var(--og)}
+.btn.gold:hover{box-shadow:0 0 28px var(--oglow)}
+.btn.w100{width:100%}
+.btn.ghost{border-color:var(--brl);color:var(--td)}
+.btn.ghost:hover{border-color:var(--vg);color:var(--pl)}
 
-/* ================================================================
-   SCREEN 2 — REGISTRO COMPLETO
-   ================================================================ */
-#s-registro{background:var(--g1)}
-.reg-bg{
-  position:absolute;inset:0;
-  background:url('img/rio.png') center/cover no-repeat;
-  filter:brightness(.08) saturate(.35);
-}
-.reg-veil{
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse 90% 90% at 50% 50%,rgba(11,16,14,.75),rgba(5,8,7,.97));
-}
+/* INTRO */
+#v-intro{text-align:center;overflow:hidden}
+.intro-bg{position:absolute;inset:0;background:url('img/sede.png') center 28%/cover no-repeat;filter:brightness(.1) saturate(.45);animation:bgB 28s ease-in-out infinite alternate}
+@keyframes bgB{0%{transform:scale(1)}100%{transform:scale(1.07)}}
+.intro-veil{position:absolute;inset:0;background:radial-gradient(ellipse 75% 55% at 50% 52%,transparent 18%,var(--bg) 100%),linear-gradient(to bottom,var(--bg) 0%,transparent 15%,transparent 70%,var(--bg) 100%)}
+.intro-body{position:relative;z-index:2;max-width:640px;display:flex;flex-direction:column;align-items:center;gap:1.4rem}
+.hero-crest{width:110px;filter:drop-shadow(0 0 32px var(--vglow)) drop-shadow(0 0 80px rgba(78,154,110,.18));animation:cF 5.5s ease-in-out infinite}
+@keyframes cF{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.intro-title{font-size:clamp(2.2rem,7.5vw,5rem);margin-bottom:.2rem}
+.intro-pull{border-left:2px solid var(--vg);padding:.9rem 1.4rem;background:rgba(78,154,110,.04);max-width:500px;text-align:left}
+.intro-pull p{font-style:italic;font-size:clamp(.85rem,1.5vw,1rem);color:var(--pl);line-height:1.9;opacity:.78}
+.intro-pull cite{display:block;margin-top:.5rem;font-style:normal;font-family:'Cinzel',serif;font-size:.57rem;letter-spacing:.22em;text-transform:uppercase;color:var(--vg);opacity:.6}
 
-.reg-shell{
-  position:relative;z-index:2;
-  width:100%;max-width:640px;
-}
-
-.reg-card{
-  background:rgba(15,22,18,.9);
-  border:1px solid var(--brl);
-  padding:2.8rem 2.4rem 2rem;
-  backdrop-filter:blur(14px);
-  position:relative;
-}
-.reg-card::before{
-  content:'';display:block;
-  width:100%;height:1px;
-  background:linear-gradient(to right,transparent,var(--vg),transparent);
-  margin-bottom:2rem;
-  opacity:.5;
-}
-.reg-card::after{
-  content:'';display:block;
-  width:100%;height:1px;
-  background:linear-gradient(to right,transparent,var(--vg),transparent);
-  margin-top:1.8rem;
-  opacity:.2;
-}
-
-.reg-intro{text-align:center;margin-bottom:2rem}
-.reg-crest{width:52px;margin-bottom:.9rem;opacity:.75;filter:drop-shadow(0 0 10px var(--vglow))}
-.reg-title{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.18em;color:var(--pb);margin-bottom:.3rem}
-.reg-sub{font-style:italic;font-size:.85rem;color:var(--vg);opacity:.75}
-
-/* Field layout */
-.fields{display:flex;flex-direction:column;gap:1.3rem}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-@media(max-width:540px){.field-row{grid-template-columns:1fr}}
-
-.field{display:flex;flex-direction:column;gap:.38rem}
-.field label{
-  font-family:'Cinzel',serif;
-  font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;
-  color:var(--vg);
-}
-.field input,
-.field select,
-.field textarea{
-  background:rgba(5,8,7,.75);
-  border:1px solid var(--brl);
-  border-bottom:1px solid rgba(82,168,130,.28);
-  color:var(--pb);
-  padding:.72rem .95rem;
-  font-family:'Cormorant Garamond',serif;
-  font-size:1rem;
-  outline:none;
-  transition:var(--transition);
-  -webkit-appearance:none;
-}
-.field input::placeholder,.field textarea::placeholder{color:var(--ts)}
-.field input:focus,.field select:focus,.field textarea:focus{
-  border-color:var(--vg);
-  background:rgba(5,8,7,.9);
-  box-shadow:0 0 0 1px rgba(82,168,130,.18);
-}
-.field select{
-  cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2352a882'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right .9rem center;
-  padding-right:2.2rem;
-}
-.field select option{background:#111a16;color:var(--pb)}
-.field textarea{resize:vertical;min-height:84px;line-height:1.65}
-.field-err{
-  font-family:'Cinzel',serif;font-size:.58rem;
-  color:var(--rd);display:none;
-}
+/* REGISTRO */
+#v-reg{background:var(--bg1)}
+.reg-bg{position:absolute;inset:0;background:url('img/rio.png') center/cover no-repeat;filter:brightness(.07) saturate(.3)}
+.reg-veil{position:absolute;inset:0;background:radial-gradient(ellipse 90% 90% at 50% 50%,rgba(9,13,11,.72),rgba(5,8,6,.97))}
+.reg-card{position:relative;z-index:2;width:100%;max-width:520px;background:rgba(12,18,14,.92);border:1px solid var(--brl);padding:2.6rem 2.2rem 2rem;backdrop-filter:blur(14px)}
+.reg-card::before{content:'';display:block;width:100%;height:1px;background:linear-gradient(to right,transparent,var(--vg),transparent);opacity:.5;margin-bottom:1.8rem}
+.reg-top{text-align:center;margin-bottom:1.8rem}
+.reg-crest{width:48px;margin-bottom:.8rem;opacity:.7;filter:drop-shadow(0 0 10px var(--vglow))}
+.reg-title{font-family:'Cinzel',serif;font-size:.95rem;letter-spacing:.18em;color:var(--pb);margin-bottom:.3rem}
+.reg-sub{font-style:italic;font-size:.85rem;color:var(--vg);opacity:.72}
+.fields{display:flex;flex-direction:column;gap:1.2rem}
+.field{display:flex;flex-direction:column;gap:.36rem}
+.field label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--vg)}
+.field input,.field select{background:rgba(5,8,6,.72);border:1px solid var(--brl);border-bottom:1px solid rgba(78,154,110,.28);color:var(--pb);padding:.7rem .9rem;font-family:'Cormorant Garamond',serif;font-size:1rem;outline:none;transition:var(--T);-webkit-appearance:none}
+.field input::placeholder{color:var(--ts)}
+.field input:focus,.field select:focus{border-color:var(--vg);background:rgba(5,8,6,.9);box-shadow:0 0 0 1px rgba(78,154,110,.18)}
+.field select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234e9a6e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem}
+.field select option{background:#0f1510;color:var(--pb)}
+.field-err{font-family:'Cinzel',serif;font-size:.57rem;color:var(--rd);display:none}
 .field-err.show{display:block}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:500px){.field-row{grid-template-columns:1fr}}
 
-/* Checkboxes inline */
-.check-row{
-  display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.3rem;
-}
-.check-pill{
-  display:flex;align-items:center;gap:.5rem;
-  background:rgba(5,8,7,.6);
-  border:1px solid var(--brl);
-  padding:.42rem .85rem;cursor:pointer;
-  transition:var(--transition);font-size:.82rem;color:var(--tx);
-  user-select:none;
-}
-.check-pill:hover{border-color:var(--vg);background:rgba(82,168,130,.07)}
-.check-pill.on{border-color:var(--vg);background:rgba(82,168,130,.12);color:var(--pb)}
-.check-pill .tick{
-  width:11px;height:11px;border:1px solid var(--td);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.55rem;flex-shrink:0;transition:var(--transition);
-}
-.check-pill.on .tick{background:var(--vg);border-color:var(--vg);color:#fff}
+/* HUD TEST */
+#test-hud{position:fixed;top:0;left:0;right:0;z-index:800;display:none}
+#test-hud.show{display:block}
+#hud-prog-bg{height:2px;background:rgba(78,154,110,.1)}
+#hud-prog{height:100%;background:linear-gradient(to right,var(--bg4),var(--vg));transition:width .5s ease;box-shadow:0 0 6px var(--vg)}
+#hud-bar{display:flex;justify-content:space-between;align-items:center;padding:.52rem 1.4rem;background:rgba(5,8,6,.9);border-bottom:1px solid var(--brl);backdrop-filter:blur(12px)}
+.hud-brand{display:flex;align-items:center;gap:.65rem}
+.hud-ic{width:22px;opacity:.55;filter:drop-shadow(0 0 5px var(--vg))}
+.hud-txt{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--vg)}
+.hud-step{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--td)}
 
-.field-note{font-size:.78rem;color:var(--td);font-style:italic;line-height:1.5}
-
-/* Slider in form */
-.slider-field{display:flex;flex-direction:column;gap:.45rem}
-.slider-track{display:flex;align-items:center;gap:.9rem}
-.slider-track input[type=range]{
-  flex:1;-webkit-appearance:none;height:2px;
-  background:linear-gradient(to right,var(--vg) 0%,var(--vg) 50%,rgba(82,168,130,.2) 50%,rgba(82,168,130,.2) 100%);
-  outline:none;cursor:pointer;
-}
-.slider-track input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;width:13px;height:13px;
-  border-radius:50%;background:var(--vg);
-  box-shadow:0 0 8px var(--vglow);
-}
-.slider-ends{display:flex;justify-content:space-between}
-.slider-ends span{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--td)}
-.slider-val{
-  font-family:'Cinzel Decorative',serif;font-size:1rem;
-  color:var(--og);min-width:1.6rem;text-align:center;
-}
-
-/* Stars */
-.stars-track{display:flex;gap:.4rem;margin-top:.25rem}
-.star{
-  font-size:1.5rem;cursor:pointer;color:var(--ts);
-  transition:var(--transition);user-select:none;
-}
-.star.lit{color:var(--og);text-shadow:0 0 10px rgba(212,180,96,.5)}
-.star:hover{transform:scale(1.18)}
-
-/* ================================================================
-   PROGRESS HUD
-   ================================================================ */
-#hud{
-  position:fixed;top:0;left:0;right:0;z-index:900;
-  display:none;
-}
-#hud.show{display:block}
-#prog-track{height:2px;background:rgba(82,168,130,.1)}
-#prog-bar{height:100%;background:linear-gradient(to right,var(--vm),var(--vg));transition:width .6s ease;box-shadow:0 0 8px var(--vg)}
-#hud-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.55rem 1.4rem;
-  background:rgba(5,8,7,.88);
-  border-bottom:1px solid var(--brl);
-  backdrop-filter:blur(12px);
-}
-.hud-left{display:flex;align-items:center;gap:.7rem}
-.hud-crest{width:22px;opacity:.6;filter:drop-shadow(0 0 5px var(--vg))}
-.hud-casa{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--vg)}
-.hud-right{display:flex;align-items:center;gap:1.2rem}
-.hud-pts{font-family:'Cinzel Decorative',serif;font-size:.88rem;color:var(--og)}
-.hud-step{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--td)}
-
-/* ================================================================
-   SCREEN 3 — PRUEBA
-   ================================================================ */
-#s-prueba{background:var(--g0);padding-top:4.5rem}
-
-.prueba-wrap{width:100%;max-width:860px;margin:0 auto}
-
-.p-header{text-align:center;margin-bottom:2.2rem}
-.p-num{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.42em;text-transform:uppercase;color:var(--vg);margin-bottom:.4rem}
-.p-heading{font-size:clamp(1.6rem,5vw,3rem)}
-.p-tipo{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.32em;text-transform:uppercase;color:var(--td);margin-top:.5rem}
-
-/* Imagen cabecera prueba */
-.p-img{
-  position:relative;overflow:hidden;
-  border:1px solid var(--brl);margin-bottom:2rem;
-}
-.p-img img{
-  width:100%;max-height:300px;object-fit:cover;object-position:center 28%;
-  display:block;filter:brightness(.5) saturate(.6);transition:filter .5s;
-}
-.p-img:hover img{filter:brightness(.65) saturate(.75)}
-.p-img-label{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(5,8,7,.82);
-  font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--vg);padding:.45rem .8rem;
-}
-
-/* Fragmento narrativo */
-.fragment{
-  background:var(--g2);
-  border:1px solid var(--brl);
-  border-left:3px solid var(--vg);
-  padding:1.4rem 1.7rem;
-  margin-bottom:2rem;
-  position:relative;
-}
-.fragment-label{
-  font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.3em;text-transform:uppercase;
-  color:var(--vg);opacity:.6;margin-bottom:.7rem;
-}
-.fragment p{
-  font-style:italic;font-size:clamp(.88rem,1.5vw,1rem);
-  line-height:1.9;color:var(--pl);
-}
-.fragment cite{
-  display:block;margin-top:.7rem;
-  font-family:'Cinzel',serif;font-style:normal;
-  font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--vg);opacity:.55;
-}
-
-/* Bloque de pregunta */
-.q-box{
-  background:rgba(15,22,18,.7);
-  border:1px solid var(--brm);
-  padding:1.3rem 1.6rem;
-  margin-bottom:1.4rem;
-}
-.q-text{
-  font-family:'Cinzel',serif;
-  font-size:clamp(.85rem,1.7vw,.98rem);
-  line-height:1.6;color:var(--pb);letter-spacing:.03em;
-}
-.q-hint{
-  font-style:italic;font-size:.8rem;color:var(--td);
-  line-height:1.5;margin-top:.4rem;
-}
-
-/* Opciones */
-.opts{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.4rem}
-.opt{
-  background:rgba(11,16,14,.7);
-  border:1px solid var(--brl);
-  padding:.9rem 1.2rem;
-  display:flex;align-items:flex-start;gap:.9rem;
-  cursor:pointer;position:relative;overflow:hidden;
-  transition:var(--transition);
-}
-.opt::after{
-  content:'';position:absolute;left:0;top:0;bottom:0;
-  width:0;background:rgba(82,168,130,.06);
-  transition:width .3s;
-}
+/* TEST */
+#v-test{padding-top:3.5rem;background:var(--bg)}
+.q-wrap{width:100%;max-width:780px;margin:0 auto}
+.q-meta{text-align:center;margin-bottom:1.8rem}
+.q-num{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.42em;text-transform:uppercase;color:var(--vg);margin-bottom:.6rem}
+.q-img-wrap{position:relative;overflow:hidden;border:1px solid var(--brl);margin-bottom:1.8rem}
+.q-img{width:100%;max-height:260px;object-fit:cover;display:block;filter:brightness(.42) saturate(.55);transition:filter .5s}
+.q-img-wrap:hover .q-img{filter:brightness(.55) saturate(.7)}
+.q-img-lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(5,8,6,.82);font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--vg);padding:.42rem .75rem}
+.q-text-box{background:rgba(15,21,16,.7);border:1px solid var(--brm);padding:1.3rem 1.6rem;margin-bottom:1.4rem}
+.q-text{font-family:'Cinzel',serif;font-size:clamp(.88rem,1.7vw,1.02rem);line-height:1.62;color:var(--pb);letter-spacing:.02em}
+.q-context{font-style:italic;font-size:.85rem;color:var(--td);line-height:1.55;margin-top:.45rem}
+.opts{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.6rem}
+.opt{background:rgba(12,18,14,.65);border:1px solid var(--brl);padding:1rem 1.3rem;cursor:pointer;display:flex;align-items:flex-start;gap:.9rem;position:relative;overflow:hidden;transition:var(--T)}
+.opt::after{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(78,154,110,.06);transition:width .3s}
 .opt:hover{border-color:var(--vg)}
 .opt:hover::after{width:100%}
-.opt.sel{border-color:var(--vg);background:rgba(82,168,130,.09)}
-.opt.ok{border-color:var(--vg);background:rgba(82,168,130,.14)}
-.opt.ko{border-color:var(--rd);background:var(--rdl)}
-.opt.dim{pointer-events:none;opacity:.45}
-.opt.ok.dim,.opt.ko.dim{opacity:1}
-.opt-ltr{
-  font-family:'Cinzel Decorative',serif;font-size:.8rem;
-  color:var(--vg);min-width:1.4rem;flex-shrink:0;line-height:1.5;
-}
-.opt-txt{font-size:.9rem;line-height:1.6;color:var(--tx);flex:1}
-.opt-ico{font-size:.9rem;margin-left:auto;flex-shrink:0;display:none}
-.opt.ok .opt-ico,.opt.ko .opt-ico{display:block}
-.opt.ok .opt-ico{color:var(--vg)}
-.opt.ko .opt-ico{color:var(--rd)}
+.opt.chosen{border-color:var(--vg);background:rgba(78,154,110,.11);pointer-events:none}
+.opt.chosen .opt-ltr{color:var(--vg)}
+.opt.dim{pointer-events:none;opacity:.38}
+.opt-ltr{font-family:'Cinzel Decorative',serif;font-size:.8rem;color:var(--td);min-width:1.5rem;flex-shrink:0;line-height:1.5;transition:var(--T)}
+.opt-txt{font-size:.92rem;line-height:1.65;color:var(--tx)}
+.opt.chosen .opt-txt{color:var(--pb)}
 
-/* Feedback respuesta */
-.ans-fb{
-  padding:.9rem 1.3rem;border:1px solid var(--brl);
-  margin-bottom:1.3rem;display:none;
-}
-.ans-fb.show{display:block;animation:appear .35s ease}
-.ans-fb.ok{border-color:rgba(82,168,130,.35);background:rgba(82,168,130,.07)}
-.ans-fb.ko{border-color:rgba(184,64,64,.35);background:var(--rdl)}
-.ans-fb-head{
-  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.2em;
-  text-transform:uppercase;margin-bottom:.35rem;
-}
-.ans-fb.ok .ans-fb-head{color:var(--vg)}
-.ans-fb.ko .ans-fb-head{color:var(--rd)}
-.ans-fb p{font-style:italic;font-size:.88rem;line-height:1.7;color:var(--pl)}
+/* TRANSICIÓN */
+#v-trans{text-align:center;background:var(--bg)}
+.trans-body{max-width:420px}
+.trans-glyph{font-size:2.8rem;animation:tG 1.4s ease-in-out infinite}
+@keyframes tG{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+.trans-bar-bg{width:280px;height:2px;background:rgba(78,154,110,.12);margin:.6rem auto 0}
+.trans-bar{height:100%;background:var(--vg);animation:tL 2.2s ease-in-out forwards;box-shadow:0 0 8px var(--vg)}
+@keyframes tL{0%{width:0}60%{width:85%}100%{width:100%}}
 
-/* Mapa de territorios */
-.mapa{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:5px;margin-bottom:1.4rem}
-.mapa-item{
-  position:relative;overflow:hidden;
-  border:1px solid var(--brl);cursor:pointer;
-  transition:var(--transition);
-}
-.mapa-item img{
-  width:100%;aspect-ratio:4/3;object-fit:cover;
-  display:block;filter:brightness(.45) saturate(.5);
-  transition:filter .4s;
-}
-.mapa-item:hover img{filter:brightness(.65) saturate(.7)}
-.mapa-item.sel img{filter:brightness(.8) saturate(.85)}
-.mapa-item .ml{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(5,8,7,.85);
-  font-family:'Cinzel',serif;font-size:.55rem;
-  letter-spacing:.12em;text-transform:uppercase;
-  color:var(--pl);padding:.32rem .5rem;text-align:center;
-  transition:color .3s;
-}
-.mapa-item.sel{border-color:var(--vg);box-shadow:0 0 12px var(--vglow)}
-.mapa-item.sel .ml{color:var(--vg)}
-
-/* Decodificador */
-.decoder{margin-bottom:1.4rem}
-.decoder-bank{
-  display:flex;flex-wrap:wrap;gap:.35rem;
-  padding:.9rem 1rem;
-  background:rgba(5,8,7,.6);border:1px solid var(--brl);
-  margin-bottom:.5rem;min-height:52px;
-}
-.tok{
-  font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;
-  padding:.3rem .55rem;border:1px solid var(--brl);
-  color:var(--td);cursor:pointer;transition:var(--transition);
-  user-select:none;
-}
-.tok:hover{border-color:var(--vg);color:var(--pl)}
-.tok.used{opacity:.2;pointer-events:none}
-.decoder-answer{
-  min-height:40px;padding:.45rem .8rem;
-  background:rgba(15,22,18,.7);border:1px solid var(--brm);
-  display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;
-}
-.placed{
-  font-family:'Cinzel',serif;font-size:.72rem;
-  padding:.28rem .55rem;
-  background:rgba(82,168,130,.1);border:1px solid var(--vg);
-  color:var(--pb);cursor:pointer;transition:var(--transition);
-}
-.placed:hover{background:var(--rdl);border-color:var(--rd)}
-.decoder-note{font-style:italic;font-size:.78rem;color:var(--td);margin-top:.35rem}
-
-/* Timer */
-.timer-row{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
-.timer-label-txt{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--td)}
-.timer-bg{flex:1;height:2px;background:rgba(82,168,130,.12)}
-.timer-fill{height:100%;background:var(--vg);transition:width 1s linear,background .3s}
-.timer-fill.warn{background:var(--og)}
-.timer-fill.dng{background:var(--rd)}
-.timer-n{font-family:'Cinzel Decorative',serif;font-size:.85rem;color:var(--vg);min-width:1.8rem;text-align:right;transition:color .3s}
-.timer-n.warn{color:var(--og)}
-.timer-n.dng{color:var(--rd)}
-
-/* Feedback inline en forma de pregunta narrativa */
-.feedback-q{
-  background:rgba(15,22,18,.7);
-  border:1px solid var(--brm);
-  border-left:3px solid var(--og);
-  padding:1.3rem 1.6rem;
-  margin-bottom:1.4rem;
-}
-.feedback-q-label{
-  font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;
-  color:var(--og);margin-bottom:.6rem;opacity:.75;
-}
-.feedback-q-text{
-  font-size:.9rem;color:var(--pb);line-height:1.6;margin-bottom:.8rem;
-  font-style:italic;
-}
-
-/* ================================================================
-   SCREEN 4 — TRANSICIÓN
-   ================================================================ */
-#s-trans{text-align:center}
-.trans-wrap{max-width:460px}
-.trans-glyph{font-size:3.2rem;margin-bottom:1rem;animation:transGlyph 1.2s ease-in-out infinite}
-@keyframes transGlyph{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
-.trans-heading{font-size:clamp(1.4rem,5vw,2.2rem);margin-bottom:.5rem}
-.trans-pts{
-  font-family:'Cinzel Decorative',serif;font-size:1.5rem;margin:1rem 0;
-}
-.trans-pts.ok{color:var(--vg);text-shadow:0 0 16px rgba(82,168,130,.5)}
-.trans-pts.neutral{color:var(--og)}
-.trans-pts.ko{color:var(--rd)}
-
-/* ================================================================
-   SCREEN 5 — RESULTADO FINAL
-   ================================================================ */
-#s-final{text-align:center;overflow:hidden}
-.final-bg{
-  position:absolute;inset:0;
-  background:url('img/sede.png') center/cover no-repeat;
-  filter:brightness(.1) saturate(.4);
-}
-.final-veil{
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(5,8,7,.6),rgba(5,8,7,.98));
-}
-.final-body{
-  position:relative;z-index:2;
-  max-width:640px;
-  display:flex;flex-direction:column;align-items:center;gap:1.4rem;
-  padding:2rem 1.5rem;
-}
-.final-crest{width:90px;filter:drop-shadow(0 0 30px var(--vglow));animation:crestBreath 5s ease-in-out infinite}
-.final-heading{font-size:clamp(1.6rem,5vw,3.2rem)}
-.final-score{
-  font-family:'Cinzel Decorative',serif;
-  font-size:clamp(2.5rem,8vw,5.5rem);
-  color:var(--og);
-  text-shadow:0 0 30px rgba(212,180,96,.4);
-  line-height:1;
-}
-.final-score small{font-size:.35em;color:var(--td);letter-spacing:.2em;text-transform:uppercase;font-family:'Cinzel',serif;vertical-align:middle;margin-left:.2em}
-.final-verdict{font-style:italic;font-size:clamp(.9rem,1.7vw,1.05rem);color:var(--pl);line-height:1.85;opacity:.85;max-width:500px}
-
-.summary-table{
-  width:100%;background:rgba(11,16,14,.85);
-  border:1px solid var(--brl);
-  border-top:2px solid rgba(82,168,130,.3);
-  text-align:left;
-}
-.summary-table-title{
-  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.3em;
-  text-transform:uppercase;color:var(--vg);
-  padding:.9rem 1.2rem .4rem;opacity:.7;
-}
-.sr{display:flex;justify-content:space-between;align-items:center;padding:.5rem 1.2rem;border-bottom:1px solid var(--brl)}
-.sr:last-child{border-bottom:none}
-.sr-l{font-size:.82rem;color:var(--td)}
-.sr-v{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.08em}
-.sr-v.ok{color:var(--vg)}.sr-v.ko{color:var(--rd)}.sr-v.n{color:var(--pl)}
-
-.final-qote{
-  border-left:2px solid var(--og);
-  padding:.8rem 1.2rem;
-  background:rgba(212,180,96,.04);
-  text-align:left;max-width:480px;
-}
-.final-qote p{font-style:italic;font-size:.88rem;color:var(--pl);line-height:1.75;opacity:.8}
-.final-qote cite{font-family:'Cinzel',serif;font-style:normal;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--og);display:block;margin-top:.4rem}
-
-/* ================================================================
-   RESPONSIVE
-   ================================================================ */
-@media(max-width:600px){
-  .mapa{grid-template-columns:repeat(3,1fr)}
-  .field-row{grid-template-columns:1fr}
-}
+/* RESULTADO */
+#v-result{overflow:hidden;text-align:center}
+.result-bg{position:absolute;inset:0;background-size:cover;background-position:center 25%;filter:brightness(.12) saturate(.5);transition:background-image .8s}
+.result-veil{position:absolute;inset:0;background:radial-gradient(ellipse 85% 65% at 50% 50%,rgba(5,8,6,.45),rgba(5,8,6,.95))}
+.result-body{position:relative;z-index:2;max-width:700px;display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding:2rem 1.5rem}
+.result-faction-img{width:100%;max-width:480px;aspect-ratio:3/2;object-fit:cover;object-position:center top;display:block;border:1px solid var(--brl);filter:brightness(.75) saturate(.8);box-shadow:0 16px 48px rgba(0,0,0,.6)}
+.result-faction-name{font-family:'Cinzel Decorative',serif;font-size:clamp(1.6rem,5vw,3.2rem);color:var(--pb);line-height:1.1;text-shadow:0 0 50px var(--vglow),0 4px 20px rgba(0,0,0,.8)}
+.result-universe{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.4em;text-transform:uppercase;color:var(--vg);opacity:.75}
+.result-card{background:rgba(12,18,14,.88);border:1px solid var(--brl);padding:1.8rem 2rem;max-width:560px;width:100%;text-align:left;border-top:2px solid rgba(78,154,110,.35)}
+.result-card-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.32em;text-transform:uppercase;color:var(--vg);margin-bottom:1rem;opacity:.7}
+.result-desc{font-style:italic;font-size:clamp(.9rem,1.6vw,1.05rem);line-height:1.9;color:var(--pl)}
+.result-traits{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}
+.trait{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--brm);color:var(--td);transition:var(--T)}
+.trait:hover{border-color:var(--vg);color:var(--pl)}
+.result-motto{border-left:2px solid var(--og);padding:.8rem 1.3rem;background:var(--ogl);max-width:520px;width:100%;text-align:left}
+.result-motto p{font-style:italic;font-size:.95rem;color:var(--pl);line-height:1.75;opacity:.85}
+.result-motto cite{display:block;margin-top:.4rem;font-style:normal;font-family:'Cinzel',serif;font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;color:var(--og);opacity:.65}
+.afin-row{display:flex;flex-direction:column;gap:.5rem;width:100%;max-width:520px}
+.afin-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--vg);margin-bottom:.3rem;opacity:.65}
+.afin-item{display:flex;align-items:center;gap:.8rem}
+.afin-name{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--pl);min-width:130px;flex-shrink:0}
+.afin-bg{flex:1;height:2px;background:rgba(78,154,110,.1)}
+.afin-fill{height:100%;background:var(--vg);transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.afin-pct{font-family:'Cinzel Decorative',serif;font-size:.75rem;color:var(--og);min-width:2.5rem;text-align:right}
+.share-card{background:rgba(12,18,14,.88);border:1px solid var(--brl);padding:1.8rem 2rem;max-width:520px;width:100%;text-align:left}
+.share-title{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.18em;color:var(--pb);margin-bottom:.3rem}
+.share-sub{font-style:italic;font-size:.82rem;color:var(--td);margin-bottom:1.2rem;line-height:1.5}
+.share-fields{display:flex;flex-direction:column;gap:1rem}
+.share-field{display:flex;flex-direction:column;gap:.35rem}
+.share-field label{font-family:'Cinzel',serif;font-size:.57rem;letter-spacing:.28em;text-transform:uppercase;color:var(--vg)}
+.share-field select,.share-field textarea{background:rgba(5,8,6,.7);border:1px solid var(--brl);border-bottom:1px solid rgba(78,154,110,.28);color:var(--pb);padding:.7rem .9rem;font-family:'Cormorant Garamond',serif;font-size:1rem;outline:none;transition:var(--T);-webkit-appearance:none;width:100%}
+.share-field select:focus,.share-field textarea:focus{border-color:var(--vg)}
+.share-field select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234e9a6e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem}
+.share-field select option{background:#0f1510;color:var(--pb)}
+.share-field textarea{resize:vertical;min-height:80px;line-height:1.65}
+.share-note{font-size:.72rem;color:var(--td);font-style:italic;line-height:1.5;margin-top:.8rem}
+.cta-row{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px}
+#toast{position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%);background:rgba(15,21,16,.96);border:1px solid var(--vg);font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--pb);padding:.65rem 1.6rem;z-index:9990;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+@media(max-width:600px){.result-faction-img{max-height:220px}.afin-name{min-width:90px;font-size:.55rem}.cta-row{flex-direction:column}}
 </style>
 </head>
 <body>
-
-<!-- CURSOR -->
-<div class="cursor-dot" id="cdot"></div>
-<div class="cursor-ring" id="cring"></div>
-
-<!-- CANVAS FONDO -->
-<canvas id="bg-canvas"></canvas>
-
-<!-- HUD -->
-<div id="hud">
-  <div id="prog-track"><div id="prog-bar" style="width:0%"></div></div>
-  <div id="hud-row">
-    <div class="hud-left">
-      <img src="img/escudo.png" class="hud-crest" alt="">
-      <span class="hud-casa">Casa Portil — Archivo Vivo</span>
-    </div>
-    <div class="hud-right">
-      <span class="hud-step" id="hud-step">Prueba 1 · 5</span>
-      <span class="hud-pts" id="hud-pts">⚜ 0</span>
-    </div>
+<canvas id="ambient"></canvas>
+<div id="cd"></div><div id="cr"></div>
+<div id="toast">Resultado copiado</div>
+<div id="test-hud">
+  <div id="hud-prog-bg"><div id="hud-prog" style="width:0%"></div></div>
+  <div id="hud-bar">
+    <div class="hud-brand"><img src="img/escudo.png" class="hud-ic" alt=""><span class="hud-txt">Casa Portil — Archivo de Afinidades</span></div>
+    <span class="hud-step" id="hud-step">Pregunta 1 de 10</span>
   </div>
 </div>
 
-<!-- ================================================================
-     S1 — PORTADA
-     ================================================================ -->
-<div class="screen" id="s-intro">
-  <div class="intro-bg"></div>
-  <div class="intro-veil"></div>
-  <div class="orn tl"></div><div class="orn tr"></div>
-  <div class="orn bl"></div><div class="orn br"></div>
-
+<!-- INTRO -->
+<div class="view" id="v-intro">
+  <div class="intro-bg"></div><div class="intro-veil"></div>
+  <div class="orn tl"></div><div class="orn tr"></div><div class="orn bl"></div><div class="orn br"></div>
   <div class="intro-body">
-    <img src="img/escudo.png" class="crest appear" alt="Escudo de la Casa Portil">
-
-    <div class="appear-2">
-      <div class="eyebrow">Proyecto Dune · Gincana de acceso</div>
+    <img src="img/escudo.png" class="hero-crest rise" alt="">
+    <p class="eyebrow rise2">Casa Portil · Proyecto Dune</p>
+    <h1 class="title intro-title rise2">A qué Casa<br>perteneces?</h1>
+    <div class="hdiv c rise3"></div>
+    <p class="lede rise3" style="text-align:center;font-size:clamp(.88rem,1.6vw,1.05rem);max-width:480px">En el universo de Dune, no eliges a qué Casa sirves.<br>La Casa te elige a ti.</p>
+    <div class="intro-pull rise3">
+      <p>Ocho destinos posibles. Desde los salones archivísticos de Casa Portil hasta las arenas de Arrakis, pasando por la Hermandad que teje el futuro desde las sombras. Cada respuesta revela una capa de lo que realmente eres, no lo que crees ser.</p>
+      <cite>Mentat Jano Veyr, notas reservadas al Señor de Portil</cite>
     </div>
-
-    <h1 class="heading appear-2" style="font-size:clamp(2.4rem,7.5vw,5.2rem)">El Archivo<br>Vivo</h1>
-
-    <div class="divider center appear-3"></div>
-
-    <div class="intro-pull appear-3">
-      <p>El Archivo Vivo no es una biblioteca. Es una orden de memoristas entrenados para retener, verificar y rearticular precedentes. Quien quiera acceder al dossier completo debe demostrar que merece leer lo que contiene.</p>
-      <cite>— Custodio de Archivos Mayores, Palacio de las Compuertas</cite>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem" class="rise4">
+      <button class="btn" onclick="ir('v-reg')">Descubrir mi Casa</button>
+      <p style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--td)">10 preguntas · ~3 minutos · 8 resultados posibles</p>
     </div>
-
-    <p class="lede appear-3" style="max-width:480px;text-align:center;font-size:clamp(.85rem,1.6vw,1rem)">
-      Cinco pruebas. Lore, trivia y decisiones.<br>
-      Tus respuestas ayudan a dar forma al juego.
-    </p>
-
-    <button class="btn appear-4" onclick="ir('s-registro')">
-      Solicitar acceso al Archivo
-    </button>
   </div>
 </div>
 
-<!-- ================================================================
-     S2 — REGISTRO COMPLETO
-     ================================================================ -->
-<div class="screen off" id="s-registro">
-  <div class="reg-bg"></div>
-  <div class="reg-veil"></div>
-
-  <div class="reg-shell">
-    <div class="reg-intro appear">
+<!-- REGISTRO -->
+<div class="view off" id="v-reg">
+  <div class="reg-bg"></div><div class="reg-veil"></div>
+  <div class="orn tl"></div><div class="orn br"></div>
+  <div class="reg-card rise">
+    <div class="reg-top">
       <img src="img/escudo.png" class="reg-crest" alt="">
       <div class="reg-title">Identificación del Agente</div>
-      <div class="divider center"></div>
-      <div class="reg-sub">Sala de Aforos — Registro de primer nivel</div>
+      <div class="reg-sub">El Archivo necesita saber a quién inscribe</div>
     </div>
-
-    <div class="reg-card appear-2">
-      <div class="fields">
-
-        <div class="field-row">
-          <div class="field">
-            <label for="r-nombre">Nombre o alias</label>
-            <input type="text" id="r-nombre" placeholder="Como quieras que te llamen">
-            <span class="field-err" id="e-nombre">Requerido</span>
-          </div>
-          <div class="field">
-            <label for="r-edad">Edad</label>
-            <input type="number" id="r-edad" placeholder="Tu edad" min="14" max="99">
-            <span class="field-err" id="e-edad">Entre 14 y 99</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="r-email">Correo electrónico</label>
-          <input type="email" id="r-email" placeholder="tu@correo.com">
-          <span class="field-err" id="e-email">Correo inválido</span>
-        </div>
-
-        <div class="field">
-          <label for="r-perfil">Perfil como jugador</label>
-          <select id="r-perfil">
-            <option value="">Selecciona tu perfil...</option>
-            <option value="estrategia">Me gustan la estrategia y la gestión</option>
-            <option value="narrativa">Busco narrativa y worldbuilding profundo</option>
-            <option value="ambos">Busco mecánica Y narrativa a partes iguales</option>
-            <option value="curioso">Llegué por curiosidad, no soy jugador habitual</option>
-            <option value="dev">Soy desarrollador o evaluador académico</option>
-          </select>
-          <span class="field-err" id="e-perfil">Selecciona un perfil</span>
-        </div>
-
-        <div class="field">
-          <label>Géneros que juegas habitualmente</label>
-          <div class="check-row" id="genres-row">
-            <div class="check-pill" onclick="togglePill(this,'Estrategia/Gestión')"><div class="tick"></div>Estrategia / Gestión</div>
-            <div class="check-pill" onclick="togglePill(this,'RPG')"><div class="tick"></div>RPG</div>
-            <div class="check-pill" onclick="togglePill(this,'Narrativos')"><div class="tick"></div>Narrativos</div>
-            <div class="check-pill" onclick="togglePill(this,'Simuladores')"><div class="tick"></div>Simuladores</div>
-            <div class="check-pill" onclick="togglePill(this,'Roguelikes')"><div class="tick"></div>Roguelikes</div>
-            <div class="check-pill" onclick="togglePill(this,'Sandbox')"><div class="tick"></div>Sandbox</div>
-            <div class="check-pill" onclick="togglePill(this,'Acción')"><div class="tick"></div>Acción</div>
-            <div class="check-pill" onclick="togglePill(this,'No juego')"><div class="tick"></div>No juego habitualmente</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="r-como">¿Cómo llegaste aquí?</label>
-          <select id="r-como">
-            <option value="">Selecciona...</option>
-            <option value="amigo">Por un amigo o conocido</option>
-            <option value="rrss">Redes sociales</option>
-            <option value="uni">Universidad / entorno académico</option>
-            <option value="dune">Buscando proyectos sobre Dune</option>
-            <option value="otro">Otro camino</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Primera impresión del concepto <span style="opacity:.4;font-size:.9em">(antes de jugar)</span></label>
-          <div class="slider-field">
-            <div class="slider-track">
-              <input type="range" id="r-first-imp" min="1" max="10" value="5"
-                oninput="updSlider(this,'r-first-val')">
-              <span class="slider-val" id="r-first-val">5</span>
-            </div>
-            <div class="slider-ends"><span>No me llama</span><span>Me parece genial</span></div>
-          </div>
-          <span class="field-note">Un simulador de gestión en el universo de Dune, jugando como una Casa Menor</span>
-        </div>
-
-        <div class="field">
-          <label for="r-exp">Experiencia previa con el universo de Dune</label>
-          <select id="r-exp">
-            <option value="">Selecciona...</option>
-            <option value="ninguna">No conozco Dune</option>
-            <option value="peliculas">He visto las películas</option>
-            <option value="libros">He leído los libros</option>
-            <option value="juegos">He jugado otros juegos de Dune</option>
-            <option value="fan">Fan del universo</option>
-          </select>
-        </div>
-
-      </div><!-- /fields -->
-    </div><!-- /reg-card -->
-
-    <div style="margin-top:1.2rem;display:flex;flex-direction:column;gap:.6rem" class="appear-3">
-      <button class="btn btn-wide" id="reg-btn" onclick="iniciar()">
-        Inscribirse y comenzar la gincana
-      </button>
-      <button class="btn btn-ghost btn-wide" onclick="ir('s-intro')">← Volver</button>
-      <p style="font-size:.72rem;color:var(--td);text-align:center;font-style:italic;line-height:1.5">
-        Tus respuestas se guardan como feedback para el equipo de desarrollo.<br>No se cederán a terceros.
-      </p>
+    <div class="fields">
+      <div class="field-row">
+        <div class="field"><label for="rn">Nombre</label><input type="text" id="rn" placeholder="Tu nombre o alias"><span class="field-err" id="en">Requerido</span></div>
+        <div class="field"><label for="ra">Edad</label><input type="number" id="ra" placeholder="Tu edad" min="14" max="99"><span class="field-err" id="ea">14-99</span></div>
+      </div>
+      <div class="field"><label for="re">Correo electrónico</label><input type="email" id="re" placeholder="Para enviarte el resultado"><span class="field-err" id="ee">Correo inválido</span></div>
+      <div class="field"><label for="rp">Perfil como jugador</label>
+        <select id="rp">
+          <option value="">Selecciona...</option>
+          <option value="estrategia">Me gustan la estrategia y la gestión</option>
+          <option value="narrativa">Busco narrativa y worldbuilding profundo</option>
+          <option value="ambos">Busco mecánica Y narrativa a partes iguales</option>
+          <option value="curioso">Llegué por curiosidad</option>
+          <option value="dev">Soy desarrollador / evaluador académico</option>
+        </select>
+        <span class="field-err" id="ep">Selecciona una opción</span>
+      </div>
+      <div class="field"><label for="rd2">Experiencia con el universo de Dune</label>
+        <select id="rd2">
+          <option value="">Selecciona...</option>
+          <option value="nada">No conozco Dune</option>
+          <option value="peliculas">He visto las películas</option>
+          <option value="libros">He leído los libros</option>
+          <option value="juegos">He jugado otros juegos de Dune</option>
+          <option value="fan">Fan del universo</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:.6rem">
+      <button class="btn w100" onclick="empezar()">Comenzar el test</button>
+      <button class="btn ghost w100" onclick="ir('v-intro')">Volver</button>
+      <p style="font-size:.7rem;color:var(--td);text-align:center;font-style:italic;line-height:1.5;margin-top:.3rem">Tus datos se usan únicamente como feedback para el equipo de desarrollo.</p>
     </div>
   </div>
 </div>
 
-<!-- ================================================================
-     S3 — PRUEBA (contenedor dinámico)
-     ================================================================ -->
-<div class="screen off" id="s-prueba">
-  <div id="prueba-mount" class="prueba-wrap"></div>
-</div>
+<!-- TEST -->
+<div class="view off" id="v-test"><div id="q-mount" class="q-wrap"></div></div>
 
-<!-- ================================================================
-     S4 — TRANSICIÓN
-     ================================================================ -->
-<div class="screen off" id="s-trans">
-  <div class="trans-wrap appear">
-    <div class="trans-glyph" id="tr-glyph">⚜</div>
-    <div class="eyebrow" id="tr-label">Prueba completada</div>
-    <h2 class="heading trans-heading" id="tr-titulo"></h2>
-    <div class="trans-pts" id="tr-pts"></div>
-    <button class="btn" id="tr-btn">Continuar →</button>
+<!-- TRANSICIÓN -->
+<div class="view off" id="v-trans">
+  <div class="trans-body rise">
+    <div class="trans-glyph">&#9767;</div>
+    <div class="hdiv c" style="margin:.8rem auto 1rem"></div>
+    <p class="eyebrow" style="margin-bottom:.5rem">Consultando el Archivo Vivo</p>
+    <h2 class="title" style="font-size:clamp(1.3rem,4vw,2rem);margin-bottom:1rem">Calculando tu afinidad...</h2>
+    <p class="lede" style="font-size:.9rem;text-align:center;max-width:340px;margin-bottom:1.2rem">El Mentat examina tus respuestas.<br>Las compuertas del Archivo se abren.</p>
+    <div class="trans-bar-bg"><div class="trans-bar"></div></div>
   </div>
 </div>
 
-<!-- ================================================================
-     S5 — RESULTADO FINAL
-     ================================================================ -->
-<div class="screen off" id="s-final">
-  <div class="final-bg"></div>
-  <div class="final-veil"></div>
+<!-- RESULTADO -->
+<div class="view off" id="v-result">
+  <div class="result-bg" id="res-bg"></div><div class="result-veil"></div>
   <div class="orn tl"></div><div class="orn br"></div>
-
-  <div class="final-body">
-    <img src="img/escudo.png" class="final-crest appear" alt="">
-    <div class="eyebrow appear-2" id="f-rango">Archivo completado</div>
-    <h2 class="heading final-heading appear-2" id="f-titulo">Custodio del Cauce</h2>
-    <div class="final-score appear-2" id="f-score">0 <small>pts</small></div>
-    <p class="final-verdict appear-3" id="f-verdict"></p>
-
-    <div class="summary-table appear-3" id="f-table"></div>
-
-    <div class="final-qote appear-4">
-      <p>"El agua retenida demasiado tiempo deja de ser custodia y se convierte en cárcel. El conocimiento compartido, en cambio, multiplica el caudal."</p>
-      <cite>— Lecturas de Nacar, Sor Valea</cite>
+  <div class="result-body">
+    <p class="eyebrow rise" id="res-universe">Casa del universo Dune</p>
+    <h2 class="title result-faction-name rise2" id="res-name">-</h2>
+    <div class="hdiv c rise2"></div>
+    <img class="result-faction-img rise3" id="res-img" src="" alt="">
+    <div class="result-card rise3">
+      <div class="result-card-label">Tu perfil según el Archivo Vivo</div>
+      <p class="result-desc" id="res-desc">-</p>
+      <div class="result-traits" id="res-traits"></div>
     </div>
-
-    <div style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center" class="appear-4">
-      <button class="btn btn-gold" onclick="reiniciar()">Volver al inicio</button>
+    <div class="result-motto rise4" id="res-motto-wrap">
+      <p id="res-motto">-</p><cite id="res-motto-src">-</cite>
+    </div>
+    <div class="afin-row rise4" id="res-afin"><div class="afin-label">Afinidades secundarias</div></div>
+    <div class="share-card rise4">
+      <div class="share-title">Tu opinión sobre el proyecto</div>
+      <div class="share-sub">Antes de compartir tu resultado, ayúdanos con una valoración. Es lo más útil que puedes hacer por el equipo.</div>
+      <div class="share-fields">
+        <div class="share-field"><label>Qué te ha parecido el concepto del juego</label>
+          <select id="fb-concepto">
+            <option value="">Selecciona...</option>
+            <option value="muy_interesante">Muy interesante, lo jugaría</option>
+            <option value="interesante">Interesante, dependería de la ejecución</option>
+            <option value="curioso">Me resulta curioso pero no es mi género</option>
+            <option value="poco">No me llama especialmente</option>
+          </select>
+        </div>
+        <div class="share-field"><label>Qué elemento del universo te ha enganchado más</label>
+          <select id="fb-enganche">
+            <option value="">Selecciona...</option>
+            <option value="lore">El lore y el worldbuilding de Casa Portil</option>
+            <option value="mecanicas">Las mecánicas de gestión y estrategia</option>
+            <option value="facciones">Las facciones y sus personalidades</option>
+            <option value="dune">El encaje dentro del universo de Dune</option>
+            <option value="nada">Nada en especial</option>
+          </select>
+        </div>
+        <div class="share-field"><label>Comentario libre <span style="opacity:.4;font-size:.85em">(opcional)</span></label>
+          <textarea id="fb-libre" placeholder="Sugerencias, impresiones, lo que quieras decirle al equipo..."></textarea>
+        </div>
+      </div>
+      <p class="share-note">Tus datos y esta valoración se envían al equipo de desarrollo de Casa Portil.</p>
+    </div>
+    <div class="cta-row rise5">
+      <button class="btn gold" id="btn-copy" onclick="copiarResultado()">Copiar resultado para compartir</button>
+      <button class="btn" onclick="enviarYReiniciar()">Enviar feedback y reiniciar</button>
     </div>
   </div>
 </div>
 
-<!-- ================================================================
-     JAVASCRIPT ENGINE
-     ================================================================ -->
 <script>
-/* ──────────────────────────────
-   CURSOR
-   ────────────────────────────── */
-const cdot = document.getElementById('cdot');
-const cring = document.getElementById('cring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cdot.style.left=mx+'px';cdot.style.top=my+'px'});
-(function animCursor(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;cring.style.left=rx+'px';cring.style.top=ry+'px';requestAnimationFrame(animCursor)})();
-document.querySelectorAll('button,a,.opt,.mapa-item,.tok,.placed,.check-pill,.star,.mapa-item').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{ cring.style.width='40px';cring.style.height='40px';cring.style.borderColor='rgba(82,168,130,.6)';});
-  el.addEventListener('mouseleave',()=>{ cring.style.width='28px';cring.style.height='28px';cring.style.borderColor='rgba(82,168,130,.4)';});
-});
-
-/* ──────────────────────────────
-   CANVAS PARTÍCULAS
-   ────────────────────────────── */
 (()=>{
-  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
-  const resize=()=>{c.width=innerWidth;c.height=innerHeight};
-  addEventListener('resize',resize);resize();
-  const pts=[...Array(60)].map(()=>({
-    x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-    r:.3+Math.random()*1.1,
-    vx:(Math.random()-.5)*.15,vy:-.06-Math.random()*.1,
-    a:.08+Math.random()*.3
-  }));
-  (function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    pts.forEach(p=>{
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(82,168,130,${p.a})`;ctx.fill();
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.y<-5){p.y=c.height+5;p.x=Math.random()*c.width}
-    });
-    requestAnimationFrame(draw);
-  })();
+  const c=document.getElementById('ambient'),ctx=c.getContext('2d');
+  const rs=()=>{c.width=innerWidth;c.height=innerHeight};
+  addEventListener('resize',rs);rs();
+  const P=[...Array(55)].map(()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.25+Math.random()*1.1,vx:(Math.random()-.5)*.14,vy:-.05-Math.random()*.09,a:.06+Math.random()*.28}));
+  (function draw(){ctx.clearRect(0,0,c.width,c.height);P.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(78,154,110,'+p.a+')';ctx.fill();p.x+=p.vx;p.y+=p.vy;if(p.y<-4){p.y=c.height+4;p.x=Math.random()*c.width}});requestAnimationFrame(draw)})();
 })();
+const cd=document.getElementById('cd'),cr=document.getElementById('cr');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cd.style.left=mx+'px';cd.style.top=my+'px'});
+(function ac(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;cr.style.left=rx+'px';cr.style.top=ry+'px';requestAnimationFrame(ac)})();
+document.addEventListener('mouseover',e=>{if(e.target.closest('button,.opt')){cr.style.width='38px';cr.style.height='38px';cr.style.borderColor='rgba(78,154,110,.6)'}});
+document.addEventListener('mouseout',()=>{cr.style.width='26px';cr.style.height='26px';cr.style.borderColor='rgba(78,154,110,.38)'});
 
-/* ──────────────────────────────
-   UTILIDAD NAVEGACIÓN
-   ────────────────────────────── */
+const G={nombre:'',email:'',edad:0,perfil:'',exp_dune:'',q_actual:0,respuestas:[],scores:{},ts:null,resultado_id:'',resultado_nombre:''};
+
+const F={
+  guardia:{nombre:'La Guardia de Estuario',universe:'Casa Portil · Infantería profesional',img:'img/guardia.png',bg:'img/merum.png',desc:'Eres la primera y última línea de la Casa. Tu fuerza no viene del músculo ni del acero, sino de saber cuándo cerrar una compuerta y cuándo dejarla abierta. Donde otros ven un canal, tú ves un campo de batalla. Tu lealtad es tan sólida como los diques de Merúm, y tan inflexible.',lema:'"Un portón mal defendido es una ciudad traicionada."',lema_src:'Doctrina de los Guardapuertas de Merúm',rasgos:['Lealtad absoluta','Pragmatismo táctico','Disciplina de hierro','Invisibilidad estratégica']},
+  cuchillos:{nombre:'Los Cuchillos de Marea',universe:'Casa Portil · Sabotaje e infiltración',img:'img/cuchillos.png',bg:'img/islas.png',desc:'Tu poder reside en lo que nadie ve. No buscas la victoria teatral sino la alteración mínima con efectos máximos: una compuerta cambiada en el momento exacto, un registro falsificado que nadie descubrirá hasta que sea tarde. El veneno y el cuchillo son herramientas crudas; tú prefieres la información.',lema:'"No conquistar el terreno; obligar al terreno a escoger por nosotros."',lema_src:'Doctrina militar portileña',rasgos:['Inteligencia situacional','Paciencia extrema','Pragmatismo sin escrúpulos','Invisibilidad total']},
+  flotilla:{nombre:'La Flotilla de Marea',universe:'Casa Portil · Fuerza naval',img:'img/flotilla.png',bg:'img/velha.png',desc:'Eres libre solo cuando el horizonte no tiene límites visibles. Controlas el borde de las cosas, la frontera entre territorios, entre lo legal y lo no aforado, entre la orden y el caos. No conquistas; interceptas, redirige, cierras rutas. El mar te da lo que la tierra niega: perspectiva.',lema:'"Donde hay paso, hay poder. Donde hay poder, hay Portil."',lema_src:'Capitanes de la Flotilla de Marea',rasgos:['Libertad táctica','Visión estratégica','Adaptabilidad','Control de fronteras']},
+  ala:{nombre:'El Ala de la Niebla',universe:'Casa Portil · Reconocimiento aéreo',img:'img/ala.png',bg:'img/nacar.png',desc:'Ves lo que los demás no pueden ver. Tu valor no está en el combate directo sino en la información que traes antes de que nadie más la haya buscado. Navegas entre las nieblas de Nácar donde otros se perderían, y llegas cuando más se necesita. Eres los ojos de la Casa.',lema:'"La niebla no ciega al que aprendió a volar entre ella."',lema_src:'Instructores de vuelo, Mesetas de Nácar',rasgos:['Visión privilegiada','Autonomía operativa','Rapidez de respuesta','Discreción total']},
+  guardapuertas:{nombre:'Los Guardapuertas de Merúm',universe:'Casa Portil · Reserva territorial',img:'img/guardapuertas.png',bg:'img/bajos.png',desc:'Eres la memoria viva de la disciplina. Tu familia ha custodiado las mismas compuertas generación tras generación, y encuentras en ese deber una dignidad que otros no comprenden. No buscas gloria ni ascenso; buscas que lo que debes guardar siga en pie cuando te vayas.',lema:'"Lo medido perdura."',lema_src:'Lema antiguo de la Casa Portil',rasgos:['Sentido del deber','Orgullo técnico','Continuidad generacional','Austeridad moral']},
+  atreides:{nombre:'Casa Atreides',universe:'Gran Casa del Landsraad · Caladan',img:'img/guardia.png',bg:'img/cuenca.png',desc:'Llevas el honor como una armadura, no porque te lo impongan sino porque sin él no reconocerías tu propio reflejo. Eres la clase de persona que inspira lealtades imposibles y no entiende del todo por qué; no es carisma calculado, es simplemente que no sabes actuar de otra manera. Eso, en el universo de Dune, es a la vez tu mayor virtud y tu mayor vulnerabilidad.',lema:'"La envidia es el homenaje que la mediocridad rinde a la excelencia."',lema_src:'Divisa de la Casa Atreides',rasgos:['Honor inquebrantable','Liderazgo natural','Lealtad recíproca','Vulnerabilidad política']},
+  harkonnen:{nombre:'Casa Harkonnen',universe:'Gran Casa del Landsraad · Giedi Prime',img:'img/cuchillos.png',bg:'img/islas.png',desc:'Ves el mundo como es, no como la gente prefiere creer que es. El poder no tiene moral, tiene consecuencias. Te han llamado cruel, pero tú lo llamas eficiente. El miedo es el único motivador fiable a largo plazo, y la piedad es una debilidad que se paga cara. No es que no tengas valores: simplemente los tuyos son más honestos que los de quienes te juzgan.',lema:'"La piedad es la herramienta de los que no pueden permitirse otra."',lema_src:'Barón Vladimir Harkonnen',rasgos:['Pragmatismo absoluto','Control por el miedo','Visión a largo plazo','Honestidad brutal']},
+  bene_gesserit:{nombre:'Bene Gesserit',universe:'Orden secular · La Hermandad',img:'img/ala.png',bg:'img/delta.png',desc:'Juegas al ajedrez en un tablero que nadie más puede ver completo. Tu mayor habilidad es que nadie sabe exactamente cuáles son tus verdaderas intenciones, ni siquiera tú misma a veces, porque has aprendido a operar en múltiples capas simultáneamente. La paciencia no es una virtud para ti: es un instrumento. Tus planes se miden en generaciones.',lema:'"El que controla la genealogía controla el futuro. El que controla el futuro controla el universo."',lema_src:'Reverenda Madre Gaius Helen Mohiam',rasgos:['Paciencia generacional','Manipulación sutil','Visión sistémica','Secretismo absoluto']}
+};
+
+const Q=[
+  {id:'q1',img:'img/sede.png',lbl:'Palacio de las Compuertas · Río de Vindeiro',txt:'Un problema grave amenaza a tu Casa. Tienes tres caminos. ¿Por cuál vas?',ctx:'La decisión define a la persona antes que la solución.',opts:[
+    {t:'Reúno a los míos, fijo una línea de defensa y aguanto hasta que podamos actuar desde posición de fuerza.',w:{guardia:3,guardapuertas:2,atreides:2}},
+    {t:'Identifico quién está detrás del problema, me acerco sin que lo sepan y les quito la iniciativa antes de que actúen.',w:{cuchillos:3,bene_gesserit:3,harkonnen:1}},
+    {t:'Analizo todos los ángulos, calculo qué información tengo que ellos no tienen y la uso para redirigir la situación.',w:{ala:3,bene_gesserit:2,flotilla:1}},
+    {t:'Hablo directamente con quienes causan el problema. La negociación honesta es más eficaz que cualquier maniobra.',w:{atreides:4,guardapuertas:1,flotilla:1}}
+  ]},
+  {id:'q2',img:'img/delta.png',lbl:'El Delta Quieto · Territorio semisubordinado',txt:'¿Qué tipo de poder te resulta más natural ejercer?',ctx:'No el que quisieras tener — el que ya ejerces sin darte cuenta.',opts:[
+    {t:'El que viene de la confianza que otros depositan en mí. Me siguen porque saben que no les voy a fallar.',w:{atreides:4,guardia:2,guardapuertas:2}},
+    {t:'El que viene de saber más que los demás sobre lo que realmente importa.',w:{bene_gesserit:3,ala:3,cuchillos:2}},
+    {t:'El que viene de controlar el acceso a algo que otros necesitan.',w:{guardapuertas:3,harkonnen:2,flotilla:3}},
+    {t:'El que viene del miedo o del respeto — y soy honesto: no siempre distingo los dos.',w:{harkonnen:4,cuchillos:2,guardia:1}}
+  ]},
+  {id:'q3',img:'img/mesetas.png',lbl:'Las Mesetas de Nácar · Observatorios de niebla',txt:'Un aliado comete un error grave que perjudica a ambos. ¿Qué haces?',ctx:'',opts:[
+    {t:'Le digo la verdad directamente, aunque duela. Un aliado que no puede escuchar críticas no es útil.',w:{atreides:3,guardia:2,guardapuertas:2}},
+    {t:'Primero evalúo cuánto me afecta a mí. Dependiendo del daño, actúo de forma diferente.',w:{harkonnen:3,bene_gesserit:2,cuchillos:2}},
+    {t:'Soluciono el problema en silencio sin que él sepa que yo intervine. Quedo en deuda pero evito el conflicto.',w:{cuchillos:3,bene_gesserit:3,ala:1}},
+    {t:'Analizo por qué ocurrió, qué falló en el sistema, y propongo cambios estructurales.',w:{guardapuertas:3,flotilla:2,ala:2}}
+  ]},
+  {id:'q4',img:'img/ala.png',lbl:'El Ala de la Niebla · Servicio de reconocimiento',txt:'¿Cuál de estas frases describe mejor cómo entiendes la lealtad?',ctx:'',opts:[
+    {t:'La lealtad es absoluta o no es nada. No hay versiones intermedias.',w:{guardia:4,atreides:3,guardapuertas:2}},
+    {t:'La lealtad es un contrato. Mientras ambas partes cumplan, existe. Si una falla, se renegocia.',w:{flotilla:3,harkonnen:2,bene_gesserit:2}},
+    {t:'La lealtad es una herramienta de cohesión. La cultivo porque es útil, no por sentimentalismo.',w:{harkonnen:3,bene_gesserit:3,cuchillos:2}},
+    {t:'La lealtad más valiosa es la que nadie me ha pedido. La que nace sola, sin cálculo.',w:{atreides:3,guardapuertas:3,guardia:2}}
+  ]},
+  {id:'q5',img:'img/bajos.png',lbl:'Los Bajos de Merúm · Talleres de compuerta',txt:'Tienes que tomar una decisión con información incompleta. El tiempo apremia. ¿Qué haces?',ctx:'La respuesta instintiva dice más que la racional.',opts:[
+    {t:'Actúo con lo que tengo. La parálisis es más peligrosa que el error.',w:{guardia:3,atreides:3,flotilla:2}},
+    {t:'Recopilo la información que falta aunque cueste tiempo. Una decisión apresurada puede ser irreversible.',w:{bene_gesserit:4,ala:3,guardapuertas:2}},
+    {t:'Delego en quien tiene más contexto que yo. Saber cuándo no actuar también es una decisión.',w:{atreides:2,flotilla:2,guardapuertas:3}},
+    {t:'Genero la información que falta de forma creativa, aunque eso implique moverme en terreno gris.',w:{cuchillos:4,harkonnen:2,bene_gesserit:2}}
+  ]},
+  {id:'q6',img:'img/islas.png',lbl:'Las Islas de Candal · Polo mercantil',txt:'¿Qué valoras más en alguien de tu entorno cercano?',ctx:'',opts:[
+    {t:'Fiabilidad. Que haga lo que dice que va a hacer, siempre.',w:{guardia:3,guardapuertas:3,atreides:2}},
+    {t:'Agudeza. Que vea lo que otros no ven y lo diga antes de que importe.',w:{bene_gesserit:3,ala:3,cuchillos:2}},
+    {t:'Lealtad incondicional, aunque a veces prefiera no saber los detalles de cómo la ejerce.',w:{harkonnen:3,cuchillos:3,flotilla:1}},
+    {t:'Honestidad radical. Que me diga lo que nadie más se atreve a decirme.',w:{atreides:4,guardia:2,guardapuertas:1}}
+  ]},
+  {id:'q7',img:'img/guardapuertas.png',lbl:'Los Guardapuertas de Merúm · Reserva territorial',txt:'Un gran objetivo requiere sacrificar algo importante. ¿Cuál sería el límite que no cruzarías?',ctx:'El límite define la persona más que el objetivo.',opts:[
+    {t:'No sacrifico a personas inocentes que no eligieron estar en el camino.',w:{atreides:4,guardia:2,guardapuertas:2}},
+    {t:'No sacrifico información que podría necesitar en el futuro. El conocimiento es irreemplazable.',w:{bene_gesserit:4,ala:2,cuchillos:2}},
+    {t:'No sacrifico la eficacia real por mantener las apariencias. Si debe hacerse, debe hacerse bien.',w:{harkonnen:3,cuchillos:3,flotilla:1}},
+    {t:'No sacrifico la confianza de los que dependen de mí. Hay deudas que no se pueden saldar.',w:{guardia:3,atreides:3,guardapuertas:3}}
+  ]},
+  {id:'q8',img:'img/flotilla.png',lbl:'La Flotilla de Marea · Control del borde',txt:'¿Cómo reaccionas ante una regla que crees injusta?',ctx:'',opts:[
+    {t:'La sigo mientras intento cambiarla por los cauces correctos. Las instituciones importan.',w:{atreides:3,guardapuertas:3,guardia:2}},
+    {t:'Evalúo el coste de no seguirla frente al beneficio de ignorarla. Si el cálculo lo justifica, la ignoro.',w:{harkonnen:4,cuchillos:2,flotilla:2}},
+    {t:'La sigo en apariencia mientras encuentro el margen que me permite conseguir lo que quiero de todas formas.',w:{bene_gesserit:3,cuchillos:3,flotilla:2}},
+    {t:'Analizo de dónde viene la regla. Si viene de un sistema defectuoso, trabajo para exponer el defecto.',w:{ala:3,bene_gesserit:2,atreides:2}}
+  ]},
+  {id:'q9',img:'img/cuchillos.png',lbl:'Los Cuchillos de Marea · Sabotaje e infiltración',txt:'¿Qué tipo de victoria te produce más satisfacción?',ctx:'No la más útil — la que te hace sentir que valió la pena.',opts:[
+    {t:'Derrotar a un adversario superior en sus propios términos, sin ventaja inicial.',w:{guardia:3,atreides:3,flotilla:2}},
+    {t:'Conseguir un resultado que nadie sabe que fui yo quien lo orquestó.',w:{bene_gesserit:4,cuchillos:4,ala:2}},
+    {t:'Hacer que mi sistema funcione perfectamente durante tanto tiempo que nadie recuerde que tuvo fallos.',w:{guardapuertas:4,guardia:2,flotilla:1}},
+    {t:'Conseguir que quien era mi adversario acabe trabajando con mis objetivos sin saberlo.',w:{harkonnen:3,bene_gesserit:3,cuchillos:2}}
+  ]},
+  {id:'q10',img:'img/escudo.png',lbl:'Escudo de Casa Portil · "Lo medido perdura"',txt:'El Imperio está en crisis. Las grandes Casas se reposicionan. ¿Cuál es tu primer movimiento?',ctx:'La respuesta ante el caos revela el núcleo de la persona.',opts:[
+    {t:'Asegurar mi feudo, reforzar mis alianzas más cercanas y esperar a que el mapa se aclare antes de moverme.',w:{guardapuertas:3,guardia:3,atreides:2}},
+    {t:'Aumentar la recopilación de información masivamente. Quien tenga mejor inteligencia en el caos, gana.',w:{bene_gesserit:4,ala:4,cuchillos:2}},
+    {t:'Identificar quién va a salir fortalecido y posicionarme cerca de esa facción antes de que sea obvio.',w:{harkonnen:3,flotilla:3,cuchillos:2}},
+    {t:'Mantener todas mis líneas de comunicación abiertas y ser la parte que facilita acuerdos entre los demás.',w:{atreides:2,flotilla:3,guardapuertas:2,bene_gesserit:1}}
+  ]}
+];
+
 function ir(id){
-  document.querySelectorAll('.screen').forEach(s=>{s.classList.add('off');s.classList.remove('screen')});
-  // Hack: keep screen class
-  document.querySelectorAll('.off').forEach(s=>s.classList.add('screen'));
-  const t=document.getElementById(id);
-  t.classList.remove('off');
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('off'));
+  document.getElementById(id).classList.remove('off');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-/* ──────────────────────────────
-   SLIDERS
-   ────────────────────────────── */
-function updSlider(el,valId){
-  const v=parseInt(el.value);
-  document.getElementById(valId).textContent=v;
-  const pct=(v-1)/9*100;
-  el.style.background=`linear-gradient(to right,var(--vg) 0%,var(--vg) ${pct}%,rgba(82,168,130,.2) ${pct}%,rgba(82,168,130,.2) 100%)`;
-}
-updSlider(document.getElementById('r-first-imp'),'r-first-val');
-
-/* ──────────────────────────────
-   PILLS / CHECKS
-   ────────────────────────────── */
-const pillMap=new Map();
-function togglePill(el,val){
-  el.classList.toggle('on');
-  el.querySelector('.tick').textContent=el.classList.contains('on')?'✓':'';
-  if(pillMap.has(val))pillMap.delete(val);else pillMap.set(val,true);
-}
-function getPills(){return[...pillMap.keys()]}
-
-/* ──────────────────────────────
-   STARS
-   ────────────────────────────── */
-function setStars(uid,n){
-  document.querySelectorAll(`#stars_${uid} .star`).forEach((s,i)=>{
-    s.classList.toggle('lit',i<n);
-  });
-  return n;
-}
-
-/* ──────────────────────────────
-   ESTADO GLOBAL
-   ────────────────────────────── */
-const G={
-  nombre:'',email:'',edad:0,perfil:'',generos:[],como:'',
-  first_imp:5,exp_dune:'',
-  puntos:0,prueba:0,
-  respuestas:[],tiempos:[],
-  ts_inicio:null,ts_prueba:null,
-  timer_id:null
-};
-
-/* ──────────────────────────────
-   DEFINICIÓN DE LAS 5 PRUEBAS
-   ────────────────────────────── */
-const PRUEBAS=[
-
-  /* ====== PRUEBA 1 ====== */
-  {
-    id:'p1',
-    num:'Prueba I · 5',
-    titulo:'Los Anillos del Aforo',
-    tipo:'Trivia de lore · Arquitectura del poder',
-    img:'img/sede.png',
-    img_cap:'Palacio de las Compuertas · Sede Dinástica · Río de Vindeiro',
-    fragmento:{
-      texto:`La Casa Portil no surge como una gran dinastía guerrera, sino como una casa de concesión. Su antepasado, Auren Portil I, comprendió que el verdadero poder no radicaba en poseer toda el agua, sino en definir qué agua contaba jurídicamente como recurso. De esa distinción nació el primer gran sistema portileño de dominación: los anillos de aforo. Piezas metálicas inscritas que equivalían a derecho reconocido sobre un volumen, un cauce, un paso o una tasa de uso. El anillo no era moneda pura, pero podía circular como valor. No era título absoluto, pero confería fuerza. No era sacramento, pero pronto quedó revestido de ritual. Ahí confluyeron economía, derecho y religión.`,
-      fuente:'Dossier maestro, Libro I — Fundación de la Casa'
-    },
-    bloques:[
-      {tipo:'trivia', pts:60,
-       pregunta:'¿Cuál de estas afirmaciones describe mejor el rol político de los anillos de aforo dentro del sistema portileño?',
-       hint:'Lee con cuidado el fragmento — la respuesta está implícita en tres frases encadenadas.',
-       opts:[
-         {t:'Son moneda oficial del feudo, intercambiable por melange en la CHOAM.', ok:false},
-         {t:'Son un objeto que funde valor económico, autoridad jurídica y carga ritual en una sola pieza.', ok:true},
-         {t:'Son herramienta exclusiva del sacerdocio del Rito del Río, sin valor civil.', ok:false},
-         {t:'Son identificadores militares usados por la Guardia de Estuario.', ok:false}
-       ],
-       fb_ok:'Exacto. Economía, derecho y religión fundidos en un solo objeto: esa síntesis es la clave del poder portileño.',
-       fb_ko:'No del todo. El fragmento dice que el anillo "no era moneda pura... no era título absoluto... no era sacramento" y sin embargo ejercía los tres poderes simultáneamente.'
-      },
-      {tipo:'feedback_integrado',
-       label:'Feedback de diseño',
-       texto:'El juego propone que el poder de tu Casa no venga de ejércitos sino de archivos, registros y arbitrajes. Como jugador, ¿eso te resulta atractivo como mecánica central?',
-       subtipo:'slider',
-       clave:'interes_poder_archivo',
-       min:'No me convence',max:'Me parece muy original'
-      }
-    ]
-  },
-
-  /* ====== PRUEBA 2 ====== */
-  {
-    id:'p2',
-    num:'Prueba II · 5',
-    titulo:'Los Cinco Cauces',
-    tipo:'Mapa de territorios · Geografía del feudo',
-    img:'img/cuenca.png',
-    img_cap:'La Cuenca de Vindeiro · Vista aérea del feudo central',
-    fragmento:{
-      texto:`Portil se organiza en cinco grandes complejos hidroterritoriales: la Cuenca de Vindeiro, núcleo dinástico y archivístico; los Bajos de Merúm, laboratorio de disciplina material donde nacen los mejores ingenieros de dique; las Islas de Candal, polo mercantil imprescindible y principal fuente de indisciplina de la Casa; las Mesetas de Nácar, depósitos minerales y talleres de química de sales; y el Delta Quieto, que es a un tiempo santuario ritual y reserva ecológica. La Casa lo gobierna, pero nunca del todo. Allí sobreviven las formas más antiguas del Rito del Río, las hablas más arcaicas y las genealogías menos domesticadas por el palacio.`,
-      fuente:'Dossier maestro, Libro II — Geografía del Planeta'
-    },
-    bloques:[
-      {tipo:'mapa', pts:65,
-       pregunta:'¿Cuál de estos territorios es descrito simultáneamente como «santuario ritual» y «reserva ecológica» que la Casa gobierna pero nunca del todo?',
-       clave_ok:'delta',
-       territorios:[
-         {id:'cuenca',img:'img/cuenca.png',lbl:'La Cuenca de Vindeiro'},
-         {id:'bajos', img:'img/bajos.png', lbl:'Los Bajos de Merúm'},
-         {id:'islas', img:'img/islas.png', lbl:'Las Islas de Candal'},
-         {id:'mesetas',img:'img/mesetas.png',lbl:'Las Mesetas de Nácar'},
-         {id:'delta', img:'img/delta.png',  lbl:'El Delta Quieto'}
-       ],
-       fb_ok:'Correcto. El Delta Quieto es la región más compleja y semisubordinada del feudo — donde la Casa llega pero no domina del todo.',
-       fb_ko:'No era ese. El Delta Quieto reúne santuario ritual, reserva ecológica y clanes de ribera que mantienen grados de autonomía frente al palacio.'
-      },
-      {tipo:'feedback_integrado',
-       label:'Feedback de diseño',
-       texto:'Cada territorio tiene un estilo de gestión diferente: el Delta requiere diplomacia con clanes locales, Candal es puro comercio y riesgo, Merúm es disciplina técnica. ¿Qué tipo de territorio disfrutarías más gestionar?',
-       subtipo:'texto',
-       clave:'territorio_favorito_gestion',
-       placeholder:'Cuéntanos brevemente...',
-       opcional:true
-      }
-    ]
-  },
-
-  /* ====== PRUEBA 3 ====== */
-  {
-    id:'p3',
-    num:'Prueba III · 5',
-    titulo:'La Clave del Caudal',
-    tipo:'Decodificador · El lema de la Casa',
-    img:'img/delta.png',
-    img_cap:'El Delta Quieto · Origen del Rito del Río',
-    fragmento:{
-      texto:`La doctrina central del Rito del Río afirma que el agua existe en tres órdenes: el Cauce Oculto, que pertenece a la voluntad trascendente; el Cauce Visible, que es el agua tal como aparece en el mundo; y el Cauce Medido, trasladado al orden de la custodia, el título y el deber. La Investidura del Aforo pregunta al señor: "¿Llamarás tuya al agua?" Y el señor debe responder: "La llamaré deuda y guarda." El lema secundario de la Casa nació de esa paradoja: el señor govbierna el agua porque la custodia, no porque la posee.`,
-      fuente:'Corpus Portilianum Maior — Liturgia del Rito del Río'
-    },
-    bloques:[
-      {tipo:'decoder', pts:75,
-       instruccion:'Reconstruye el lema secundario de la Casa Portil colocando los fragmentos en orden. Haz clic para añadir, clic sobre la respuesta para quitar.',
-       correctos:['Ningún','caudal','carece','de','señor;','ningún','señor','posee','el','caudal'],
-       distractores:['agua','flujo','guarda','retiene','mide'],
-       fb_ok:'¡Perfecto! "Ningún caudal carece de señor; ningún señor posee el caudal." La paradoja que define a Portil: gobernar sin poseer.',
-       fb_ko:'No era exactamente eso. El lema es: "Ningún caudal carece de señor; ningún señor posee el caudal" — la tensión entre autoridad y custodia.'
-      },
-      {tipo:'feedback_integrado',
-       label:'Valoración del worldbuilding',
-       texto:'¿Cómo valorarías la profundidad y coherencia del universo de Casa Portil que has explorado hasta ahora?',
-       subtipo:'stars',
-       clave:'valoracion_worldbuilding'
-      }
-    ]
-  },
-
-  /* ====== PRUEBA 4 ====== */
-  {
-    id:'p4',
-    num:'Prueba IV · 5',
-    titulo:'El Consejo del Caudal',
-    tipo:'Decisión política · Sin respuesta correcta',
-    img:'img/guardapuertas.png',
-    img_cap:'Los Guardapuertas de Merúm · Cuerpo de reserva territorial',
-    fragmento:{
-      texto:`El año décimosexto de Cael Portil IX. Los Cuchillos de Marea descubren que un agente de Casa Talvere ha falsificado tablas de medición en los Bajos de Merúm para desviar tasas de tránsito hacia rutas no aforadas. El daño económico es moderado, pero el ataque a la credibilidad del archivo es severo. El Mentat Jano Veyr presenta tres opciones al Señor: exposición pública ante el Landsraad para defender la reputación del archivo; negociación privada para obtener compensación y discretamente sellar el caso; o sembrar una contrapartida en los registros de Talvere, de modo que ellos tampoco puedan atacar sin sufrir consecuencias.`,
-      fuente:'Evento generativo — GDD, sistema de eventos políticos'
-    },
-    bloques:[
-      {tipo:'decision', pts:65,
-       pregunta:'Como Señor de la Casa, ¿qué ordenarías?',
-       hint:'No hay respuesta correcta. Esta elección registra tu estilo de juego preferido.',
-       opts:[
-         {t:'Exposición pública. La credibilidad del archivo es inviolable — cualquier ataque debe responderse con transparencia.',
-          val:'honor',
-          fb:'Elegiste la vía del honor. Portil arriesga represalias de Talvere, pero refuerza su posición como garante de registros verdaderos en el Landsraad.'},
-         {t:'Negociación privada. Un acuerdo discreto protege el prestigio de ambas casas y genera deuda de Talvere hacia Portil.',
-          val:'diplomacia',
-          fb:'Elegiste la vía del arbitraje. Típicamente portileña: convertir la derrota ajena en acuerdo rentable sin necesidad de espada ni escándalo.'},
-         {t:'Contrapartida archivística. Que Talvere sepa que sus registros ya no son seguros — equilibrio de vulnerabilidades.',
-          val:'sombra',
-          fb:'Elegiste la vía oscura. Los Cuchillos de Marea aprueban. El Mentat toma nota y no dice nada. Nadie sabrá jamás quién empezó.'}
-       ],
-       clave:'estilo_juego'
-      },
-      {tipo:'feedback_integrado',
-       label:'Feedback de mecánica',
-       texto:'El juego tiene tres grandes bucles: gestión de enclaves (macro), gestión de instalaciones (meso) y gestión de criaturas (micro). ¿Cuál te llama más como jugador?',
-       subtipo:'select',
-       clave:'bucle_favorito',
-       opciones:[
-         {v:'',l:'Selecciona...'},
-         {v:'macro',l:'Macro — Estrategia global de la Casa'},
-         {v:'meso', l:'Meso — Gestión de enclaves e instalaciones'},
-         {v:'micro', l:'Micro — Cuidado y gestión de criaturas'},
-         {v:'todos', l:'Me interesan los tres por igual'}
-       ]
-      }
-    ]
-  },
-
-  /* ====== PRUEBA 5 ====== */
-  {
-    id:'p5',
-    num:'Prueba V · 5',
-    titulo:'El Último Aforo',
-    tipo:'Trivia con tiempo · Acceso al dossier completo',
-    img:'img/ala.png',
-    img_cap:'El Ala de la Niebla · Servicio aéreo y de reconocimiento',
-    fragmento:{
-      texto:`Portil no manda en el Landsraad; pesa. Su función es la de casa bisagra: no encabeza grandes coaliciones, pero inclina dictámenes, redacta fórmulas de compromiso y certifica arbitrajes. Muchas casas la desprecian en público por "notarial". Pocas dejan de acudir a ella cuando necesitan que una derrota parezca acuerdo o que una concesión parezca victoria. Sus votos rara vez son ideológicos; son estabilizadores. Portil teme tres cosas por encima de todo: la concentración absoluta de monopolio en una sola mano, la guerra abierta que destruye valor archivable, y la irrupción de profetas no administrables.`,
-      fuente:'Dossier maestro, Libro I — Papel en el Landsraad'
-    },
-    bloques:[
-      {tipo:'trivia_timer', pts:80, tiempo:20,
-       pregunta:'¿Cuál de estas afirmaciones describe erróneamente el papel de la Casa Portil en el Landsraad?',
-       hint:'Tienes 20 segundos. La pregunta pide la afirmación INCORRECTA — lee con cuidado.',
-       opts:[
-         {t:'Portil es experta en convertir derrotas en acuerdos y concesiones en victorias.',ok:false},
-         {t:'Sus votos raramente son ideológicos — son estabilizadores.', ok:false},
-         {t:'Portil encabeza grandes coaliciones y lidera bloques de casas menores.',ok:true},
-         {t:'Muchas casas la desprecian en público pero recurren a ella en privado.',ok:false}
-       ],
-       fb_ok:'Correcto — esa afirmación es falsa. Portil NO encabeza coaliciones; pesa sin mandar, influye sin protagonismo. Es la casa bisagra, no la cabeza.',
-       fb_ko:'No era esa. La afirmación incorrecta es que Portil "encabeza grandes coaliciones" — todo lo contrario: su poder reside precisamente en no proclamarse como facción.'
-      },
-      {tipo:'feedback_integrado',
-       label:'Feedback final — Muy importante',
-       texto:'Después de explorar el universo de Casa Portil, ¿qué es lo que más te ha llamado la atención? ¿Hay algo que cambiarías, añadirías o echas de menos en el concepto del juego?',
-       subtipo:'textarea',
-       clave:'feedback_libre_final',
-       placeholder:'Tu opinión detallada es la más valiosa para el equipo...',
-       opcional:false
-      },
-      {tipo:'feedback_integrado',
-       label:'Feedback final',
-       texto:'¿Con qué probabilidad recomendarías este proyecto a alguien interesado en videojuegos de estrategia o en el universo de Dune?',
-       subtipo:'slider',
-       clave:'nps',
-       min:'No lo recomendaría',max:'Sin duda lo recomendaría'
-      }
-    ]
-  }
-];
-
-/* ──────────────────────────────
-   INICIO
-   ────────────────────────────── */
-function iniciar(){
-  const nombre=document.getElementById('r-nombre').value.trim();
-  const email =document.getElementById('r-email').value.trim();
-  const edad  =parseInt(document.getElementById('r-edad').value);
-  const perfil=document.getElementById('r-perfil').value;
+function empezar(){
+  const n=document.getElementById('rn').value.trim();
+  const e=document.getElementById('re').value.trim();
+  const a=parseInt(document.getElementById('ra').value);
+  const p=document.getElementById('rp').value;
   let ok=true;
-  const showE=(id,c)=>{document.getElementById(id).classList.toggle('show',c);if(c)ok=false};
-  showE('e-nombre',!nombre);
-  showE('e-email',!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-  showE('e-edad',isNaN(edad)||edad<14||edad>99);
-  showE('e-perfil',!perfil);
+  const se=(id,c)=>{document.getElementById(id).classList.toggle('show',c);if(c)ok=false};
+  se('en',!n);se('ee',!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));se('ea',isNaN(a)||a<14||a>99);se('ep',!p);
   if(!ok)return;
-
-  G.nombre=nombre;G.email=email;G.edad=edad;G.perfil=perfil;
-  G.generos=getPills();
-  G.como=document.getElementById('r-como').value;
-  G.first_imp=parseInt(document.getElementById('r-first-imp').value);
-  G.exp_dune=document.getElementById('r-exp').value;
-  G.puntos=0;G.prueba=0;G.respuestas=[];G.tiempos=[];
-  G.ts_inicio=Date.now();
-
-  document.getElementById('hud').classList.add('show');
-  mostrarPrueba(0);
+  G.nombre=n;G.email=e;G.edad=a;G.perfil=p;G.exp_dune=document.getElementById('rd2').value;
+  G.q_actual=0;G.respuestas=[];G.ts=Date.now();
+  Object.keys(F).forEach(k=>G.scores[k]=0);
+  document.getElementById('test-hud').classList.add('show');
+  mostrarQ(0);
 }
 
-/* ──────────────────────────────
-   RENDERIZAR PRUEBA
-   ────────────────────────────── */
-function mostrarPrueba(idx){
-  G.prueba=idx;G.ts_prueba=Date.now();
-  updHUD();
-  const P=PRUEBAS[idx];
-  const resp={id:P.id,titulo:P.titulo,pts:0,correcto:null,datos:{},tiempo:0};
-  G.respuestas.push(resp);
+function mostrarQ(idx){
+  G.q_actual=idx;
+  const P=Q[idx];
+  document.getElementById('hud-prog').style.width=(idx/Q.length*100)+'%';
+  document.getElementById('hud-step').textContent='Pregunta '+(idx+1)+' de '+Q.length;
+  document.getElementById('q-mount').innerHTML=
+    '<div class="q-meta rise"><div class="q-num">Pregunta '+(idx+1)+' de '+Q.length+'</div><div class="hdiv c"></div></div>'+
+    '<div class="q-img-wrap rise2"><img src="'+P.img+'" class="q-img" alt=""><div class="q-img-lbl">'+P.lbl+'</div></div>'+
+    '<div class="q-text-box rise2"><div class="q-text">'+P.txt+'</div>'+(P.ctx?'<div class="q-context">'+P.ctx+'</div>':'')+'</div>'+
+    '<div class="opts rise3">'+P.opts.map((o,oi)=>
+      '<div class="opt" id="o_'+idx+'_'+oi+'" onclick="eleg('+idx+','+oi+')">'+
+      '<div class="opt-ltr">'+String.fromCharCode(65+oi)+'</div>'+
+      '<div class="opt-txt">'+o.t+'</div></div>'
+    ).join('')+'</div>';
+  ir('v-test');
+}
 
-  const mount=document.getElementById('prueba-mount');
-  mount.innerHTML='';
-
-  let html=`
-    <div class="p-header appear">
-      <div class="p-num">${P.num}</div>
-      <h2 class="heading p-heading">${P.titulo}</h2>
-      <div class="p-tipo">${P.tipo}</div>
-    </div>
-    <div class="p-img appear-2">
-      <img src="${P.img}" alt="${P.titulo}">
-      <div class="p-img-label">${P.img_cap}</div>
-    </div>
-    <div class="fragment appear-2">
-      <div class="fragment-label">Fragmento del Archivo</div>
-      <p>${P.fragmento.texto}</p>
-      <cite>— ${P.fragmento.fuente}</cite>
-    </div>
-  `;
-
-  P.bloques.forEach((b,bi)=>{ html+=renderBloque(b,idx,bi); });
-
-  html+=`<button class="btn btn-wide appear" id="btn-ok-${idx}" onclick="confirmar(${idx})" disabled>
-    Confirmar y continuar →
-  </button>`;
-
-  mount.innerHTML=html;
-  ir('s-prueba');
-
-  // Inicializar sliders
-  P.bloques.forEach((b,bi)=>{
-    if(b.subtipo==='slider'||b.tipo==='slider'){
-      const sl=document.getElementById(`sl_${idx}_${bi}`);
-      if(sl){updSliderGeneric(sl,`slv_${idx}_${bi}`)}
-    }
+function eleg(qi,oi){
+  const o=Q[qi].opts[oi];
+  Object.entries(o.w).forEach(([k,v])=>{G.scores[k]=(G.scores[k]||0)+v});
+  [0,1,2,3].forEach(i=>{
+    const el=document.getElementById('o_'+qi+'_'+i);
+    if(el)el.classList.add(i===oi?'chosen':'dim');
   });
-  chkConfirmar(idx);
+  G.respuestas.push({q:qi,opt:oi,txt:o.t});
+  setTimeout(()=>{qi+1<Q.length?mostrarQ(qi+1):calcular()},520);
 }
 
-/* ──────────────────────────────
-   RENDER BLOQUE
-   ────────────────────────────── */
-function renderBloque(b,pi,bi){
-  const uid=`${pi}_${bi}`;
-  switch(b.tipo){
-
-    case 'trivia':
-    case 'decision':
-      return `
-        <div class="q-box appear">
-          <div class="q-text">${b.pregunta}</div>
-          ${b.hint?`<div class="q-hint">${b.hint}</div>`:''}
-        </div>
-        <div class="opts" id="opts_${uid}">
-          ${b.opts.map((o,oi)=>`
-            <div class="opt" id="opt_${uid}_${oi}" onclick="clickOpt(${pi},${bi},${oi})">
-              <div class="opt-ltr">${String.fromCharCode(65+oi)}</div>
-              <div class="opt-txt">${o.t}</div>
-              <div class="opt-ico">${b.tipo==='decision'?'⚜':'✓'}</div>
-            </div>`).join('')}
-        </div>
-        <div class="ans-fb" id="afb_${uid}">
-          <div class="ans-fb-head" id="afbh_${uid}"></div>
-          <p id="afbt_${uid}"></p>
-        </div>`;
-
-    case 'trivia_timer':
-      return `
-        <div class="timer-row" id="tmr_${uid}">
-          <span class="timer-label-txt">Tiempo</span>
-          <div class="timer-bg"><div class="timer-fill" id="tf_${uid}"></div></div>
-          <span class="timer-n" id="tn_${uid}">${b.tiempo}</span>
-        </div>
-        <div class="q-box appear">
-          <div class="q-text">${b.pregunta}</div>
-          ${b.hint?`<div class="q-hint">${b.hint}</div>`:''}
-        </div>
-        <div class="opts" id="opts_${uid}">
-          ${b.opts.map((o,oi)=>`
-            <div class="opt" id="opt_${uid}_${oi}" onclick="clickOpt(${pi},${bi},${oi})">
-              <div class="opt-ltr">${String.fromCharCode(65+oi)}</div>
-              <div class="opt-txt">${o.t}</div>
-              <div class="opt-ico">✓</div>
-            </div>`).join('')}
-        </div>
-        <div class="ans-fb" id="afb_${uid}">
-          <div class="ans-fb-head" id="afbh_${uid}"></div>
-          <p id="afbt_${uid}"></p>
-        </div>
-        <script>startTimer('${uid}',${pi},${bi},${b.tiempo})<\/script>`;
-
-    case 'mapa':
-      return `
-        <div class="q-box appear">
-          <div class="q-text">${b.pregunta}</div>
-        </div>
-        <p style="font-style:italic;font-size:.8rem;color:var(--td);margin-bottom:.8rem">
-          Haz clic en el territorio correcto</p>
-        <div class="mapa appear" id="mapa_${uid}">
-          ${b.territorios.map(t=>`
-            <div class="mapa-item" id="mi_${uid}_${t.id}" onclick="clickMapa('${uid}',${pi},${bi},'${t.id}')">
-              <img src="${t.img}" alt="${t.lbl}">
-              <div class="ml">${t.lbl}</div>
-            </div>`).join('')}
-        </div>
-        <div class="ans-fb" id="afb_${uid}">
-          <div class="ans-fb-head" id="afbh_${uid}"></div>
-          <p id="afbt_${uid}"></p>
-        </div>`;
-
-    case 'decoder':
-      const allToks=[...b.correctos,...b.distractores].sort(()=>Math.random()-.5);
-      return `
-        <div class="decoder appear">
-          <div class="fragment-label">${b.instruccion}</div>
-          <div class="decoder-bank" id="bank_${uid}">
-            ${allToks.map((t,ti)=>`<span class="tok" id="tok_${uid}_${ti}" onclick="addTok('${uid}',${pi},${bi},'${t}',${ti})">${t}</span>`).join('')}
-          </div>
-          <div class="decoder-answer" id="ans_${uid}"></div>
-          <div class="decoder-note">Haz clic en una palabra para añadirla · Haz clic en la respuesta para quitarla</div>
-        </div>
-        <div class="ans-fb" id="afb_${uid}">
-          <div class="ans-fb-head" id="afbh_${uid}"></div>
-          <p id="afbt_${uid}"></p>
-        </div>`;
-
-    case 'feedback_integrado':
-      return renderFeedbackBloque(b,uid);
-  }
-  return '';
+function calcular(){
+  document.getElementById('hud-prog').style.width='100%';
+  ir('v-trans');
+  setTimeout(resultado,2600);
 }
 
-function renderFeedbackBloque(b,uid){
-  let inner='';
-  switch(b.subtipo){
-    case 'slider':
-      inner=`
-        <div class="slider-field">
-          <div class="slider-track">
-            <input type="range" id="sl_${uid}" min="1" max="10" value="5"
-              oninput="updSliderGeneric(this,'slv_${uid}');saveFB('${uid}','${b.clave}',parseInt(this.value))">
-            <span class="slider-val" id="slv_${uid}">5</span>
-          </div>
-          <div class="slider-ends"><span>${b.min||'Poco'}</span><span>${b.max||'Mucho'}</span></div>
-        </div>`;
-      break;
-    case 'stars':
-      inner=`
-        <div class="stars-track" id="stars_${uid}">
-          ${[1,2,3,4,5].map(n=>`<span class="star" onclick="clickStar('${uid}','${b.clave}',${n})">★</span>`).join('')}
-        </div>`;
-      break;
-    case 'texto':
-    case 'textarea':
-      inner=`<textarea placeholder="${b.placeholder||''}" rows="4"
-        oninput="saveFB('${uid}','${b.clave}',this.value)"
-        style="width:100%;background:rgba(5,8,7,.7);border:1px solid var(--brl);border-bottom:1px solid rgba(82,168,130,.28);color:var(--pb);padding:.72rem .95rem;font-family:'Cormorant Garamond',serif;font-size:1rem;outline:none;resize:vertical;min-height:90px;line-height:1.65;transition:var(--transition)"
-        onfocus="this.style.borderColor='var(--vg)'" onblur="this.style.borderColor='rgba(82,168,130,.28)'"></textarea>`;
-      break;
-    case 'select':
-      inner=`<select onchange="saveFB('${uid}','${b.clave}',this.value)"
-        style="-webkit-appearance:none;width:100%;background:rgba(5,8,7,.75);border:1px solid var(--brl);border-bottom:1px solid rgba(82,168,130,.28);color:var(--pb);padding:.72rem .95rem;font-family:'Cormorant Garamond',serif;font-size:1rem;outline:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2352a882'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem">
-        ${b.opciones.map(o=>`<option value="${o.v}" style="background:#111a16">${o.l}</option>`).join('')}
-      </select>`;
-      break;
-  }
-  return `
-    <div class="feedback-q appear">
-      <div class="feedback-q-label">▸ ${b.label}</div>
-      <div class="feedback-q-text">${b.texto}${b.opcional?` <span style="opacity:.4;font-size:.85em">(opcional)</span>`:''}</div>
-      ${inner}
-    </div>`;
-}
-
-/* ──────────────────────────────
-   INTERACCIONES
-   ────────────────────────────── */
-function clickOpt(pi,bi,oi){
-  const uid=`${pi}_${bi}`;
-  const P=PRUEBAS[pi];const b=P.bloques[bi];
-  const all=document.querySelectorAll(`#opts_${uid} .opt`);
-  if(all[0].classList.contains('dim'))return;
-
-  const esDec=b.tipo==='decision';
-  const correcto=esDec||b.opts[oi].ok;
-
-  all.forEach((op,i)=>{
-    op.classList.add('dim');
-    if(!esDec&&b.opts[i].ok)op.classList.add('ok');
+function resultado(){
+  const sorted=Object.entries(G.scores).sort((a,b)=>b[1]-a[1]);
+  const ganadora=sorted[0][0];
+  const total=sorted.reduce((a,b)=>a+b[1],0);
+  const fac=F[ganadora];
+  G.resultado_id=ganadora;G.resultado_nombre=fac.nombre;
+  document.getElementById('res-bg').style.backgroundImage="url('"+fac.bg+"')";
+  document.getElementById('res-universe').textContent=fac.universe;
+  document.getElementById('res-name').textContent=fac.nombre;
+  document.getElementById('res-img').src=fac.img;
+  document.getElementById('res-img').alt=fac.nombre;
+  document.getElementById('res-desc').textContent=fac.desc;
+  document.getElementById('res-motto').textContent=fac.lema;
+  document.getElementById('res-motto-src').textContent=fac.lema_src;
+  document.getElementById('res-traits').innerHTML=fac.rasgos.map(r=>'<span class="trait">'+r+'</span>').join('');
+  const afinEl=document.getElementById('res-afin');
+  afinEl.innerHTML='<div class="afin-label">Afinidades secundarias</div>';
+  sorted.slice(1,5).forEach(([k,v])=>{
+    const pct=total>0?Math.round(v/total*100):0;
+    if(!pct)return;
+    const fi=F[k];
+    const nm=fi.nombre.replace(/^(Los |La |El |Casa )/,'');
+    const row=document.createElement('div');
+    row.className='afin-item';
+    row.innerHTML='<span class="afin-name">'+nm+'</span><div class="afin-bg"><div class="afin-fill" style="width:0%" data-w="'+pct+'"></div></div><span class="afin-pct">'+pct+'%</span>';
+    afinEl.appendChild(row);
   });
-  all[oi].classList.add(correcto?'ok':'ko');
-
-  const fb=document.getElementById(`afb_${uid}`);
-  fb.className=`ans-fb show ${correcto?'ok':'ko'}`;
-  document.getElementById(`afbh_${uid}`).textContent=
-    esDec?`Decisión: ${b.opts[oi].val}`:(correcto?'✓ Respuesta correcta':'✗ No del todo');
-  document.getElementById(`afbt_${uid}`).textContent=
-    esDec?b.opts[oi].fb:(correcto?b.fb_ok:b.fb_ko);
-
-  const resp=G.respuestas[G.respuestas.length-1];
-  if(correcto&&!esDec){resp.pts+=b.pts;G.puntos+=b.pts;resp.correcto=true;}
-  else if(esDec){resp.pts+=b.pts;G.puntos+=b.pts;resp.correcto=true;resp.datos[b.clave]=b.opts[oi].val;}
-  else resp.correcto=false;
-  resp.datos[`opcion_${bi}`]=oi;
-  updHUD();chkConfirmar(pi);
+  ir('v-result');
+  setTimeout(()=>{document.querySelectorAll('.afin-fill').forEach(b=>{b.style.width=b.dataset.w+'%'})},400);
 }
 
-function clickMapa(uid,pi,bi,tid){
-  const b=PRUEBAS[pi].bloques[bi];
-  const items=document.querySelectorAll(`#mapa_${uid} .mapa-item`);
-  if([...items].some(it=>it.classList.contains('sel')))return;
-  items.forEach(it=>it.classList.remove('sel'));
-  document.getElementById(`mi_${uid}_${tid}`)?.classList.add('sel');
-
-  const ok=tid===b.clave_ok;
-  const fb=document.getElementById(`afb_${uid}`);
-  fb.className=`ans-fb show ${ok?'ok':'ko'}`;
-  document.getElementById(`afbh_${uid}`).textContent=ok?'✓ Correcto':'✗ No exactamente';
-  document.getElementById(`afbt_${uid}`).textContent=ok?b.fb_ok:b.fb_ko;
-  if(!ok)document.getElementById(`mi_${uid}_${b.clave_ok}`)?.classList.add('sel');
-
-  const resp=G.respuestas[G.respuestas.length-1];
-  if(ok){resp.pts+=b.pts;G.puntos+=b.pts;resp.correcto=true;}
-  else resp.correcto=false;
-  resp.datos['territorio_sel']=tid;
-  updHUD();chkConfirmar(pi);
-}
-
-/* DECODER */
-const DEC={};
-function addTok(uid,pi,bi,tok,ti){
-  if(!DEC[uid])DEC[uid]=[];
-  DEC[uid].push({tok,ti});
-  document.getElementById(`tok_${uid}_${ti}`).classList.add('used');
-  const ans=document.getElementById(`ans_${uid}`);
-  const sp=document.createElement('span');
-  sp.className='placed';sp.dataset.ti=ti;sp.textContent=tok;
-  sp.onclick=()=>removeTok(uid,pi,bi,ti,sp);
-  ans.appendChild(sp);
-  G.respuestas[G.respuestas.length-1].datos['decode']=DEC[uid].map(d=>d.tok);
-  chkConfirmar(pi);
-}
-function removeTok(uid,pi,bi,ti,el){
-  DEC[uid]=(DEC[uid]||[]).filter(d=>d.ti!==ti);
-  document.getElementById(`tok_${uid}_${ti}`).classList.remove('used');
-  el.remove();
-  G.respuestas[G.respuestas.length-1].datos['decode']=DEC[uid].map(d=>d.tok);
-  chkConfirmar(pi);
-}
-function confirmarDecoder(uid,pi,bi){
-  const b=PRUEBAS[pi].bloques[bi];
-  const resp=(DEC[uid]||[]).map(d=>d.tok);
-  const ok=JSON.stringify(resp)===JSON.stringify(b.correctos);
-  const fb=document.getElementById(`afb_${uid}`);
-  fb.className=`ans-fb show ${ok?'ok':'ko'}`;
-  document.getElementById(`afbh_${uid}`).textContent=ok?'✓ Correcto':'✗ No exactamente';
-  document.getElementById(`afbt_${uid}`).textContent=ok?b.fb_ok:b.fb_ko;
-  document.querySelectorAll(`#bank_${uid} .tok`).forEach(t=>{t.classList.add('used');t.style.pointerEvents='none'});
-  document.querySelectorAll(`#ans_${uid} .placed`).forEach(t=>t.style.pointerEvents='none');
-  const r=G.respuestas[G.respuestas.length-1];
-  if(ok){r.pts+=b.pts;G.puntos+=b.pts;r.correcto=true;}
-  else r.correcto=false;
-  updHUD();
-}
-
-/* TIMER */
-function startTimer(uid,pi,bi,total){
-  let t=total;
-  const bar=document.getElementById(`tf_${uid}`);
-  const num=document.getElementById(`tn_${uid}`);
-  bar.style.width='100%';
-  G.timer_id=setInterval(()=>{
-    t--;const pct=(t/total)*100;
-    bar.style.width=pct+'%';num.textContent=t;
-    if(t<=6){bar.className='timer-fill dng';num.className='timer-n dng';}
-    else if(t<=11){bar.className='timer-fill warn';num.className='timer-n warn';}
-    if(t<=0){
-      clearInterval(G.timer_id);G.timer_id=null;
-      const all=document.querySelectorAll(`#opts_${uid} .opt`);
-      const b=PRUEBAS[pi].bloques[bi];
-      all.forEach((op,i)=>{op.classList.add('dim');if(b.opts[i].ok)op.classList.add('ok');});
-      const fb=document.getElementById(`afb_${uid}`);
-      fb.className='ans-fb show ko';
-      document.getElementById(`afbh_${uid}`).textContent='⏱ Tiempo agotado';
-      document.getElementById(`afbt_${uid}`).textContent=b.fb_ko;
-      G.respuestas[G.respuestas.length-1].correcto=false;
-      G.respuestas[G.respuestas.length-1].datos['timeout']=true;
-      chkConfirmar(pi);
-    }
-  },1000);
-}
-
-/* FEEDBACK INTEGRADO */
-function saveFB(uid,clave,val){
-  const resp=G.respuestas[G.respuestas.length-1];
-  if(resp)resp.datos[clave]=val;
-  const pi=parseInt(uid.split('_')[0]);
-  chkConfirmar(pi);
-}
-function clickStar(uid,clave,n){
-  setStars(uid,n);
-  saveFB(uid,clave,n);
-}
-function updSliderGeneric(el,valId){
-  const v=parseInt(el.value);
-  const vEl=document.getElementById(valId);
-  if(vEl)vEl.textContent=v;
-  const pct=(v-1)/9*100;
-  el.style.background=`linear-gradient(to right,var(--vg) 0%,var(--vg) ${pct}%,rgba(82,168,130,.2) ${pct}%,rgba(82,168,130,.2) 100%)`;
-  // save
-  const parts=valId.replace('slv_','').split('_');
-  const pi=parseInt(parts[0]),bi=parseInt(parts[1]);
-  if(!isNaN(pi)&&!isNaN(bi)){
-    const b=PRUEBAS[pi]?.bloques[bi];
-    if(b&&b.clave)saveFB(`${pi}_${bi}`,b.clave,v);
-  }
-}
-
-/* ──────────────────────────────
-   VERIFICAR BOTÓN CONFIRMAR
-   ────────────────────────────── */
-function chkConfirmar(pi){
-  const P=PRUEBAS[pi];
-  const btn=document.getElementById(`btn-ok-${pi}`);
-  if(!btn)return;
-  let ok=true;
-  P.bloques.forEach((b,bi)=>{
-    const uid=`${pi}_${bi}`;
-    const fb=()=>document.getElementById(`afb_${uid}`)?.classList.contains('show');
-    switch(b.tipo){
-      case 'trivia':case 'decision':case 'mapa':case 'trivia_timer':
-        if(!fb())ok=false;break;
-      case 'decoder':
-        if(!DEC[uid]||DEC[uid].length===0)ok=false;break;
-      case 'feedback_integrado':
-        if(b.subtipo==='stars'){
-          const v=G.respuestas[G.respuestas.length-1]?.datos[b.clave];
-          if(!v||v===0)ok=false;
-        }
-        if((b.subtipo==='texto'||b.subtipo==='textarea')&&!b.opcional){
-          const v=G.respuestas[G.respuestas.length-1]?.datos[b.clave];
-          if(!v||v.trim().length<4)ok=false;
-        }
-        break;
-    }
+function copiarResultado(){
+  const fac=F[G.resultado_id];
+  const txt='Mi Casa en el universo de Dune: '+G.resultado_nombre+'\n\n'+fac.lema+'\n\nDescubre la tuya: Casa Portil - Proyecto Dune\n#CasaPortil #Dune';
+  navigator.clipboard.writeText(txt).catch(()=>{
+    const el=document.createElement('textarea');el.value=txt;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);
   });
-  btn.disabled=!ok;
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-/* ──────────────────────────────
-   CONFIRMAR PRUEBA
-   ────────────────────────────── */
-function confirmar(pi){
-  if(G.timer_id){clearInterval(G.timer_id);G.timer_id=null;}
-  const P=PRUEBAS[pi];
-
-  // Confirmar decoders pendientes
-  P.bloques.forEach((b,bi)=>{
-    const uid=`${pi}_${bi}`;
-    if(b.tipo==='decoder'&&!document.getElementById(`afb_${uid}`)?.classList.contains('show'))
-      confirmarDecoder(uid,pi,bi);
-    // Guardar sliders/feedback values finales
-    if(b.tipo==='feedback_integrado'&&b.subtipo==='slider'){
-      const v=parseInt(document.getElementById(`sl_${uid}`)?.value||5);
-      saveFB(uid,b.clave,v);
-    }
-  });
-
-  const t=Math.round((Date.now()-G.ts_prueba)/1000);
-  G.tiempos.push(t);
-  G.respuestas[G.respuestas.length-1].tiempo=t;
-
-  const r=G.respuestas[G.respuestas.length-1];
-  const correcto=r.correcto;
-  const esUltima=pi>=PRUEBAS.length-1;
-
-  document.getElementById('tr-glyph').textContent=correcto===true?'✓':correcto===false?'✗':'⚜';
-  document.getElementById('tr-label').textContent=`${P.num} — completada`;
-  document.getElementById('tr-titulo').textContent=P.titulo;
-
-  const ptsEl=document.getElementById('tr-pts');
-  ptsEl.className=`trans-pts ${correcto===true?'ok':correcto===false?'ko':'neutral'}`;
-  ptsEl.textContent=r.pts>0?`+${r.pts} pts · Total: ${G.puntos} pts`:`Total: ${G.puntos} pts`;
-
-  const btnTrans=document.getElementById('tr-btn');
-  btnTrans.textContent=esUltima?'Ver resultado final →':'Siguiente prueba →';
-  btnTrans.onclick=()=>esUltima?mostrarFinal():mostrarPrueba(pi+1);
-
-  updProgressBar(pi+1);
-  ir('s-trans');
-}
-
-/* ──────────────────────────────
-   HUD / PROGRESS
-   ────────────────────────────── */
-function updHUD(){
-  document.getElementById('hud-step').textContent=`Prueba ${G.prueba+1} · ${PRUEBAS.length}`;
-  document.getElementById('hud-pts').textContent=`⚜ ${G.puntos}`;
-}
-function updProgressBar(done){
-  document.getElementById('prog-bar').style.width=(done/PRUEBAS.length*100)+'%';
-}
-
-/* ──────────────────────────────
-   RESULTADO FINAL
-   ────────────────────────────── */
-function mostrarFinal(){
-  const maxPts=PRUEBAS.reduce((a,p)=>a+p.bloques.reduce((b,bl)=>b+(bl.pts||0),0),0);
-  const pct=Math.round(G.puntos/maxPts*100);
-
-  let rango,titulo,verdict;
-  if(pct>=85){
-    rango='Custodio Mayor del Archivo Vivo';titulo='Memorista de Plata';
-    verdict=`Has demostrado un conocimiento excepcional del universo de Casa Portil. El Archivo Vivo abre sus cámaras más profundas para ti, ${G.nombre}.`;
-  } else if(pct>=60){
-    rango='Notario del Agua — Acceso concedido';titulo='Guardián del Cauce';
-    verdict=`Conocimiento sólido del feudo. Los Bajos de Merúm te reconocerían como digno custodio del flujo, ${G.nombre}.`;
-  } else {
-    rango='Aspirante del Delta Quieto';titulo='Agente en Formación';
-    verdict=`El conocimiento del Archivo se construye despacio, como los diques de Merúm. El Delta Quieto tiene paciencia, ${G.nombre}.`;
-  }
-
-  document.getElementById('f-rango').textContent=rango;
-  document.getElementById('f-titulo').textContent=titulo;
-  document.getElementById('f-score').innerHTML=`${G.puntos} <small>/ ${maxPts} pts</small>`;
-  document.getElementById('f-verdict').textContent=verdict;
-
-  let tbl=`<div class="summary-table-title">Resumen de pruebas</div>`;
-  G.respuestas.forEach(r=>{
-    const ico=r.correcto===true?'✓':r.correcto===false?'✗':'—';
-    const cls=r.correcto===true?'ok':r.correcto===false?'ko':'n';
-    tbl+=`<div class="sr"><span class="sr-l">${r.titulo}</span><span class="sr-v ${cls}">${ico} +${r.pts} pts · ${r.tiempo}s</span></div>`;
-  });
-  document.getElementById('f-table').innerHTML=tbl;
-
-  updProgressBar(PRUEBAS.length);
-  ir('s-final');
-  enviar();
-}
-
-/* ──────────────────────────────
-   ENVÍO AL SERVIDOR
-   ────────────────────────────── */
-async function enviar(){
-  const extraer=(clave)=>{
-    for(const r of G.respuestas){if(r.datos[clave]!==undefined)return r.datos[clave];}
-    return null;
-  };
+async function enviarYReiniciar(){
   const payload={
-    nombre:G.nombre, email:G.email, edad:G.edad,
-    perfil:G.perfil, generos:G.generos, como:G.como,
-    first_impression:G.first_imp, exp_dune:G.exp_dune,
-    puntos:G.puntos,
-    tiempo_total:Math.round((Date.now()-G.ts_inicio)/1000),
-    tiempos_prueba:G.tiempos,
-    // Feedback extraído
-    interes_poder_archivo:extraer('interes_poder_archivo'),
-    territorio_favorito_gestion:extraer('territorio_favorito_gestion'),
-    valoracion_worldbuilding:extraer('valoracion_worldbuilding'),
-    estilo_juego:extraer('estilo_juego'),
-    bucle_favorito:extraer('bucle_favorito'),
-    feedback_libre:extraer('feedback_libre_final'),
-    nps:extraer('nps'),
-    // Dump completo
-    respuestas:G.respuestas,
+    nombre:G.nombre,email:G.email,edad:G.edad,perfil:G.perfil,exp_dune:G.exp_dune,
+    resultado_faccion:G.resultado_id,resultado_nombre:G.resultado_nombre,
+    scores:G.scores,respuestas:G.respuestas,
+    tiempo_seg:Math.round((Date.now()-G.ts)/1000),
+    fb_concepto:document.getElementById('fb-concepto').value,
+    fb_enganche:document.getElementById('fb-enganche').value,
+    fb_libre:document.getElementById('fb-libre').value.trim(),
     fecha:new Date().toISOString()
   };
-
   try{
-    const r=await fetch('register.php',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    const d=await r.json();
-    if(!d.success)console.warn('Backend:',d.message);
-  }catch(e){
-    console.warn('Modo demo — backend no disponible:',e.message);
-  }
-}
-
-/* ──────────────────────────────
-   REINICIAR
-   ────────────────────────────── */
-function reiniciar(){
-  if(G.timer_id){clearInterval(G.timer_id);G.timer_id=null;}
-  document.getElementById('hud').classList.remove('show');
-  document.getElementById('prog-bar').style.width='0%';
-  ir('s-intro');
+    const r=await fetch('register.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();if(!d.success)console.warn('Backend:',d.message);
+  }catch(e){console.warn('Demo:',e.message)}
+  document.getElementById('test-hud').classList.remove('show');
+  document.getElementById('hud-prog').style.width='0%';
+  Object.keys(F).forEach(k=>G.scores[k]=0);
+  G.q_actual=0;G.respuestas=[];
+  ir('v-intro');
 }
 </script>
 </body>

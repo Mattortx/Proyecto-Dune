@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dune Data Observatory</title>
+  <style>
+    :root {
+      --bg: #0b1317;
+      --bg-soft: #112028;
+      --card: #182b34;
+      --line: #264451;
+      --text: #d9edf5;
+      --muted: #8db0bf;
+      --ok: #58c28d;
+      --warn: #e3c35f;
+      --err: #f57c7c;
+      --accent: #7ee4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, #1c3947 0%, transparent 40%),
+        radial-gradient(circle at 80% 10%, #103545 0%, transparent 35%),
+        linear-gradient(160deg, var(--bg), #071015 65%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(24, 43, 52, 0.88), rgba(11, 19, 23, 0.92));
+      padding: 1.5rem;
+      border-radius: 16px;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(2px);
+    }
+
+    .hero h1 {
+      margin: 0;
+      letter-spacing: 0.08em;
+      font-size: clamp(1.2rem, 2vw, 1.8rem);
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      margin: 0.7rem 0 0;
+      color: var(--muted);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      color: var(--text);
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    #timestamp {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: rgba(24, 43, 52, 0.8);
+      border-radius: 14px;
+      overflow: hidden;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--line);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .badge.ok {
+      background: rgba(88, 194, 141, 0.2);
+      color: var(--ok);
+    }
+
+    .badge.warn {
+      background: rgba(227, 195, 95, 0.2);
+      color: var(--warn);
+    }
+
+    .badge.err {
+      background: rgba(245, 124, 124, 0.2);
+      color: var(--err);
+    }
+
+    .card-body {
+      padding: 1rem;
+    }
+
+    .kpi {
+      font-size: 1.5rem;
+      margin-bottom: 0.7rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .msg {
+      margin: 0 0 0.8rem;
+      color: var(--muted);
+      min-height: 1.2em;
+      font-size: 0.9rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid rgba(38, 68, 81, 0.8);
+      text-align: left;
+      padding: 0.35rem;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 0.5rem 0;
+    }
+
+    .error-box {
+      margin-top: 1rem;
+      border: 1px solid rgba(245, 124, 124, 0.35);
+      background: rgba(245, 124, 124, 0.08);
+      color: #ffd6d6;
+      border-radius: 10px;
+      padding: 0.8rem;
+      display: none;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Dune Data Observatory</h1>
+      <p>Vista agregada de Firebase, Supabase y Neon para seguimiento operativo.</p>
+    </section>
+
+    <div class="controls">
+      <button id="refresh" type="button">Actualizar datos</button>
+      <span id="timestamp">Sin datos</span>
+    </div>
+
+    <section id="grid" class="grid"></section>
+    <section id="error" class="error-box"></section>
+  </div>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const timestamp = document.getElementById("timestamp");
+    const errorBox = document.getElementById("error");
+    const refreshButton = document.getElementById("refresh");
+
+    function statusClass(status) {
+      if (status === "ok") return "ok";
+      if (status === "not_configured") return "warn";
+      return "err";
+    }
+
+    function toCell(value) {
+      if (value === null || value === undefined) return "-";
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
+    }
+
+    function renderTable(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return '<div class="empty">Sin filas para mostrar.</div>';
+      }
+
+      const columns = Object.keys(rows[0]).slice(0, 5);
+      const header = columns.map((col) => `<th>${col}</th>`).join("");
+      const body = rows
+        .slice(0, 10)
+        .map((row) => {
+          const tds = columns.map((col) => `<td>${toCell(row[col])}</td>`).join("");
+          return `<tr>${tds}</tr>`;
+        })
+        .join("");
+
+      return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+    }
+
+    function renderSources(sources) {
+      grid.innerHTML = "";
+      sources.forEach((source, index) => {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.style.animationDelay = `${index * 0.08}s`;
+
+        card.innerHTML = `
+          <header class="card-head">
+            <span>${source.source}</span>
+            <span class="badge ${statusClass(source.status)}">${source.status}</span>
+          </header>
+          <div class="card-body">
+            <div class="kpi">${source.total ?? "-"}</div>
+            <p class="msg">${source.message ?? "Conectado correctamente"}</p>
+            ${renderTable(source.rows)}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    async function loadOverview() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+
+      try {
+        const response = await fetch("/api/overview", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        renderSources(data.sources || []);
+        const date = data.generated_at ? new Date(data.generated_at) : new Date();
+        timestamp.textContent = `Actualizado: ${date.toLocaleString()}`;
+      } catch (error) {
+        errorBox.style.display = "block";
+        errorBox.textContent = `No se pudo cargar /api/overview: ${error.message}`;
+      }
+    }
+
+    refreshButton.addEventListener("click", loadOverview);
+    loadOverview();
+  </script>
+</body>
+</html>
