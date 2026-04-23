@@ -1,0 +1,48 @@
+{
+  "name": "dune-the-measure",
+  "version": "1.0.0",
+  "description": "Casa Portil - Gestión Hidráulica Dinástica",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win"
+  },
+  "author": "Casa Portil",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.portil.dunethemeasure",
+    "productName": "Dune The Measure",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "wwwroot/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": null
+    },
+    "portable": {
+      "artifactName": "${productName}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "electronDownload": {
+      "cache": "C:\\Users\\jadgg\\AppData\\Local\\electron-builder\\Cache"
+    }
+  }
+}

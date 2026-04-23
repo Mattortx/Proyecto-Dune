@@ -22,6 +22,39 @@ function logDebug(component, message, data = null) {
 const STORAGE_KEY = 'hydraulic_dynasty_save';
 
 // ============================================
+// CONSTRUCTION PANEL STATE (Persist selection)
+// ============================================
+
+const ConstructionState = {
+    activeCategory: 'all',
+    scrollPosition: 0
+};
+
+function setActiveCategory(category) {
+    ConstructionState.activeCategory = category;
+}
+
+function getActiveCategory() {
+    return ConstructionState.activeCategory;
+}
+
+function saveScrollPosition(position) {
+    ConstructionState.scrollPosition = position;
+}
+
+function restoreScrollPosition() {
+    const list = document.getElementById('buildingsList');
+    if (list && ConstructionState.scrollPosition > 0) {
+        list.scrollTop = ConstructionState.scrollPosition;
+    }
+}
+
+function getScrollPosition() {
+    const list = document.getElementById('buildingsList');
+    return list ? list.scrollTop : 0;
+}
+
+// ============================================
 // RESOURCE SYSTEM (Canonical Registry)
 // ============================================
 
@@ -790,11 +823,13 @@ function buildBuilding(buildingId) {
     console.log('[BUILD] Agua ANTES:', cost.water ? res.water + cost.water : res.water, '-> DESPUÉS:', res.water, '(-' + cost.water + ')');
     console.log('[BUILD] Comida ANTES:', cost.food ? res.food + cost.food : res.food, '-> DESPUÉS:', res.food, '(-' + cost.food + ')');
     console.log('[BUILD] Recursos finales:', JSON.stringify(res));
-    logDebug('BUILD', 'Construido', { id: buildingId, name: building.name });
-    showNotification('Obra Completada', building.name + ' construida');
-    renderBuildingsList();
+logDebug('BUILD', 'Construido', { id: buildingId, name: building.name });
+    showNotification('Obra Completada', building.name + ' construída');
+    // Re-render preserving active category (no full panel reset)
+    renderBuildingsList(getActiveCategory());
     updateHUD();
-    console.log('[BUILD] UI actualizada, verificanco valores en DOM:');
+    console.log('[BUILD] UI actualizada (categoría preservada: ' + getActiveCategory() + ')');
+    console.log('[BUILD] Verificando valores en DOM:');
     console.log('  resource-money:', document.getElementById('resource-money')?.textContent);
     console.log('  resource-water:', document.getElementById('resource-water')?.textContent);
     console.log('  resource-food:', document.getElementById('resource-food')?.textContent);
@@ -889,6 +924,16 @@ function setupHUDEvents() {
         });
     });
 
+    // Top Command Buttons (Bitácora)
+    document.querySelectorAll('.command-btn-top').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const panel = btn.dataset.panel;
+            document.querySelectorAll('.command-btn-top').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            openPanel(panel);
+        });
+    });
+
     // Resource Card Tooltips
     document.querySelectorAll('.resource-card').forEach(card => {
         const resource = card.dataset.resource;
@@ -920,22 +965,23 @@ function openPanel(panelName) {
         'alerts': 'alertsPanel',
         'mainMenu': 'mainMenuModal',
         'house': 'housePanel',
-        'army': 'armyPanel' // PREPARED - future implementation
+        'army': 'armyPanel', // PREPARED - future implementation
+        'expeditions': 'expeditionsPanel' // PREPARED - future implementation
     };
     
     const panelId = panelMap[panelName];
     if (!panelId) return;
     
     // Check if button is blocked (for army placeholder)
-    if (panelName === 'army') {
-        showNotification('Próximamente', 'El sistema de ejército está en desarrollo.', true);
+    if (panelName === 'army' || panelName === 'expeditions') {
+        showNotification('Próximamente', 'El sistema de expediciones está en desarrollo.', true);
         return;
     }
     
     document.getElementById(panelId)?.classList.add('active');
     
-    // Load panel content
-    if (panelName === 'construction') renderBuildingsList();
+    // Load panel content - preserve active category for construction
+    if (panelName === 'construction') renderBuildingsList(getActiveCategory());
     else if (panelName === 'politics') renderPolitics();
     else if (panelName === 'research') renderResearch();
     else if (panelName === 'diplomacy') renderDiplomacy();
@@ -1057,59 +1103,19 @@ function exitToMainMenu() {
 // Construction Panel
 // ============================================
 
-function renderBuildingsList() {
-    const list = document.getElementById('buildingsList');
-    if (!list) return;
-    
-    const tierNames = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
-    const resourceIcons = {
-        funds: '💰', water: '💧', food: '🍖', sellos: '📜',
-        credito: '🏦', choam: '⚗️', registros: '📋', plastiacero: '🔩'
-    };
-    
-    list.innerHTML = gameState.buildings.map(b => {
-        // Cost display
-        const costHTML = Object.entries(b.cost)
-            .map(([key, amount]) => `<span class="cost-${key}">${resourceIcons[key] || key} ${amount}</span>`)
-            .join('');
-        
-        // Upkeep display
-        const upkeepHTML = Object.entries(b.upkeep)
-            .map(([key, amount]) => `<span class="upkeep-${key}">-${amount} ${resourceIcons[key] || key}/mes</span>`)
-            .join('');
-        
-        // Output display
-        const outputHTML = Object.entries(b.output)
-            .map(([key, amount]) => `<span class="output-${key}">+${amount} ${resourceIcons[key] || key}/mes</span>`)
-            .join('');
-        
-        // Effects display
-        const effectsEntries = Object.entries(b.effects);
-        const effectsHTML = effectsEntries.length 
-            ? `<div class="building-effects">${effectsEntries.map(([k, v]) => `<span>${k}: ${v > 0 ? '+' : ''}${v}</span>`).join(', ')}</div>` 
-            : '';
-        
-        return `
-            <div class="building-card ${b.isBuilt ? 'built' : ''}" onclick="buildBuilding('${b.id}')">
-                <div class="building-card-header">
-                    <span class="building-name">${b.name}</span>
-                    <span class="building-tier">Tier ${tierNames[b.tier] || b.tier}</span>
-                </div>
-                <div class="building-description">${b.description || ''}</div>
-                <div class="building-cost">${costHTML}</div>
-                <div class="building-upkeep">${upkeepHTML}</div>
-                <div class="building-output">${outputHTML}</div>
-                ${effectsHTML}
-                ${b.prerequisites?.length ? `<div class="building-prereq">Req: ${b.prerequisites.join(', ')}</div>` : ''}
-                ${b.isBuilt ? '<div class="building-status built">✓ Construido</div>' : ''}
-            </div>
-        `;
-    }).join('');
+function renderBuildingsList(category = getActiveCategory()) {
+    renderBuildingsByCategory(category);
 }
 
 function renderBuildingsByCategory(category) {
     const list = document.getElementById('buildingsList');
     if (!list) return;
+    
+    // Save active category
+    setActiveCategory(category);
+    
+    // Save scroll position before re-render
+    saveScrollPosition(getScrollPosition());
     
     let buildings = gameState.buildings;
     if (category !== 'all') {
@@ -1143,6 +1149,15 @@ function renderBuildingsByCategory(category) {
             </div>
         `;
     }).join('');
+    
+    // Update visual active tab
+    document.querySelectorAll('.category-tab').forEach(t => {
+        t.classList.remove('active');
+    });
+    document.querySelector(`.category-tab[data-cat="${category}"]`)?.classList.add('active');
+    
+    // Restore scroll position after render
+    setTimeout(() => restoreScrollPosition(), 0);
 }
 
 // ============================================
