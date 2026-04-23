@@ -860,7 +860,7 @@ function initUI() {
         updateHUD();
         console.log('[INIT] HUD actualizado');
         
-        renderBuildingsList();
+        renderBuildingsList(getActiveCategory());
         console.log('[INIT] Edificios renderizados');
         
         startGameLoop();
@@ -944,12 +944,19 @@ function setupHUDEvents() {
     // Category Tabs
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.addEventListener('click', () => {
+            const cat = tab.dataset.cat;
+            setActiveCategory(cat);
             document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            const cat = tab.dataset.cat;
             renderBuildingsByCategory(cat);
         });
     });
+}
+
+// Global function for category tab onclick handlers
+function switchCategory(category) {
+    setActiveCategory(category);
+    renderBuildingsByCategory(category);
 }
 
 // ============================================
@@ -1063,7 +1070,7 @@ function loadGame() {
                 if (latestSave.gameState) {
                     Object.assign(gameState, latestSave.gameState);
                     updateHUD();
-                    renderBuildingsList();
+                    renderBuildingsList(getActiveCategory());
                     showNotification('Partida Cargada', 'Partida restaurada de la nube.');
                 } else {
                     // Fallback to localStorage
@@ -1085,7 +1092,7 @@ function loadFromLocalStorage() {
     if (data) {
         Object.assign(gameState, data);
         updateHUD();
-        renderBuildingsList();
+        renderBuildingsList(getActiveCategory());
         showNotification('Partida Cargada', 'Partida restaurada (local).');
     } else {
         showNotification('Sin Partida', 'No hay partida guardada.');
