@@ -2,3 +2,37 @@
 bin/
 obj/
 src/dashboard_web/.env
+
+# Build outputs and executables
+*.exe
+*.dll
+*.pdb
+*.exe.config
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Electron build outputs
+dist/
+build/
+out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
